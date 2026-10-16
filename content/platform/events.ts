@@ -271,7 +271,7 @@ export const EVENT_CATALOGUE: PlatformEvent[] = [
   {
     slug: 'gathering-exhibition-2026',
     sample: true,
-    title: { en: 'Engineering Gathering Exhibition', ar: 'معرض التجمع الهندسي' },
+    title: { en: 'Engineering Gathering Exhibition', ar: 'معرض الملتقى الهندسي' },
     type: 'exhibition',
     start: '2026-03-10T10:00:00+04:00',
     end: '2026-03-10T20:00:00+04:00',

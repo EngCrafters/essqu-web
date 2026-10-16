@@ -136,7 +136,7 @@ const photo = (key: keyof typeof PHOTO, focus?: string): MediaImage => ({ ...PHO
 export const ACTIVITIES: Activity[] = [
   {
     id: 'gathering',
-    nameAr: 'التجمع الهندسي',
+    nameAr: 'الملتقى الهندسي',
     nameEn: 'Engineering Gathering',
     description: {
       en: 'A gathering that brings students from across the engineering disciplines together in one place.',
