@@ -1,0 +1,505 @@
+/* /activities — the archive cabinet and its prints. */
+
+/* ---------------------------------------------------------------- cabinet (hero) */
+
+.cabinet {
+  display: grid;
+  width: min(100%, 36rem);
+  margin-inline: auto;
+}
+
+.cabinetTop {
+  height: 14px;
+  margin-inline: -10px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #2a3a55, var(--section-dark));
+}
+
+.cabinetPlinth {
+  height: 16px;
+  margin-inline: 12px;
+  border-radius: 0 0 6px 6px;
+  background: var(--section-dark);
+}
+
+.drawers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 6px;
+  background: var(--section-dark);
+}
+
+.drawer {
+  position: relative;
+  display: grid;
+  min-height: 7.25rem;
+  padding: 12px 0 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  isolation: isolate;
+}
+
+.drawerFront {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.6), transparent 40%),
+    #e9e6dc;
+  box-shadow:
+    inset 0 0 0 1px rgb(19 35 60 / 0.12),
+    inset 0 -3px 0 rgb(19 35 60 / 0.08);
+  transition:
+    transform 420ms var(--ease-out),
+    box-shadow 420ms var(--ease-out);
+}
+
+.drawerNo {
+  color: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* The label holder: a brass-edged card slot. */
+.drawerLabel {
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  padding: var(--space-2) var(--space-3);
+  border: 1.5px solid #b8a467;
+  border-radius: 3px;
+  background: #fbfaf5;
+}
+
+.drawerName {
+  color: var(--text-primary);
+  font-size: var(--text-small);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.drawerOther {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.drawerFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.drawerHandle {
+  width: 46px;
+  height: 8px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #d8dde5, #8d96a6);
+  box-shadow: 0 2px 2px rgb(19 35 60 / 0.2);
+}
+
+.drawerCount {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* The photograph tucked inside the drawer: it rises out when the drawer opens. */
+.drawerPhoto {
+  position: absolute;
+  inset: 0 10px auto;
+  z-index: 0;
+  height: 70%;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 2px;
+  box-shadow: 0 6px 16px -8px rgb(0 0 0 / 0.5);
+  transform: translateY(0) rotate(-1.5deg);
+  transition: transform 520ms var(--ease-out);
+}
+
+.drawerPhoto img {
+  object-fit: cover;
+}
+
+.drawer:hover .drawerFront,
+.drawer:focus-visible .drawerFront {
+  transform: translateY(5px);
+}
+
+.drawer:hover .drawerPhoto,
+.drawer:focus-visible .drawerPhoto {
+  transform: translateY(-14%) rotate(-2.5deg);
+}
+
+.drawer[aria-pressed='true'] .drawerFront {
+  transform: translateY(12px);
+  box-shadow:
+    inset 0 0 0 2px var(--accent-gold),
+    0 10px 18px -12px rgb(0 0 0 / 0.6);
+}
+
+.drawer[aria-pressed='true'] .drawerPhoto {
+  z-index: 2;
+  transform: translateY(-46%) rotate(-3deg);
+}
+
+.drawer[aria-pressed='true'] .drawerLabel {
+  border-color: var(--accent-gold);
+}
+
+.drawer:focus-visible {
+  outline: 2px solid var(--focus-ring-on-dark);
+  outline-offset: 2px;
+}
+
+@media (min-width: 40rem) {
+  .drawers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------- archive */
+
+.archive {
+  padding-block: var(--space-8) var(--section-space);
+  scroll-margin-top: calc(var(--nav-offset) + var(--nav-height));
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  margin-bottom: var(--space-4);
+}
+
+.search {
+  min-width: 0;
+}
+
+.inlineFilters {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+
+  .search {
+    max-width: 30rem;
+  }
+
+  .inlineFilters {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) minmax(12rem, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+}
+
+.year {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-9);
+}
+
+.yearMark {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  color: transparent;
+  font-family: var(--font-display-latin);
+  font-size: clamp(4rem, 2.6rem + 6vw, 8rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  -webkit-text-stroke: 1.5px var(--text-primary);
+}
+
+.yearMark::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+.prints {
+  display: grid;
+  gap: var(--space-8) var(--space-6);
+}
+
+@media (min-width: 40rem) {
+  .prints {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .prints {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .print:nth-child(3n + 2) {
+    margin-top: var(--space-8);
+  }
+}
+
+.print {
+  min-width: 0;
+}
+
+.printButton {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: start;
+}
+
+/* A print in a mat: white border, a slight hand-placed tilt that straightens on hover. */
+.printPhoto {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border: 8px solid #fff;
+  border-bottom-width: 8px;
+  border-radius: 3px;
+  background: var(--surface-soft);
+  box-shadow:
+    0 1px 2px rgb(19 35 60 / 0.08),
+    0 18px 30px -22px rgb(19 35 60 / 0.5);
+  transform: rotate(var(--tilt, 0deg));
+  transition:
+    transform 480ms var(--ease-out),
+    box-shadow 480ms var(--ease-out);
+}
+
+.printPhoto img {
+  object-fit: cover;
+  transition: transform 700ms var(--ease-out);
+}
+
+.printButton:hover .printPhoto,
+.printButton:focus-visible .printPhoto {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow:
+    0 2px 4px rgb(19 35 60 / 0.08),
+    0 28px 40px -24px rgb(19 35 60 / 0.55);
+}
+
+.printButton:hover .printPhoto img {
+  transform: scale(1.04);
+}
+
+.printCount {
+  position: absolute;
+  bottom: var(--space-2);
+  inset-inline-end: var(--space-2);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-chip);
+  background: rgb(16 33 61 / 0.72);
+  color: var(--on-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.printCaption {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.printMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+
+.printTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  font-weight: 600;
+  line-height: var(--leading-heading);
+  transition: color var(--dur-hover) var(--ease-out);
+}
+
+.printButton:hover .printTitle {
+  color: var(--brand-primary);
+}
+
+.printFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.keys {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.keys span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--key);
+}
+
+/* ---------------------------------------------------------------- lightbox */
+
+.lightbox {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.lightboxStage {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--section-dark);
+}
+
+.lightboxImage {
+  object-fit: contain;
+}
+
+.lightboxNav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.88);
+  color: var(--text-primary);
+  translate: 0 -50%;
+}
+
+.lightboxNav svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lightboxPrev {
+  inset-inline-start: var(--space-3);
+}
+
+.lightboxPrev svg {
+  transform: scaleX(-1);
+}
+
+.lightboxNext {
+  inset-inline-end: var(--space-3);
+}
+
+:global(html[dir='rtl']) .lightboxPrev svg {
+  transform: none;
+}
+
+:global(html[dir='rtl']) .lightboxNext svg {
+  transform: scaleX(-1);
+}
+
+.lightboxCounter {
+  position: absolute;
+  bottom: var(--space-3);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-chip);
+  background: rgb(16 33 61 / 0.72);
+  color: var(--on-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+:global(html[dir='rtl']) .lightboxCounter {
+  translate: 50% 0;
+}
+
+.thumbs {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  width: 72px;
+  height: 52px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  opacity: 0.6;
+  transition: opacity var(--dur-hover) var(--ease-out);
+}
+
+.thumb img {
+  object-fit: cover;
+}
+
+.thumb[aria-pressed='true'] {
+  opacity: 1;
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.lightboxFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding-block: var(--space-3);
+  border-block: 1px solid var(--border);
+}
+
+.lightboxFacts dt {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lightboxFacts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.lightboxSummary {
+  color: var(--text-primary);
+}
+
+@media (max-width: 29.99rem) {
+  .lightboxFacts {
+    grid-template-columns: 1fr;
+  }
+}

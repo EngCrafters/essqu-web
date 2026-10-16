@@ -1,0 +1,990 @@
+/* /about — the convergence room. */
+
+/* ---------------------------------------------------------------- convergence hero */
+
+.convergence {
+  position: relative;
+  background:
+    radial-gradient(60% 50% at 75% 45%, rgb(35 75 196 / 0.07), transparent 70%),
+    var(--background);
+}
+
+.convergenceSticky {
+  padding-top: calc(var(--nav-offset) + var(--nav-height) + clamp(var(--space-8), 6vw, var(--space-10)));
+  padding-bottom: var(--space-9);
+}
+
+.convergence[data-sequence='pinned'] {
+  min-height: 240svh;
+}
+
+.convergence[data-sequence='pinned'] .convergenceSticky {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: center;
+  min-height: 100svh;
+  padding-block: calc(var(--nav-offset) + var(--nav-height)) var(--space-5);
+}
+
+.convergenceGrid {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.convergenceCopy {
+  display: grid;
+  align-content: start;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-gold);
+}
+
+.title {
+  max-width: 13ch;
+  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.75rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.lead {
+  max-width: 46ch;
+  margin-top: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-lead);
+}
+
+.cue {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cue::before {
+  content: '';
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(var(--text-secondary), transparent);
+}
+
+.convergence[data-sequence='pinned'] .cue {
+  display: inline-flex;
+}
+
+.stageFigure {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+/* 100 units wide, 80 tall (Convergence.tsx works in the same units). */
+.stage {
+  --tile: clamp(46px, 13vw, 76px);
+  position: relative;
+  width: min(100%, 560px);
+  aspect-ratio: 5 / 4;
+  isolation: isolate;
+}
+
+.convergence[data-sequence='pinned'] .stage {
+  width: min(100%, 560px, 80vh);
+  width: min(100%, 560px, 80svh);
+}
+
+.geometry {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.orbit {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 0.3;
+  stroke-dasharray: 1 1.6;
+  opacity: 0;
+}
+
+.ring {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 0.35;
+}
+
+.spoke {
+  stroke: var(--accent-gold);
+  stroke-width: 0.45;
+  stroke-linecap: round;
+}
+
+.cross {
+  stroke: var(--text-secondary);
+  stroke-width: 0.25;
+}
+
+.emblem {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 24px 48px -28px rgb(19 35 60 / 0.45);
+}
+
+.emblem img {
+  width: 100%;
+  height: 100%;
+  padding: 10%;
+  object-fit: contain;
+}
+
+/* A zero-size anchor on the tile's point; the symbol and label centre on it. */
+.tile {
+  position: absolute;
+  width: 0;
+  height: 0;
+  /* Depth on the orbit: tiles behind the emblem are smaller (GSAP owns transform; this is scale). */
+  scale: var(--depth, 1);
+}
+
+.tile[data-back] {
+  z-index: -1;
+}
+
+.tile[data-back] .tileSymbol :global(path:first-child) {
+  fill: color-mix(in srgb, var(--surface) 70%, var(--background));
+}
+
+.tileSymbol {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  width: var(--tile);
+  height: var(--tile);
+  translate: -50% -50%;
+}
+
+.tileSymbol :global(path:first-child) {
+  stroke: var(--key);
+  stroke-width: 1.5;
+}
+
+.tileLabel {
+  position: absolute;
+  top: calc(var(--tile) / 2 + 4px);
+  left: 0;
+  translate: -50% 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: max-content;
+  max-width: 6.5rem;
+  line-height: 1.25;
+  text-align: center;
+  opacity: 0;
+}
+
+.stageCaption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  font-weight: 600;
+}
+
+.stageCaptionMark {
+  width: 18px;
+  height: 2px;
+  background: var(--accent-gold);
+}
+
+@media (min-width: 64rem) {
+  .convergenceGrid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: clamp(var(--space-8), 5vw, var(--space-11));
+  }
+}
+
+/* ---------------------------------------------------------------- purpose */
+
+.purpose {
+  border-top: 1px solid var(--border);
+}
+
+.purposeGrid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.purposeBody {
+  max-width: 60ch;
+  color: var(--text-secondary);
+  font-size: var(--text-lead);
+}
+
+.spec {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: clamp(var(--space-8), 5vw, var(--space-10));
+  counter-reset: spec;
+}
+
+.specItem {
+  display: grid;
+  gap: var(--space-3);
+  counter-increment: spec;
+}
+
+.specRule {
+  display: block;
+  height: 2px;
+  background: var(--text-primary);
+  transform-origin: left center;
+}
+
+:global(html[dir='rtl']) .specRule {
+  transform-origin: right center;
+}
+
+.specTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-h4);
+}
+
+.specTitle::before {
+  content: counter(spec, decimal-leading-zero);
+  color: var(--accent-gold);
+  font-family: var(--font-display-latin);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.specBody {
+  color: var(--text-secondary);
+}
+
+@media (min-width: 48rem) {
+  .spec {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-8);
+  }
+}
+
+@media (min-width: 64rem) {
+  .purposeGrid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: var(--space-10);
+    align-items: end;
+  }
+
+  .spec {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* ---------------------------------------------------------------- activities */
+
+.activities {
+  border-top: 1px solid var(--border);
+}
+
+/* ---------------------------------------------------------------- activities board */
+
+.board {
+  margin-top: clamp(var(--space-8), 5vw, var(--space-10));
+  border-top: 2px solid var(--text-primary);
+}
+
+.boardRow {
+  border-bottom: 1px solid var(--border);
+}
+
+.boardLink {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-5);
+  align-items: center;
+  padding-block: var(--space-5);
+  color: inherit;
+}
+
+.boardIndex {
+  align-self: start;
+  padding-top: 0.3em;
+  color: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: var(--text-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.boardNames {
+  display: grid;
+  gap: 2px;
+}
+
+.boardName {
+  font-size: var(--text-h3);
+  line-height: var(--leading-heading);
+  transition: color var(--dur-hover) var(--ease-out);
+}
+
+.boardOfficial {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.boardDesc {
+  grid-column: 2 / -1;
+  max-width: 62ch;
+  color: var(--text-secondary);
+}
+
+.boardDesc[data-pending] {
+  font-style: italic;
+}
+
+.boardThumb {
+  position: relative;
+  grid-row: 1;
+  grid-column: 3;
+  width: 72px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.boardThumb img {
+  object-fit: cover;
+  transition: transform 600ms var(--ease-out);
+}
+
+.boardArrow {
+  display: none;
+}
+
+.boardLink:hover .boardName,
+.boardLink:focus-visible .boardName {
+  color: var(--brand-primary);
+}
+
+@media (min-width: 64rem) {
+  .boardLink {
+    grid-template-columns: 4rem minmax(0, 4fr) minmax(0, 5fr) 9rem 2rem;
+    column-gap: var(--space-6);
+    padding-block: var(--space-6);
+  }
+
+  .boardDesc {
+    grid-column: auto;
+  }
+
+  .boardThumb {
+    grid-row: auto;
+    grid-column: auto;
+    width: 9rem;
+    aspect-ratio: 4 / 3;
+    border-radius: 14px;
+    clip-path: inset(0 0 0 100%);
+    transition: clip-path 520ms var(--ease-out);
+  }
+
+  :global(html[dir='rtl']) .boardThumb {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  .boardLink:hover .boardThumb,
+  .boardLink:focus-visible .boardThumb {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .boardLink:hover .boardThumb img {
+    transform: scale(1.05);
+  }
+
+  .boardArrow {
+    display: block;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition:
+      transform var(--dur-hover) var(--ease-out),
+      color var(--dur-hover) var(--ease-out);
+  }
+
+  .boardLink:hover .boardArrow {
+    color: var(--brand-primary);
+    transform: translateX(4px);
+  }
+
+  :global(html[dir='rtl']) .boardArrow {
+    transform: scaleX(-1);
+  }
+
+  :global(html[dir='rtl']) .boardLink:hover .boardArrow {
+    transform: scaleX(-1) translateX(4px);
+  }
+}
+
+@media (hover: none) and (min-width: 64rem) {
+  .boardThumb {
+    clip-path: none;
+  }
+}
+
+/* ---------------------------------------------------------------- the record */
+
+.milestones {
+  border-top: 1px solid var(--border);
+}
+
+/* One time axis from the founding year to today: a pair of columns per year on a shared
+   scale, a readout naming the selected year, faint reference lines drawn like a CAD grid. */
+.record {
+  margin: 0;
+}
+
+.recordHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3) var(--space-6);
+}
+
+.readYear {
+  display: grid;
+  font-family: var(--font-display-latin);
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 3rem);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.readNote {
+  min-height: 1rem;
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1rem;
+}
+
+/* The readout's two figures double as the key. */
+.readItem {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--brand-primary);
+}
+
+.readItem[data-kind='projects'] {
+  border-color: var(--accent-gold);
+}
+
+.readName {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.readValue {
+  min-width: 2ch;
+  font-family: var(--font-display-latin);
+  font-size: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.recordAside {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.recordHint {
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.plot {
+  --count: 27;
+  position: relative;
+  height: clamp(11rem, 8rem + 12vw, 16rem);
+  margin-bottom: 3rem;
+  border-bottom: 2px solid var(--text-primary);
+  cursor: crosshair;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.plot:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 8px;
+  border-radius: 2px;
+}
+
+.gridLine {
+  position: absolute;
+  bottom: calc(var(--at) * 100%);
+  inset-inline: 0;
+  border-top: 1px dashed var(--border-strong);
+  transform-origin: left center;
+}
+
+:global(html[dir='rtl']) .gridLine {
+  transform-origin: right center;
+}
+
+.gridValue {
+  position: absolute;
+  bottom: 3px;
+  inset-inline-start: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cols {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+}
+
+.col {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(1px, 0.25vw, 3px);
+  min-width: 0;
+}
+
+/* The selected year: a faint band behind its pair, a gold mark on the axis. */
+.col::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--space-3) * -1) 0 0;
+  border-radius: 6px 6px 0 0;
+  background: color-mix(in srgb, var(--brand-primary) 8%, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-hover) var(--ease-out);
+}
+
+.col[data-selected]::before {
+  opacity: 1;
+}
+
+.col[data-selected]::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + 1px);
+  left: 50%;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  background: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--background);
+  translate: -50% -50%;
+  rotate: 45deg;
+}
+
+.colBar {
+  --c: var(--brand-primary);
+  position: relative;
+  width: min(36%, 12px);
+  height: calc(var(--h) * 100%);
+  border-radius: 3px 3px 0 0;
+  background: var(--c);
+  transform-origin: bottom center;
+}
+
+.colBar[data-kind='projects'] {
+  --c: var(--accent-gold);
+}
+
+/* The year still in progress is hatched: its total is not final. */
+.col[data-current] .colBar {
+  background: repeating-linear-gradient(-45deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 35%, transparent) 3px 6px);
+  box-shadow: inset 0 0 0 1px var(--c);
+}
+
+.colTick {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 1px;
+  height: var(--space-2);
+  background: var(--text-primary);
+}
+
+.colYear {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  left: 50%;
+  display: grid;
+  justify-items: center;
+  color: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: var(--text-label);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  translate: -50% 0;
+}
+
+/* The first year's label opens from the axis's start edge rather than overhanging it. */
+.colYear[data-edge='start'] {
+  left: auto;
+  inset-inline-start: 0;
+  justify-items: start;
+  translate: none;
+}
+
+.colNote {
+  color: #8a6c0e;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+}
+
+@media (max-width: 47.99rem) {
+  .recordHead {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .recordAside {
+    justify-items: start;
+  }
+
+  .colBar {
+    width: min(40%, 12px);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .col[data-selected]::after {
+    width: 7px;
+    height: 7px;
+  }
+}
+
+/* Small phones: the readout stays on one line. */
+@media (max-width: 29.99rem) {
+  .readout {
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .readYear {
+    font-size: 1.75rem;
+  }
+
+  .readValue {
+    font-size: 1.375rem;
+  }
+}
+
+.recordsNote {
+  margin-top: var(--space-4);
+  max-width: 70ch;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.recordTag {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* The verified facts, compact beneath the comparison. */
+.verified {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  margin: var(--space-8) 0 0;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.verified div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+
+.verified dt {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.verified dd {
+  margin: 0;
+  font-family: var(--font-display-latin);
+  font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.markerYear {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ---------------------------------------------------------------- structure teaser */
+
+.teaser {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.teaserDrawing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The current President and Vice Presidents, seated on the truss's joints. */
+.leaders {
+  position: relative;
+  aspect-ratio: 1240 / 600;
+  margin: 0;
+}
+
+.seats {
+  position: absolute;
+  inset: 0;
+}
+
+.seat {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 8.5rem;
+  text-align: center;
+  translate: -50% calc(var(--seat) / -2 - 4px);
+  --seat: 56px;
+}
+
+.seat[data-rank='president'] {
+  --seat: 76px;
+}
+
+.seat .seatPortrait[data-size] {
+  --size: var(--seat);
+  margin-bottom: var(--space-2);
+}
+
+.seatRole,
+.seatName {
+  padding-inline: var(--space-2);
+  background: var(--background);
+}
+
+.seatRole {
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.seat[data-rank='president'] .seatRole {
+  font-size: var(--text-body);
+}
+
+.seatName {
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.deckLabel {
+  position: absolute;
+  translate: -50% 0;
+  padding-inline: var(--space-2);
+  background: var(--background);
+  color: var(--brand-primary);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Below wide desktops: the same hierarchy without the drawing, President above the three
+   Vice Presidents, joined by a stem and a bar. */
+@media (max-width: 79.99rem) {
+  .leaders {
+    display: grid;
+    aspect-ratio: auto;
+  }
+
+  .teaserDrawing {
+    display: none;
+  }
+
+  .seats {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-2);
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+
+  .seat {
+    position: relative;
+    inset: auto !important;
+    width: auto;
+    translate: none;
+  }
+
+  .seat[data-rank='president'] {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  /* The structural lines: a stem from the President, a bar across the Vice Presidents. */
+  .seat[data-rank='president']::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: var(--space-4);
+    background: var(--text-primary);
+  }
+
+  /* Each Vice President hangs from one bar, drawn as segments that meet across the gaps. */
+  .seat[data-rank='vp']::before,
+  .seat[data-rank='vp']::after {
+    content: '';
+    position: absolute;
+    background: var(--text-primary);
+  }
+
+  .seat[data-rank='vp']::before {
+    top: calc(var(--space-4) * -1);
+    inset-inline: calc(var(--space-1) * -1);
+    height: 2px;
+  }
+
+  .seat[data-rank='vp']:nth-child(2)::before {
+    inset-inline-start: 50%;
+  }
+
+  .seat[data-rank='vp']:last-child::before {
+    inset-inline-end: 50%;
+  }
+
+  .seat[data-rank='vp']::after {
+    top: calc(var(--space-4) * -1);
+    left: 50%;
+    width: 2px;
+    height: var(--space-4);
+  }
+
+  .seatRole,
+  .seatName {
+    padding: 0;
+  }
+
+  .deckLabel {
+    position: static;
+    inset: auto !important;
+    justify-self: center;
+    margin-top: var(--space-5);
+    translate: none;
+  }
+}
+
+.teaserDrawing line {
+  stroke: var(--text-primary);
+  stroke-linecap: round;
+}
+
+.teaserDrawing line[data-kind='web'] {
+  stroke: var(--text-secondary);
+}
+
+.teaserDrawing line[data-kind='deck'] {
+  stroke: var(--brand-primary);
+}
+
+.teaserDrawing circle {
+  fill: var(--surface);
+  stroke: var(--text-primary);
+  stroke-width: 3;
+}
+
+.teaserDrawing circle[data-seat] {
+  fill: var(--brand-soft);
+  stroke: var(--brand-primary);
+}
+
+.teaserLink {
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 64rem) {
+  .teaser {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: var(--space-10);
+  }
+}

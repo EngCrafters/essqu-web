@@ -1,6 +1,8 @@
+import Link from 'next/link'
 import type { CSSProperties } from 'react'
 import { IconArrowRight } from '@/components/ui/icons'
 import { getI18n } from '@/lib/i18n/server'
+import { routes } from '@/lib/routes'
 import { HeroArt } from './HeroArt'
 import styles from './Hero.module.css'
 
@@ -33,13 +35,13 @@ export async function Hero() {
               {t.hero.lead}
             </p>
             <div className={`${styles.actions} intro-item`} style={order(3)}>
-              <a href="#events" className="btn btn--primary">
+              <Link href={routes.events} className="btn btn--primary">
                 {t.hero.exploreEvents}
                 <IconArrowRight className="btn__arrow" />
-              </a>
-              <a href="#projects" className="btn btn--secondary">
+              </Link>
+              <Link href={routes.projects} className="btn btn--secondary">
                 {t.hero.discoverProjects}
-              </a>
+              </Link>
             </div>
           </div>
           <div className={styles.artColumn}>

@@ -1,10 +1,11 @@
+import Link from 'next/link'
 import { EVENTS, type SocietyEvent } from '@/content/events'
 import { eventDateParts, eventTimeRange } from '@/lib/format'
 import type { I18n } from '@/lib/i18n'
 import { getI18n } from '@/lib/i18n/server'
-import { IconClock, IconPin } from '@/components/ui/icons'
+import { IconArrowRight, IconClock, IconPin } from '@/components/ui/icons'
 import { ItemMedia } from '@/components/ui/Plate'
-import { PreviewAction } from '@/components/ui/PreviewAction'
+import { routes } from '@/lib/routes'
 import styles from './Events.module.css'
 
 export async function Events() {
@@ -84,6 +85,7 @@ function Meta({ event, i18n, className }: Props & { className?: string }) {
   )
 }
 
+/** The event's own page holds its (prototype) registration, so the action opens it there. */
 function Register({ event, i18n, variant }: Props & { variant: 'primary' | 'secondary' }) {
   const { t, l } = i18n
   const title = l(event.title)
@@ -93,21 +95,26 @@ function Register({ event, i18n, variant }: Props & { variant: 'primary' | 'seco
         <span className="status-dot" aria-hidden="true" />
         {t.events.registration[event.registration]}
       </p>
-      <PreviewAction
-        label={t.events.previewRegistration}
-        accessibleLabel={t.events.previewFor(t.events.previewRegistration, title)}
-        variant={variant}
-        compact
-        arrow
-        title={t.events.dialogTitle}
+      <Link
+        href={`${routes.event(event.id)}#register`}
+        className={`btn btn--${variant} btn--compact`}
+        aria-label={t.events.previewFor(t.events.previewRegistration, title)}
       >
-        <p>
-          <strong>{title}</strong>
-          {t.events.dialogSample}
-        </p>
-        <p>{t.events.dialogNothing}</p>
-      </PreviewAction>
+        {t.events.previewRegistration}
+        <IconArrowRight className="btn__arrow" />
+      </Link>
     </div>
+  )
+}
+
+/** The title opens the event's page; the text keeps the section's own styling. */
+function EventTitle({ event, i18n, className, part }: Props & { className: string; part?: string }) {
+  return (
+    <h3 id={`${event.id}-title`} className={className} data-part={part}>
+      <Link href={routes.event(event.id)} className={styles.titleLink}>
+        {i18n.l(event.title)}
+      </Link>
+    </h3>
   )
 }
 
@@ -143,9 +150,7 @@ function FeaturedEvent({ event, i18n }: Props) {
         <p className={styles.type} data-part="text">
           {t.events.featured} · {t.events.types[event.type]}
         </p>
-        <h3 id={`${event.id}-title`} className={styles.featuredTitle} data-part="text">
-          {l(event.title)}
-        </h3>
+        <EventTitle event={event} i18n={i18n} className={styles.featuredTitle} part="text" />
         <p className={styles.description} data-part="text">
           {l(event.description)}
         </p>
@@ -174,9 +179,7 @@ function EventRow({ event, i18n }: Props) {
           {t.events.types[event.type]}
           {event.sample && <span className="chip chip--sample">{t.common.sample}</span>}
         </p>
-        <h3 id={`${event.id}-title`} className={styles.rowTitle}>
-          {l(event.title)}
-        </h3>
+        <EventTitle event={event} i18n={i18n} className={styles.rowTitle} />
         <p className={styles.description}>{l(event.description)}</p>
       </div>
       <Meta event={event} i18n={i18n} className={styles.rowMeta} />

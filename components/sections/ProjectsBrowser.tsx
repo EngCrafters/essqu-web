@@ -3,6 +3,7 @@
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DISCIPLINE_BY_ID, type DisciplineId } from '@/content/disciplines'
 import type { ArchiveProject } from '@/content/projects'
@@ -219,10 +220,10 @@ function ProjectTitle({ project, className }: { project: ArchiveProject; classNa
   return (
     <h3 id={`${project.id}-title`} className={className}>
       {project.href ? (
-        <a href={project.href} className={styles.stretched}>
+        <Link href={project.href} className={styles.stretched}>
           {l(project.title)}
           <IconArrowRight className={styles.titleArrow} />
-        </a>
+        </Link>
       ) : (
         l(project.title)
       )}

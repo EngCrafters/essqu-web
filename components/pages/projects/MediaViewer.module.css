@@ -1,0 +1,378 @@
+/* The project media viewer, in the bench's dark tone or the detail page's light one. */
+
+.viewer {
+  --line: var(--border);
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --panel: var(--surface);
+  --stage: linear-gradient(180deg, #fbfbf7, #eef1f5);
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.viewer[data-tone='dark'] {
+  --line: var(--border-on-dark);
+  --ink: var(--on-dark);
+  --muted: var(--atmo-text-secondary);
+  --panel: rgb(255 255 255 / 0.04);
+  --stage: radial-gradient(60% 55% at 50% 60%, rgb(247 248 242 / 0.12), transparent 70%), rgb(255 255 255 / 0.02);
+}
+
+.viewer[data-full] {
+  align-content: center;
+  padding: var(--space-5);
+  background: var(--section-dark);
+  --line: var(--border-on-dark);
+  --ink: var(--on-dark);
+  --muted: var(--atmo-text-secondary);
+}
+
+.viewport {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--stage);
+  touch-action: pan-y;
+  isolation: isolate;
+}
+
+.viewer[data-full] .viewport {
+  aspect-ratio: auto;
+  height: min(78vh, 62vw);
+}
+
+.viewport:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.viewer[data-tone='dark'] .viewport:focus-visible {
+  outline-color: var(--focus-ring-on-dark);
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+}
+
+.sheet {
+  border-radius: 0;
+}
+
+.photo {
+  object-fit: cover;
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0b1730;
+}
+
+/* Before a video starts: one clear play button over the poster. */
+.play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 12px 30px -10px rgb(0 0 0 / 0.5);
+  color: var(--section-dark);
+  translate: -50% -50%;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.play:hover {
+  transform: scale(1.06);
+}
+
+.play:active {
+  transform: scale(0.96);
+}
+
+.play svg {
+  width: 30px;
+  height: 30px;
+  margin-inline-start: 4px;
+  fill: currentColor;
+}
+
+:global(html[dir='rtl']) .play svg {
+  margin-inline-start: 0;
+  margin-inline-end: 4px;
+}
+
+/* The exploded-view control, inside the viewport, only for models that have one. */
+.explode {
+  position: absolute;
+  inset-inline: var(--space-4);
+  bottom: var(--space-3);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 26rem;
+  margin-inline: auto;
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-chip);
+  background: rgb(16 33 61 / 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--on-dark);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+
+.viewer[data-tone='light'] .explode {
+  background: rgb(255 255 255 / 0.8);
+  color: var(--text-primary);
+}
+
+.explode input {
+  --fill: 0%;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+}
+
+.explode input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent-gold) var(--fill), rgb(127 140 160 / 0.35) var(--fill));
+}
+
+:global(html[dir='rtl']) .explode input::-webkit-slider-runnable-track {
+  background: linear-gradient(270deg, var(--accent-gold) var(--fill), rgb(127 140 160 / 0.35) var(--fill));
+}
+
+.explode input::-moz-range-track {
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(127 140 160 / 0.35);
+}
+
+.explode input::-moz-range-progress {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--accent-gold);
+}
+
+.explode input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border: 2px solid var(--section-dark);
+  border-radius: 50%;
+  background: var(--on-dark);
+  box-shadow: 0 0 0 2px var(--accent-gold);
+  appearance: none;
+}
+
+.explode input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--section-dark);
+  border-radius: 50%;
+  background: var(--on-dark);
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.nav,
+.fullButton {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--nav-border);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.85);
+  color: var(--text-primary);
+  transition: background-color var(--dur-hover) var(--ease-out);
+}
+
+.nav:hover,
+.fullButton:hover {
+  background: var(--surface);
+}
+
+.nav {
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.nav svg,
+.fullButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.prev {
+  inset-inline-start: var(--space-3);
+}
+
+.prev svg {
+  transform: scaleX(-1);
+}
+
+.next {
+  inset-inline-end: var(--space-3);
+}
+
+:global(html[dir='rtl']) .prev svg {
+  transform: none;
+}
+
+:global(html[dir='rtl']) .next svg {
+  transform: scaleX(-1);
+}
+
+.fullButton {
+  top: var(--space-3);
+  inset-inline-end: var(--space-3);
+}
+
+.fullButton svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Hover-capable screens show the arrows on interaction only; touch screens always. */
+@media (hover: hover) and (pointer: fine) {
+  .nav {
+    opacity: 0;
+    transition:
+      opacity var(--dur-hover) var(--ease-out),
+      background-color var(--dur-hover) var(--ease-out);
+  }
+
+  .viewport:hover .nav,
+  .viewport:focus-within .nav {
+    opacity: 1;
+  }
+}
+
+.bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  min-width: 0;
+  color: var(--ink);
+  font-size: var(--text-small);
+}
+
+.kind {
+  color: var(--muted);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.captionText {
+  font-weight: 600;
+}
+
+.illustrative {
+  padding: 1px var(--space-2);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-chip);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.counter {
+  flex: none;
+  color: var(--muted);
+  font-family: var(--font-display-latin);
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbs {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.thumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 84px;
+  height: 56px;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  opacity: 0.65;
+  transition:
+    opacity var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+}
+
+.thumb:hover {
+  opacity: 0.9;
+}
+
+.thumb[aria-current] {
+  border-color: var(--accent-gold);
+  opacity: 1;
+  box-shadow: 0 0 0 2px var(--accent-gold);
+}
+
+.thumbKind {
+  position: absolute;
+  bottom: 4px;
+  inset-inline-end: 4px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgb(16 33 61 / 0.8);
+  color: var(--on-dark);
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.thumbKind:empty {
+  display: none;
+}

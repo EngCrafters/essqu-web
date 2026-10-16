@@ -1,5 +1,6 @@
 import { pluralAr } from '../plural'
 import type { Dictionary } from './en'
+import { platformAr } from './platform-ar'
 
 /** واجهة الموقع بالعربية. البنية مطابقة للقاموس الإنجليزي، ويتحقق TypeScript من اكتمالها. */
 export const ar: Dictionary = {
@@ -46,6 +47,8 @@ export const ar: Dictionary = {
     home: '، الصفحة الرئيسية',
     language: 'اللغة',
     switchTo: 'التبديل إلى العربية',
+    homePage: 'الرئيسية',
+    breadcrumb: 'مسار التنقل',
   },
 
   hero: {
@@ -92,10 +95,6 @@ export const ar: Dictionary = {
     },
     previewRegistration: 'معاينة التسجيل',
     previewFor: (label: string, title: string) => `${label}: ${title}`,
-    dialogTitle: 'التسجيل لم يُفتح بعد',
-    dialogSample:
-      ' فعالية تجريبية للعرض فقط. عند إطلاق التسجيل في المرحلة الأولى، ستسجّل من هنا مباشرةً ويظهر لك تأكيد التسجيل فورًا في الصفحة نفسها.',
-    dialogNothing: 'لم يُرسَل أي طلب، ولم يُحجز أي مقعد.',
   },
 
   projects: {
@@ -196,15 +195,6 @@ export const ar: Dictionary = {
     body: 'تبدأ العضوية بملف شخصي دائم واحد يجمع فعالياتك وشهاداتك ومشاريعك في مكان واحد، ويرافقك عامًا بعد عام. تسجيل الأعضاء جزء من الإصدار الأول للمنصة.',
     join: 'انضم إلى الجماعة',
     exploreEvents: 'استكشف الفعاليات',
-    dialogTitle: 'يُفتح تسجيل العضوية قريبًا',
-    dialogIntro: 'التسجيل غير متاح في هذا الموقع بعد، ولن يُرسَل أي شيء تفعله هنا.',
-    dialogWhenOpen: 'عند افتتاحه، ستتمكّن من:',
-    dialogSteps: [
-      'إنشاء ملف شخصي واحد يتضمن اسمك وبريدك الجامعي ورقمك الجامعي وسنتك الدراسية وتخصصك؛',
-      'استلام رسالة تأكيد على بريدك تتضمن بيانات الدخول إلى المنصة؛',
-      'الاحتفاظ بالملف نفسه وسجلّه في كل عام يليه.',
-    ],
-    dialogNext: 'استكشف الفعاليات',
   },
 
   footer: {
@@ -216,6 +206,7 @@ export const ar: Dictionary = {
     navLabel: 'روابط التذييل',
     copyright: (year: number, name: string, affiliation: string) => `© ${year} ${name}، ${affiliation}.`,
     previewSite: 'نسخة تجريبية من الموقع، وتصل ميزات المنصة على مراحل.',
+    groups: { society: 'الجماعة', explore: 'استكشف', community: 'المجتمع' },
   },
 
   about: {
@@ -249,4 +240,6 @@ export const ar: Dictionary = {
     noMatch: 'لا توجد نسخ تطابق هذه التصفية.',
     viewEdition: 'اعرض هذه النسخة',
   },
+
+  platform: platformAr,
 }

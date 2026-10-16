@@ -236,6 +236,15 @@
   letter-spacing: var(--tracking-heading);
 }
 
+/* Titles open the event's page; at rest they read exactly as before. */
+.titleLink {
+  transition: color var(--dur-hover) var(--ease-out);
+}
+
+.titleLink:hover {
+  color: var(--brand-primary);
+}
+
 .rowMeta,
 .rowAction {
   grid-column: 2;

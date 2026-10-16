@@ -1,0 +1,34 @@
+/* Zero specificity, so a page can place the mount absolutely without fighting load order. */
+:where(.mount) {
+  position: relative;
+  isolation: isolate;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  transition: opacity 600ms var(--ease-out);
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out);
+}
+
+.canvas canvas {
+  display: block;
+}
+
+.mount[data-state='live'] .canvas {
+  opacity: 1;
+}
+
+.mount[data-state='live'] .fallback {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 600ms var(--ease-out),
+    visibility 0s linear 600ms;
+}

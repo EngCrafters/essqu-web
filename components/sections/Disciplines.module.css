@@ -44,6 +44,15 @@
   letter-spacing: -0.014em;
 }
 
+/* The name opens the discipline's section of /disciplines; at rest it reads as before. */
+.nameLink {
+  transition: color var(--dur-hover) var(--ease-out);
+}
+
+.nameLink:hover {
+  color: var(--brand-primary);
+}
+
 .focus {
   color: var(--brand-primary);
   font-size: var(--text-label);

@@ -61,3 +61,11 @@ export function formatMonthYear(isoDate: string, intl: string) {
   }
   return f.format(new Date(`${isoDate}T12:00:00+04:00`))
 }
+
+/**
+ * The same range wrapped in a left-to-right isolate, so it never reverses inside Arabic text.
+ * (Platform pages use this; the homepage keeps eventTimeRange exactly as approved.)
+ */
+export function timeRangeIsolated(startIso: string, endIso: string, intl: string) {
+  return `\u2066${eventTimeRange(startIso, endIso, intl)}\u2069`
+}

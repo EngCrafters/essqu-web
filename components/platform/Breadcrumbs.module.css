@@ -1,0 +1,65 @@
+/* The trail on deep pages, in the place and type of the back links it replaces. */
+
+.crumbs {
+  display: flex;
+  min-width: 0;
+  margin-bottom: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* The separator: a drafting slash, the same in both directions. */
+.item + .item::before {
+  content: '/';
+  flex: none;
+  margin-inline: var(--space-2);
+  color: var(--border-strong);
+  font-weight: 500;
+}
+
+.link {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--dur-hover) var(--ease-out);
+}
+
+.link:hover {
+  color: var(--brand-primary);
+}
+
+.back {
+  width: 16px;
+  height: 16px;
+  transform: scaleX(-1);
+}
+
+:global(html[dir='rtl']) .back {
+  transform: none;
+}
+
+.current {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

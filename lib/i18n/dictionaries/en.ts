@@ -1,4 +1,5 @@
 import { pluralEn } from '../plural'
+import { platformEn } from './platform-en'
 
 /**
  * English interface copy. The Arabic dictionary has the same shape (TypeScript enforces it),
@@ -51,6 +52,8 @@ export const en = {
     home: ', home',
     language: 'Language',
     switchTo: 'Switch to English',
+    homePage: 'Home',
+    breadcrumb: 'Breadcrumb',
   },
 
   hero: {
@@ -97,10 +100,6 @@ export const en = {
     },
     previewRegistration: 'Preview registration',
     previewFor: (label: string, title: string) => `${label} for ${title}`,
-    dialogTitle: 'Registration isn’t open yet',
-    dialogSample:
-      ' is a sample listing. When event registration launches in Phase 1, you’ll register right here and see your confirmation instantly on the same page.',
-    dialogNothing: 'Nothing has been submitted, and no place has been reserved.',
   },
 
   projects: {
@@ -174,15 +173,6 @@ export const en = {
     body: 'Membership starts with one permanent profile: your events, certificates and projects in one place, carried forward every year. Member registration is part of the platform’s first release.',
     join: 'Join the Society',
     exploreEvents: 'Explore Events',
-    dialogTitle: 'Membership registration opens soon',
-    dialogIntro: 'Registration isn’t open on this site yet, and nothing you do here is submitted.',
-    dialogWhenOpen: 'When it opens, you’ll:',
-    dialogSteps: [
-      'create one profile with your name, university email, student ID, year and major;',
-      'receive a confirmation email with your platform login;',
-      'keep that same profile, and its history, every year after.',
-    ],
-    dialogNext: 'Explore events',
   },
 
   footer: {
@@ -194,6 +184,7 @@ export const en = {
     navLabel: 'Footer',
     copyright: (year: number, name: string, affiliation: string) => `© ${year} ${name}, ${affiliation}.`,
     previewSite: 'Preview site. Platform features arrive in phases.',
+    groups: { society: 'Society', explore: 'Explore', community: 'Community' },
   },
 
   about: {
@@ -219,6 +210,9 @@ export const en = {
     noMatch: 'No editions match these filters.',
     viewEdition: 'View this edition',
   },
+
+  /** Everything beyond the homepage: see platform-en.ts. */
+  platform: platformEn,
 }
 
 export type Dictionary = typeof en

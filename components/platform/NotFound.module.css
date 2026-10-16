@@ -1,0 +1,116 @@
+.page {
+  padding-top: calc(var(--nav-offset) + var(--nav-height) + var(--space-10));
+  padding-bottom: var(--section-space);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-9);
+  align-items: center;
+}
+
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: var(--space-10);
+  }
+}
+
+.code {
+  color: var(--accent-gold);
+  font-family: var(--font-display-latin);
+  font-size: var(--text-small);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin-top: var(--space-4);
+  font-size: clamp(2.25rem, 1.6rem + 2.6vw, 3.75rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.body {
+  max-width: 44ch;
+  margin-top: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-lead);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+}
+
+.sheet {
+  width: 100%;
+  height: auto;
+}
+
+.paper {
+  fill: var(--surface);
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+}
+
+.gridLine {
+  fill: none;
+  stroke: var(--grid-line);
+}
+
+.border {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 1;
+}
+
+.axis {
+  stroke: var(--brand-primary);
+  stroke-width: 1;
+  stroke-dasharray: 6 4 2 4;
+}
+
+.missing {
+  fill: none;
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.cross {
+  stroke: var(--logo-red);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.label {
+  fill: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.value {
+  fill: var(--text-primary);
+  font-family: var(--font-display-latin);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Loading skeleton, sized like the real pages. */
+.skeleton {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.skeletonCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}

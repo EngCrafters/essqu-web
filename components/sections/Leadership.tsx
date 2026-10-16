@@ -4,6 +4,7 @@ import { IconArrowRight } from '@/components/ui/icons'
 import { getI18n } from '@/lib/i18n/server'
 import { LeadershipTree } from './LeadershipTree'
 import styles from './Leadership.module.css'
+import { routes } from '@/lib/routes'
 
 export async function Leadership() {
   const { t, l } = await getI18n()
@@ -37,7 +38,7 @@ export async function Leadership() {
         <LeadershipTree />
 
         <div className={styles.cta} data-reveal="rise">
-          <Link href="/about#structure" className="btn btn--secondary">
+          <Link href={routes.leadership} className="btn btn--secondary">
             {t.leadership.viewStructure}
             <IconArrowRight className="btn__arrow" />
           </Link>
