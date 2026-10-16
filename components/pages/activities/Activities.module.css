@@ -498,6 +498,18 @@
   color: var(--text-primary);
 }
 
+.lightboxNote {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+}
+
+/* Records with no date: the heading in words, smaller than the year numerals. */
+.yearMark[data-undated] {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3.5rem);
+  letter-spacing: -0.02em;
+}
+
 @media (max-width: 29.99rem) {
   .lightboxFacts {
     grid-template-columns: 1fr;

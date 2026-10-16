@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes } from 'react'
-import { COMMUNITY_PAGES, PRIMARY_PAGES } from '@/content/site'
+import { COMMUNITY_PAGES, PRIMARY_PAGES, upcomingAt } from '@/content/site'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { LanguageSwitch } from '@/components/i18n/LanguageSwitch'
 import { IconArrowRight } from '@/components/ui/icons'
@@ -300,7 +300,10 @@ function PrimaryLinks({ pathname }: { pathname: string }) {
                   data-drop-item=""
                   aria-current={isWithin(pathname, page.href) ? 'page' : undefined}
                 >
-                  <span className={styles.dropTitle}>{t.platform.nav[page.id]}</span>
+                  <span className={styles.dropTitle}>
+                    {t.platform.nav[page.id]}
+                    <Soon href={page.href} />
+                  </span>
                   <span className={styles.dropNote}>{t.platform.nav[`${page.id}Note`]}</span>
                 </Link>
               </li>
@@ -346,7 +349,10 @@ function PanelLinks({
               aria-current={isWithin(pathname, page.href) ? 'page' : undefined}
               onClick={onNavigate}
             >
-              {t.nav.links[page.id]}
+              <span>
+                {t.nav.links[page.id]}
+                <Soon href={page.href} />
+              </span>
               <IconArrowRight className={styles.panelArrow} />
             </Link>
           </li>
@@ -362,7 +368,10 @@ function PanelLinks({
               aria-current={isWithin(pathname, page.href) ? 'page' : undefined}
               onClick={onNavigate}
             >
-              {t.platform.nav[page.id]}
+              <span>
+                {t.platform.nav[page.id]}
+                <Soon href={page.href} />
+              </span>
               <IconArrowRight className={styles.panelArrow} />
             </Link>
           </li>
@@ -370,4 +379,11 @@ function PanelLinks({
       </ul>
     </nav>
   )
+}
+
+/** Marks a module that is not open yet, where the menus list it. */
+function Soon({ href }: { href: string }) {
+  const { t } = useI18n()
+  if (!upcomingAt(href)) return null
+  return <span className={styles.soon}>{t.platform.comingSoon.tag}</span>
 }

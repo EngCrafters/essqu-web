@@ -2,10 +2,10 @@
 
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
-import type { GalleryEvent } from '@/content/activities'
+import type { GallerySlide } from '@/content/activities'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { IconCalendar, IconPause, IconPlay, IconTeam } from '@/components/ui/icons'
-import { formatCount, formatMonthYear } from '@/lib/format'
+import { formatCount, formatPartialDate } from '@/lib/format'
 import { REDUCED_MOTION_QUERY } from '@/lib/motion'
 import styles from './Slideshow.module.css'
 
@@ -47,7 +47,7 @@ export function Slideshow({
   id: string
   /** The activity's name, for the carousel's accessible label. */
   label: string
-  events: GalleryEvent[]
+  events: GallerySlide[]
   /** CSS aspect-ratio of the frame, e.g. '3 / 2'. */
   ratio: string
   sizes: string
@@ -164,7 +164,7 @@ export function Slideshow({
         <div className={styles.slides} aria-live={paused ? 'polite' : 'off'}>
           {events.map((event, i) => {
             const active = i === index
-            const shown = formatCount(event.attendance.count, intl)
+            const shown = event.attendance ? formatCount(event.attendance.count, intl) : ''
             return (
               <figure
                 key={event.id}
@@ -192,21 +192,26 @@ export function Slideshow({
                 </div>
                 <figcaption className={styles.caption}>
                   <h4 className={styles.title}>{l(event.title)}</h4>
-                  <div className={styles.meta}>
-                    <span className={styles.metaItem}>
-                      <IconCalendar className={styles.metaIcon} />
-                      <span className="visually-hidden">{t.activities.date}: </span>
-                      <time dateTime={event.date}>{formatMonthYear(event.date, intl)}</time>
-                    </span>
-                    <span className={styles.metaItem}>
-                      <IconTeam className={styles.metaIcon} />
-                      <span className="visually-hidden">{t.activities.attendance}: </span>
-                      {event.attendance.kind === 'visitors'
-                        ? t.activities.visitors(event.attendance.count, shown)
-                        : t.activities.attendees(event.attendance.count, shown)}
-                    </span>
-                    {event.demo && <span className={styles.demo}>{t.activities.demo}</span>}
-                  </div>
+                  {(event.date || event.attendance) && (
+                    <div className={styles.meta}>
+                      {event.date && (
+                        <span className={styles.metaItem}>
+                          <IconCalendar className={styles.metaIcon} />
+                          <span className="visually-hidden">{t.activities.date}: </span>
+                          <time dateTime={event.date}>{formatPartialDate(event.date, intl)}</time>
+                        </span>
+                      )}
+                      {event.attendance && (
+                        <span className={styles.metaItem}>
+                          <IconTeam className={styles.metaIcon} />
+                          <span className="visually-hidden">{t.activities.attendance}: </span>
+                          {event.attendance.kind === 'visitors'
+                            ? t.activities.visitors(event.attendance.count, shown)
+                            : t.activities.attendees(event.attendance.count, shown)}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </figcaption>
               </figure>
             )

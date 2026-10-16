@@ -560,3 +560,18 @@
     transition: none;
   }
 }
+
+/* A module that is not open yet, in the menus (its page says Coming soon). */
+.soon {
+  display: inline-block;
+  margin-inline-start: var(--space-2);
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 55%, transparent);
+  border-radius: var(--radius-chip);
+  color: #6f560a;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.5;
+  vertical-align: middle;
+}

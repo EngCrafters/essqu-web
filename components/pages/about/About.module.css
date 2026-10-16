@@ -255,6 +255,66 @@
   font-size: var(--text-lead);
 }
 
+/* The community, photographed: a wide frame between the overview and its four points. */
+.community {
+  display: grid;
+  gap: var(--space-3);
+  margin: clamp(var(--space-8), 5vw, var(--space-10)) 0 0;
+}
+
+.communityFrame {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  box-shadow: 0 30px 60px -40px rgb(19 35 60 / 0.45);
+}
+
+/* A hairline frame and a faint ink wash at the foot, so the photograph sits on the paper. */
+.communityFrame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, transparent 62%, rgb(19 35 60 / 0.16));
+  box-shadow: inset 0 0 0 1px rgb(19 35 60 / 0.08);
+  pointer-events: none;
+}
+
+.communityPhoto {
+  object-fit: cover;
+}
+
+.communityCaption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.communityMark {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-gold);
+}
+
+@media (min-width: 48rem) {
+  .communityFrame {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (min-width: 64rem) {
+  .communityFrame {
+    aspect-ratio: 21 / 9;
+  }
+}
+
 .spec {
   display: grid;
   gap: var(--space-6);

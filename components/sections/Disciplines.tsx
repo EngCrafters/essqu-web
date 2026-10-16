@@ -10,7 +10,7 @@ import styles from './Disciplines.module.css'
 export async function Disciplines() {
   const { t, l } = await getI18n()
   // An action appears only where it leads somewhere real: a discipline with archive entries.
-  const withProjects = new Set(PROJECTS.map((p) => p.discipline))
+  const withProjects = new Set(PROJECTS.flatMap((p) => (p.discipline ? [p.discipline] : [])))
 
   return (
     <section id="disciplines" className={`section ${styles.section}`} aria-labelledby="disciplines-title">

@@ -1,0 +1,428 @@
+/* A module that is not open yet: the module's name and a plain "coming soon" beside its
+   drawing sheet, still on the board. The page's own language: drafting paper, ink blue, gold. */
+
+.page {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-height: min(100vh, 56rem);
+  min-height: min(100svh, 56rem);
+  padding-top: calc(var(--nav-offset) + var(--nav-height) + clamp(var(--space-8), 6vw, var(--space-10)));
+  padding-bottom: var(--section-space);
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(55% 60% at 78% 45%, rgb(35 75 196 / 0.07), transparent 70%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--background);
+}
+
+:global(html[dir='rtl']) .page {
+  background:
+    radial-gradient(55% 60% at 22% 45%, rgb(35 75 196 / 0.07), transparent 70%),
+    linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0 / 32px 32px,
+    var(--background);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+}
+
+@media (min-width: 64rem) {
+  .grid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    column-gap: clamp(var(--space-8), 5vw, var(--space-11));
+  }
+}
+
+.copy {
+  display: grid;
+  justify-items: start;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.eyebrowMark {
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-gold);
+}
+
+.title {
+  max-width: 14ch;
+  font-size: clamp(2.75rem, 1.7rem + 4.2vw, 5rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+}
+
+/* The full stop in gold, as in the society's other display titles. */
+.title::after {
+  content: '.';
+  color: var(--accent-gold);
+}
+
+.page[data-module='register'] .title::after {
+  content: none;
+}
+
+.lead {
+  max-width: 44ch;
+  margin-top: var(--space-5);
+  color: var(--text-primary);
+  font-size: var(--text-lead);
+}
+
+.note {
+  max-width: 46ch;
+  margin-top: var(--space-3);
+  color: var(--text-secondary);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  padding: 6px var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 50%, transparent);
+  border-radius: var(--radius-chip);
+  background: color-mix(in srgb, var(--accent-gold) 9%, var(--surface));
+  color: #6f560a;
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 0 0 var(--gold-halo);
+  animation: halo 2.4s var(--ease-out) infinite;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.visual {
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- the drawing sheet */
+
+.sheet {
+  position: relative;
+  width: min(100%, 36rem);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: 0 30px 60px -36px rgb(19 35 60 / 0.45);
+}
+
+.drawing {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gridLine {
+  fill: none;
+  stroke: var(--grid-line);
+  stroke-width: 1;
+}
+
+.frame {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+}
+
+.marks {
+  fill: none;
+  stroke: var(--accent-gold);
+  stroke-width: 1.5;
+}
+
+.ink,
+.thin,
+.accent,
+.link,
+.construction,
+.ring,
+.centre,
+.dimension {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ink {
+  stroke: var(--brand-primary);
+  stroke-width: 2;
+}
+
+.thin {
+  stroke: color-mix(in srgb, var(--brand-primary) 45%, transparent);
+  stroke-width: 1.2;
+}
+
+.soft {
+  fill: color-mix(in srgb, var(--brand-primary) 30%, transparent);
+}
+
+.inkFill {
+  fill: var(--brand-primary);
+}
+
+.paperFill {
+  fill: var(--surface);
+}
+
+.accent {
+  stroke: var(--accent-gold);
+  stroke-width: 2;
+}
+
+.accentFill {
+  fill: var(--accent-gold);
+}
+
+.link {
+  stroke: color-mix(in srgb, var(--brand-primary) 40%, transparent);
+  stroke-width: 1.5;
+}
+
+.construction {
+  stroke: var(--accent-gold);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 5;
+}
+
+.ring {
+  stroke: var(--accent-gold);
+  stroke-width: 1.5;
+}
+
+/* Centre lines: long dash, dot. */
+.centre {
+  stroke: var(--text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 14 4 2 4;
+  opacity: 0.6;
+}
+
+/* Dimension lines tick along, like a plotter at work. */
+.dimension {
+  stroke: var(--accent-gold);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  animation: march 1.8s linear infinite;
+}
+
+.spin {
+  animation: spin 40s linear infinite;
+}
+
+.slow {
+  animation-duration: 48s;
+}
+
+/* The small gear turns the other way, faster by the tooth ratio (14 : 8). */
+.reverse {
+  animation: spin 27.4s linear infinite reverse;
+}
+
+/* Nodes and points light one after another. */
+.node {
+  animation: light 6s var(--ease-out) infinite;
+  animation-delay: calc(var(--n) * 0.6s);
+}
+
+.pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ring 2.8s var(--ease-out) infinite;
+}
+
+/* A gold hairline crosses the sheet slowly: the drawing is still being worked on. */
+.scan {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 1.5px;
+  background: linear-gradient(transparent, var(--accent-gold), transparent);
+  opacity: 0.55;
+  animation: scan 9s ease-in-out infinite alternate;
+}
+
+/* The title block, in the sheet's lower corner. */
+.titleBlock {
+  position: absolute;
+  inset-inline-end: 3%;
+  bottom: 4%;
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  margin: 0;
+  border: 1.5px solid var(--text-primary);
+  background: var(--surface);
+}
+
+.titleBlock div {
+  display: grid;
+  gap: 1px;
+  padding: 5px 9px;
+}
+
+.titleBlock div + div {
+  border-inline-start: 1px solid var(--text-primary);
+}
+
+.titleBlock dt {
+  color: var(--text-secondary);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.titleBlock dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.blockStatus {
+  color: #6f560a !important;
+}
+
+@media (max-width: 29.99rem) {
+  .titleBlock div {
+    padding: 4px 6px;
+  }
+
+  .titleBlock dd {
+    font-size: 0.6875rem;
+  }
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes march {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+@keyframes light {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  12% {
+    opacity: 0.35;
+  }
+  24% {
+    opacity: 1;
+  }
+}
+
+@keyframes ring {
+  0% {
+    opacity: 0.9;
+    scale: 0.6;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+
+@keyframes scan {
+  from {
+    left: 0;
+  }
+  to {
+    left: calc(100% - 2px);
+  }
+}
+
+@keyframes halo {
+  0% {
+    box-shadow: 0 0 0 0 var(--gold-halo);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .reverse,
+  .dimension,
+  .node,
+  .pulse,
+  .statusDot {
+    animation: none;
+  }
+
+  .scan {
+    display: none;
+  }
+}
+
+/* Phones and tablets, on /register: the card is the centrepiece, so it follows the
+   introduction directly and the status and actions come after it. */
+@media (max-width: 63.99rem) {
+  .page[data-module='register'] .grid {
+    gap: 0;
+  }
+
+  .page[data-module='register'] .copy {
+    display: contents;
+  }
+
+  .page[data-module='register'] .copy > * {
+    justify-self: start;
+  }
+
+  .page[data-module='register'] .visual {
+    order: 1;
+    margin-top: var(--space-6);
+  }
+
+  .page[data-module='register'] .status,
+  .page[data-module='register'] .actions {
+    order: 2;
+  }
+}

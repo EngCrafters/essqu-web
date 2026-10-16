@@ -10,7 +10,8 @@ import { trussGeometry } from '@/components/pages/leadership/truss'
 import { CtaBand } from '@/components/platform/Platform'
 import { IconArrowRight } from '@/components/ui/icons'
 import { Portrait } from '@/components/ui/Portrait'
-import { ACTIVITIES } from '@/content/activities'
+import { ACTIVITIES, leadPhoto } from '@/content/activities'
+import { SOCIETY_PHOTOS } from '@/content/media'
 import { OVERVIEW } from '@/content/overview'
 import { SOCIETY_FACTS } from '@/content/stats'
 import { COMMITTEES, LEADERSHIP } from '@/content/structure'
@@ -71,6 +72,23 @@ export default async function AboutPage() {
               {l(OVERVIEW.paragraphs[1]!)}
             </p>
           </div>
+          {/* The community the overview describes, in one of the society's own photographs. */}
+          <figure className={styles.community} data-reveal="rise">
+            <span className={styles.communityFrame}>
+              <Image
+                src={SOCIETY_PHOTOS.sablah2025.src}
+                alt={l(SOCIETY_PHOTOS.sablah2025.alt)}
+                fill
+                sizes="(min-width: 75rem) 1200px, calc(100vw - 2rem)"
+                className={styles.communityPhoto}
+                style={{ objectPosition: SOCIETY_PHOTOS.sablah2025.focus }}
+              />
+            </span>
+            <figcaption className={styles.communityCaption}>
+              <span className={styles.communityMark} aria-hidden="true" />
+              {l(SOCIETY_PHOTOS.sablah2025.caption)}
+            </figcaption>
+          </figure>
           <ol className={styles.spec} data-reveal="points">
             {OVERVIEW.points.map((p) => (
               <li key={p.id} className={styles.specItem}>
@@ -103,7 +121,7 @@ export default async function AboutPage() {
           </div>
           <ol className={styles.board} data-reveal="rows">
             {ACTIVITIES.map((a, i) => {
-              const photo = a.events[0]?.image
+              const photo = leadPhoto(a)
               const main = locale === 'ar' ? a.nameAr : a.nameEn
               const other = locale === 'ar' ? a.nameEn : a.nameAr
               return (

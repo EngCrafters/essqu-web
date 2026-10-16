@@ -1,7 +1,6 @@
 import { ACTIVITIES, type ActivityId } from '@/content/activities'
 import type { DisciplineId } from '@/content/disciplines'
 import type { MediaImage } from '@/content/media'
-import { ARCHIVE_DETAILS, ARCHIVE_PHOTOS } from '@/content/platform/archive'
 import { CERTIFICATES, type Certificate } from '@/content/platform/certificates'
 import { EVENT_CATALOGUE, type PlatformEvent } from '@/content/platform/events'
 import { GRADUATES, type Graduate } from '@/content/platform/graduates'
@@ -265,37 +264,31 @@ export interface ArchiveEntry {
   id: string
   activity: ActivityId
   title: Localized
-  date: string
-  year: number
-  attendance: { count: number; kind: 'attendees' | 'visitors' }
+  /** 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD'; absent when the record is undated. */
+  date?: string
+  year?: number
+  attendance?: { count: number; kind: 'attendees' | 'visitors' }
   image: MediaImage
   gallery: MediaImage[]
   disciplines: DisciplineId[]
-  summary: Localized
-  demo: boolean
+  summary?: Localized
 }
 
+/** One record per documented edition of an activity, newest first; undated records last. */
 export async function getArchive(): Promise<ArchiveEntry[]> {
   return ACTIVITIES.flatMap((activity) =>
-    activity.events.map((e) => {
-      const detail = ARCHIVE_DETAILS[e.id]
-      return {
-        id: e.id,
-        activity: activity.id,
-        title: e.title,
-        date: e.date,
-        year: Number(e.date.slice(0, 4)),
-        attendance: e.attendance,
-        image: e.image,
-        gallery: [e.image, ...(detail?.gallery ?? []).map((k) => ({ ...ARCHIVE_PHOTOS[k], alt: e.image.alt }))].filter(
-          (img, i, all) => all.findIndex((x) => x.src === img.src) === i,
-        ),
-        disciplines: detail?.disciplines ?? [],
-        summary: detail?.summary ?? e.title,
-        demo: Boolean(e.demo),
-      }
-    }),
-  ).sort((a, b) => b.date.localeCompare(a.date))
+    activity.editions.map((e) => ({
+      id: e.id,
+      activity: activity.id,
+      title: e.title,
+      date: e.date,
+      year: e.date ? Number(e.date.slice(0, 4)) : undefined,
+      attendance: e.attendance,
+      image: e.photos[0]!,
+      gallery: e.photos,
+      disciplines: [],
+    })),
+  ).sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
 }
 
 // ---------------------------------------------------------------- the yearly record

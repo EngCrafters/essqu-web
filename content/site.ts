@@ -57,6 +57,19 @@ export const FOOTER_GROUPS = [
   },
 ] as const
 
+/**
+ * Platform modules that are not open yet. Their pages show a Coming Soon state instead of the
+ * full implementation, which stays in place: remove an id here to bring its page back.
+ */
+export const COMING_SOON: readonly UpcomingModule[] = ['projects', 'members', 'network', 'certificates', 'register']
+
+export type UpcomingModule = 'projects' | 'members' | 'network' | 'certificates' | 'register'
+
+export const isComingSoon = (module: UpcomingModule) => COMING_SOON.includes(module)
+
+/** The module behind a navigation address, if that address is one of the upcoming modules. */
+export const upcomingAt = (href: string) => COMING_SOON.find((m) => href === `/${m}`)
+
 export const SITE = {
   /** No sign-in destination exists yet, so the navbar omits sign-in. */
   signInUrl: null as string | null,

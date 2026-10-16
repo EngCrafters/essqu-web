@@ -63,6 +63,15 @@ export function formatMonthYear(isoDate: string, intl: string) {
 }
 
 /**
+ * A date only as precise as the record: '2026' → '2026'; '2025-02' → 'February 2025';
+ * a full date → its month and year.
+ */
+export function formatPartialDate(date: string, intl: string) {
+  if (/^\d{4}$/.test(date)) return date
+  return formatMonthYear(date.length === 7 ? `${date}-01` : date, intl)
+}
+
+/**
  * The same range wrapped in a left-to-right isolate, so it never reverses inside Arabic text.
  * (Platform pages use this; the homepage keeps eventTimeRange exactly as approved.)
  */

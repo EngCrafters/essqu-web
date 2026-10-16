@@ -5,14 +5,19 @@ import styles from '@/components/pages/certificates/Certificates.module.css'
 import { SampleNotice } from '@/components/platform/Platform'
 import { CERTIFICATES } from '@/content/platform/certificates'
 import { getCertificate, getCertificates, getCurrentMember } from '@/lib/data'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n()
+  if (isComingSoon('certificates')) return { title: t.platform.comingSoon.metaTitle(t.platform.comingSoon.modules.certificates.name), description: t.platform.comingSoon.modules.certificates.note }
   return { title: t.platform.certificatesPage.metaTitle, description: t.platform.certificatesPage.metaDescription, robots: { index: false } }
 }
 
 export default async function CertificatesPage({ searchParams }: { searchParams: Promise<{ state?: string; verify?: string }> }) {
+  // Not open yet: the Coming Soon page stands in, and the full page below stays ready.
+  if (isComingSoon('certificates')) return <ComingSoon module="certificates" />
   const { t, l } = await getI18n()
   const c = t.platform.certificatesPage
   const [{ state, verify }, me, mine] = await Promise.all([searchParams, getCurrentMember(), getCertificates()])

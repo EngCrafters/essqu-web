@@ -37,7 +37,7 @@ export const ar: Dictionary = {
       events: 'الفعاليات',
       projects: 'المشاريع',
       disciplines: 'التخصصات',
-      activities: 'الأنشطة',
+      activities: 'الأرشيف',
       about: 'من نحن',
     },
     join: 'انضم إلى الجماعة',
@@ -100,22 +100,22 @@ export const ar: Dictionary = {
   projects: {
     title: 'من صنع مجتمعنا.',
     lead: 'مشاريع ومنشورات محفوظة مع تخصصها وسنتها وفريقها، ليبني كل جيل على ما أنجزه من سبقه بدل أن يبدأ من الصفر.',
-    sampleStrong: 'أمثلة تجريبية.',
-    sampleBody: 'يُفتتح الأرشيف في المرحلة الثالثة، وتوضّح هذه الأمثلة كيف ستُحفظ الأعمال المنجزة.',
+    noteStrong: 'أعمال فائزة.',
+    noteBody: 'مشاريع نالت التقدير في معارض الجماعة وخارجها. صفحات المشاريع الكاملة قريبًا.',
     filterLabel: 'تصفية المشاريع حسب التخصص',
     all: 'الكل',
-    showingAll: (n: number) => `عرض جميع المشاريع التجريبية (${n})`,
+    showingAll: (n: number) => `عرض جميع المشاريع (${n})`,
     showingIn: (n: number, discipline: string) =>
       `عرض ${pluralAr(n, {
-        one: () => 'مشروع تجريبي واحد',
-        two: () => 'مشروعين تجريبيين',
-        few: (c) => `${c} مشاريع تجريبية`,
-        many: (c) => `${c} مشروعًا تجريبيًا`,
-        other: (c) => `${c} مشروع تجريبي`,
+        one: () => 'مشروع واحد',
+        two: () => 'مشروعين',
+        few: (c) => `${c} مشاريع`,
+        many: (c) => `${c} مشروعًا`,
+        other: (c) => `${c} مشروع`,
       })} في ${discipline}`,
-    alsoInArchive: 'أيضًا في الأرشيف',
-    onlyOne: 'هذا هو المشروع التجريبي الوحيد في هذا التخصص.',
-    archiveOpens: 'يُتاح السجل الكامل في الأرشيف مع المرحلة الثالثة',
+    alsoInArchive: 'مشاريع أخرى',
+    onlyOne: 'هذا هو المشروع الوحيد في هذا التخصص حتى الآن.',
+    archiveOpens: 'صفحة المشروع الكاملة قريبًا',
     discipline: 'التخصص',
     year: 'السنة',
     team: 'الفريق',
@@ -131,8 +131,8 @@ export const ar: Dictionary = {
 
   disciplines: {
     title: 'تخصصات مختلفة، وطموح مشترك.',
-    sampleProjects: 'مشاريع تجريبية',
-    sampleProjectsIn: (name: string) => `مشاريع تجريبية في تخصص ${name}`,
+    sampleProjects: 'المشاريع',
+    sampleProjectsIn: (name: string) => `المشاريع في تخصص ${name}`,
   },
 
   activities: {
@@ -144,9 +144,6 @@ export const ar: Dictionary = {
     photosBody: 'ستظهر مع كل برنامج بعد أن توفّرها الجماعة وتؤكدها.',
     explorePrevious: 'استكشف الأنشطة السابقة',
     previousEditions: 'النسخ السابقة',
-    demoStrong: 'فعاليات توضيحية.',
-    demoBody: 'العناوين والتواريخ وأعداد الحضور أمثلة توضّح طريقة عرض الفعاليات السابقة، أما الصور فمن أرشيف الجماعة.',
-    demo: 'توضيحي',
     date: 'التاريخ',
     attendance: 'الحضور',
     attendees: (n: number, shown: string) =>

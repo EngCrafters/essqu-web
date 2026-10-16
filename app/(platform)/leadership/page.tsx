@@ -33,7 +33,15 @@ export default async function LeadershipPage() {
         <p className={`preview-note ${styles.rosterNote}`}>
           <span className="status-dot" aria-hidden="true" />
           <span>
-            <strong>{c.rosterStrong}</strong> {c.rosterBody}
+            {senior.some((p) => p.holder) ? (
+              <>
+                <strong>{c.rosterPartialStrong}</strong> {c.rosterPartialBody}
+              </>
+            ) : (
+              <>
+                <strong>{c.rosterStrong}</strong> {c.rosterBody}
+              </>
+            )}
           </span>
         </p>
         {LEADERSHIP.term && <p className="chip">{l(LEADERSHIP.term)}</p>}

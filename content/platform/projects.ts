@@ -1,6 +1,5 @@
 import type { DrawingId } from '@/components/ui/drawings'
 import type { DisciplineId } from '@/content/disciplines'
-import { PROJECTS } from '@/content/projects'
 import type { Localized } from '@/lib/i18n'
 import type { ProjectTypeId, TechnologyId } from './taxonomy'
 
@@ -110,10 +109,63 @@ export interface Project {
   featured?: boolean
 }
 
+/**
+ * The five sample projects' shared fields. They began as the homepage's sample cards; the
+ * homepage now shows the society's real projects (content/projects.ts), and these stay here
+ * for the sample project pages.
+ */
+const SAMPLE_BASE: Record<string, { title: Localized; discipline: DisciplineId; summary: Localized; drawing: DrawingId }> = {
+  'line-following-rover': {
+    title: { en: 'Autonomous line-following rover', ar: 'مركبة ذاتية لتتبّع الخطوط' },
+    discipline: 'mechatronics',
+    summary: {
+      en: 'A competition rover that combines infrared sensing with PID steering, documented with wiring diagrams, code and test logs so next year’s team starts from a working baseline.',
+      ar: 'مركبة مسابقات تجمع بين الاستشعار بالأشعة تحت الحمراء والتوجيه بمتحكّم PID، وموثّقة بمخططات التوصيل والشيفرة وسجلات الاختبار ليبدأ فريق العام القادم من أساس يعمل.',
+    },
+    drawing: 'rover',
+  },
+  'water-quality-node': {
+    title: { en: 'Low-cost water-quality sensor node', ar: 'وحدة استشعار منخفضة التكلفة لجودة المياه' },
+    discipline: 'electrical',
+    summary: {
+      en: 'A solar-powered board that logs turbidity and temperature and reports readings over a low-power radio link.',
+      ar: 'لوحة تعمل بالطاقة الشمسية تسجّل العكارة ودرجة الحرارة، وترسل القراءات عبر وصلة لاسلكية منخفضة الاستهلاك.',
+    },
+    drawing: 'sensor-node',
+  },
+  'seismic-truss-model': {
+    title: { en: 'Seismic-resistant truss model', ar: 'نموذج جملون مقاوم للزلازل' },
+    discipline: 'civil',
+    summary: {
+      en: 'A scale truss tested on a shake table, comparing bracing layouts for stiffness against weight.',
+      ar: 'جملون مصغّر اختُبر على طاولة اهتزاز لمقارنة أنماط التدعيم من حيث الصلابة مقابل الوزن.',
+    },
+    drawing: 'truss',
+  },
+  'shelter-cooling-study': {
+    title: { en: 'Passive cooling study for campus shelters', ar: 'دراسة التبريد السلبي لمظلات الحرم الجامعي' },
+    discipline: 'mechanical',
+    summary: {
+      en: 'Measured shade, airflow and surface temperatures to propose a lower-energy shelter design.',
+      ar: 'قياس الظل وحركة الهواء ودرجات حرارة الأسطح لاقتراح تصميم مظلة أقل استهلاكًا للطاقة.',
+    },
+    drawing: 'shelter',
+  },
+  'produced-water-bench': {
+    title: { en: 'Produced-water treatment bench model', ar: 'نموذج مخبري لمعالجة المياه المصاحبة' },
+    discipline: 'chemical',
+    summary: {
+      en: 'A bench-scale separation process that estimates how much oilfield water could be treated for reuse.',
+      ar: 'عملية فصل على نطاق مخبري تقدّر كمية مياه الحقول النفطية التي يمكن معالجتها لإعادة استخدامها.',
+    },
+    drawing: 'water-bench',
+  },
+}
+
 const home = (id: string) => {
-  const p = PROJECTS.find((x) => x.id === id)
-  if (!p) throw new Error(`Missing homepage project ${id}`)
-  return { slug: p.id, title: p.title, discipline: p.discipline, summary: p.summary, drawing: p.drawing }
+  const p = SAMPLE_BASE[id]
+  if (!p) throw new Error(`Missing sample project ${id}`)
+  return { slug: id, ...p }
 }
 
 const part = (en: string, ar: string, qty = 1): ProjectPart => ({ name: { en, ar }, qty })

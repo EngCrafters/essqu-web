@@ -20,7 +20,7 @@ import type { ActivityId } from '@/content/activities'
 import { DISCIPLINES, DISCIPLINE_BY_ID, type DisciplineId } from '@/content/disciplines'
 import { DISCIPLINE_COLOR } from '@/content/platform/taxonomy'
 import type { ArchiveEntry } from '@/lib/data'
-import { formatCount, formatMonthYear } from '@/lib/format'
+import { formatCount, formatPartialDate } from '@/lib/format'
 import styles from './Activities.module.css'
 
 const KEYS = ['q', 'category', 'year', 'discipline'] as const
@@ -47,14 +47,21 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
 
   const data = view === 'empty' ? [] : entries
   const passes = (e: ArchiveEntry, skip?: (typeof KEYS)[number]) =>
-    (skip === 'q' || matchesQuery(values.q, l(e.title), l(e.summary), actName(e.activity))) &&
+    (skip === 'q' || matchesQuery(values.q, l(e.title), e.summary ? l(e.summary) : '', actName(e.activity))) &&
     (skip === 'category' || lists.category.length === 0 || lists.category.includes(e.activity)) &&
     (skip === 'year' || lists.year.length === 0 || lists.year.includes(String(e.year))) &&
     (skip === 'discipline' || !values.discipline || e.disciplines.includes(values.discipline as DisciplineId))
 
   const shown = data.filter((e) => passes(e))
-  const years = [...new Set(data.map((e) => e.year))].sort((a, b) => b - a)
-  const byYear = years.map((y) => ({ year: y, items: shown.filter((e) => e.year === y) })).filter((g) => g.items.length)
+  const years = [...new Set(data.flatMap((e) => (e.year ? [e.year] : [])))].sort((a, b) => b - a)
+  // Records whose source gives no date are filed last, under their own heading.
+  const byYear = [
+    ...years.map((y) => ({ year: y as number | null, items: shown.filter((e) => e.year === y) })),
+    { year: null, items: shown.filter((e) => !e.year) },
+  ].filter((g) => g.items.length)
+  const dated = (e: ArchiveEntry) => (e.date ? formatPartialDate(e.date, intl) : c.undated)
+  // The discipline filter appears once records carry disciplines.
+  const byDiscipline = data.some((e) => e.disciplines.length > 0)
 
   const categoryOptions = activities.map((a) => ({
     value: a.id,
@@ -87,7 +94,9 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
         layout={layout}
       />
       <ChipGroup label={f.year} options={yearOptions} selected={lists.year} onToggle={(v) => toggle('year', v)} allLabel={f.all} onAll={() => set({ year: null })} layout={layout} />
-      <SelectField label={f.discipline} value={values.discipline} onChange={(v) => set({ discipline: v || null })} options={disciplineOptions} />
+      {byDiscipline && (
+        <SelectField label={f.discipline} value={values.discipline} onChange={(v) => set({ discipline: v || null })} options={disciplineOptions} />
+      )}
     </>
   )
 
@@ -139,10 +148,10 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
           />
         ) : (
           byYear.map((g) => (
-            <div key={g.year} className={styles.year}>
-              <h2 className={styles.yearMark} data-reveal="heading">
-                <span aria-hidden="true">{g.year}</span>
-                <span className="visually-hidden">{g.year}</span>
+            <div key={g.year ?? 'undated'} className={styles.year}>
+              <h2 className={styles.yearMark} data-reveal="heading" data-undated={g.year === null || undefined}>
+                <span aria-hidden="true">{g.year ?? c.undated}</span>
+                <span className="visually-hidden">{g.year ?? c.undated}</span>
               </h2>
               <ul className={styles.prints}>
                 {g.items.map((e, i) => (
@@ -161,7 +170,7 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
                       </span>
                       <span className={styles.printCaption}>
                         <span className={styles.printMeta}>
-                          <span>{formatMonthYear(e.date, intl)}</span>
+                          <span>{dated(e)}</span>
                           <span aria-hidden="true">·</span>
                           <span>{actName(e.activity)}</span>
                         </span>
@@ -172,11 +181,13 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
                               <span key={d} style={{ '--key': DISCIPLINE_COLOR[d] } as CSSProperties} />
                             ))}
                           </span>
-                          <span>
-                            {e.attendance.kind === 'visitors'
-                              ? c.visitors(formatCount(e.attendance.count, intl))
-                              : c.attendees(formatCount(e.attendance.count, intl))}
-                          </span>
+                          {e.attendance && (
+                            <span>
+                              {e.attendance.kind === 'visitors'
+                                ? c.visitors(formatCount(e.attendance.count, intl))
+                                : c.attendees(formatCount(e.attendance.count, intl))}
+                            </span>
+                          )}
                         </span>
                       </span>
                     </button>
@@ -193,7 +204,6 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
         onClose={() => setOpenId(null)}
         title={current ? l(current.title) : ''}
         size="lg"
-        eyebrow={current ? <span className="chip chip--sample">{t.platform.sample.tag}</span> : undefined}
       >
         {current && (
           <div className={styles.lightbox}>
@@ -244,26 +254,25 @@ export function ArchiveExplorer({ entries, activities, state }: { entries: Archi
             <dl className={styles.lightboxFacts}>
               <div>
                 <dt>{f.date}</dt>
-                <dd>{formatMonthYear(current.date, intl)}</dd>
+                <dd>{dated(current)}</dd>
               </div>
               <div>
                 <dt>{c.inActivity}</dt>
                 <dd>{actName(current.activity)}</dd>
               </div>
-              <div>
-                <dt>{f.discipline}</dt>
-                <dd className={styles.lightboxKeys}>
-                  {current.disciplines.length === DISCIPLINES.length
-                    ? t.platform.common.allDisciplines
-                    : current.disciplines.map((d) => l(DISCIPLINE_BY_ID[d].shortName)).join(' · ')}
-                </dd>
-              </div>
+              {current.disciplines.length > 0 && (
+                <div>
+                  <dt>{f.discipline}</dt>
+                  <dd className={styles.lightboxKeys}>
+                    {current.disciplines.length === DISCIPLINES.length
+                      ? t.platform.common.allDisciplines
+                      : current.disciplines.map((d) => l(DISCIPLINE_BY_ID[d].shortName)).join(' · ')}
+                  </dd>
+                </div>
+              )}
             </dl>
-            <p className={styles.lightboxSummary}>{l(current.summary)}</p>
-            <p className="preview-note">
-              <span className="status-dot" aria-hidden="true" />
-              <span>{c.demoRecord}</span>
-            </p>
+            {current.summary && <p className={styles.lightboxSummary}>{l(current.summary)}</p>}
+            {!current.date && <p className={styles.lightboxNote}>{c.undatedNote}</p>}
           </div>
         )}
       </Modal>

@@ -5,11 +5,11 @@ const arCount = (n: number, one: string, two: string, few: string, many: string)
 
 /** /activities — the archive cabinet. */
 export const activitiesEn = {
-  metaTitle: 'Activities archive · Engineering Society',
-  metaDescription: 'Past editions of the society’s six activities, by activity and year.',
-  eyebrow: 'Engineering Society Activities',
-  title: 'The society’s memory, drawer by drawer.',
-  lead: 'Past editions of the six activities, filed by activity and year. Open a drawer, or search the whole archive.',
+  metaTitle: 'Archive · Engineering Society',
+  metaDescription: 'Explore past Engineering Society activities, events, programmes, competitions, photos, and records from previous years.',
+  eyebrow: 'Engineering Society',
+  title: 'Archive',
+  lead: 'Explore past Engineering Society activities, events, programmes, competitions, photos, and records from previous years.',
   cabinetLabel: 'The archive cabinet: one drawer per activity',
   editions: (n: number) => pluralEn(n, 'edition', 'editions'),
   searchPlaceholder: 'Search titles and summaries',
@@ -23,7 +23,8 @@ export const activitiesEn = {
   previous: 'Previous photograph',
   next: 'Next photograph',
   thumbs: 'Photographs',
-  demoRecord: 'Demonstration record: the title, date and attendance are samples. The photographs are the society’s own.',
+  undated: 'Undated',
+  undatedNote: 'The date will be added as the society documents this record.',
   inActivity: 'Activity',
   moreIn: (name: string) => `More from ${name}`,
   emptyTitle: 'No editions archived yet',
@@ -34,11 +35,11 @@ export const activitiesEn = {
 export type ActivitiesCopy = typeof activitiesEn
 
 export const activitiesAr: ActivitiesCopy = {
-  metaTitle: 'أرشيف الأنشطة · الجماعة الهندسية',
-  metaDescription: 'النسخ السابقة من أنشطة الجماعة الستة، حسب النشاط والسنة.',
-  eyebrow: 'أنشطة الجماعة الهندسية',
-  title: 'ذاكرة الجماعة، درجًا بعد درج.',
-  lead: 'النسخ السابقة من الأنشطة الستة، مصنّفة حسب النشاط والسنة. افتح درجًا، أو ابحث في الأرشيف كله.',
+  metaTitle: 'الأرشيف · الجماعة الهندسية',
+  metaDescription: 'استكشف أرشيف الجماعة الهندسية من الفعاليات والبرامج والمسابقات والصور والسجلات من الأعوام السابقة.',
+  eyebrow: 'الجماعة الهندسية',
+  title: 'الأرشيف',
+  lead: 'استكشف أرشيف الجماعة الهندسية من الفعاليات والبرامج والمسابقات والصور والسجلات من الأعوام السابقة.',
   cabinetLabel: 'خزانة الأرشيف: درج لكل نشاط',
   editions: (n: number) => arCount(n, 'نسخة واحدة', 'نسختان', 'نسخ', 'نسخة'),
   searchPlaceholder: 'ابحث في العناوين والملخصات',
@@ -52,7 +53,8 @@ export const activitiesAr: ActivitiesCopy = {
   previous: 'الصورة السابقة',
   next: 'الصورة التالية',
   thumbs: 'الصور',
-  demoRecord: 'سجل توضيحي: العنوان والتاريخ وعدد الحضور أمثلة، أما الصور فهي من الجماعة نفسها.',
+  undated: 'غير مؤرّخ',
+  undatedNote: 'سيُضاف التاريخ مع توثيق الجماعة لهذا السجل.',
   inActivity: 'النشاط',
   moreIn: (name: string) => `المزيد من ${name}`,
   emptyTitle: 'لم تُؤرشف أي نسخة بعد',

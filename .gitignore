@@ -20,3 +20,6 @@ next-env.d.ts
 
 # verification output
 artifacts/
+
+# source photographs (full resolution, some private): the site uses the web copies in public/images
+/photos/

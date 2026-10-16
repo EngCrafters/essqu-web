@@ -3,14 +3,19 @@ import { Suspense } from 'react'
 import { MembersNetwork } from '@/components/pages/members/MembersNetwork'
 import { PlatformHero, SampleNotice } from '@/components/platform/Platform'
 import { getMembers, getProjects } from '@/lib/data'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n()
+  if (isComingSoon('members')) return { title: t.platform.comingSoon.metaTitle(t.platform.comingSoon.modules.members.name), description: t.platform.comingSoon.modules.members.note }
   return { title: t.platform.membersPage.metaTitle, description: t.platform.membersPage.metaDescription }
 }
 
 export default async function MembersPage({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
+  // Not open yet: the Coming Soon page stands in, and the full page below stays ready.
+  if (isComingSoon('members')) return <ComingSoon module="members" />
   const { t } = await getI18n()
   const c = t.platform.membersPage
   const [{ state }, members, projects] = await Promise.all([searchParams, getMembers(), getProjects()])

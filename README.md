@@ -45,7 +45,7 @@ Platform pages (`app/(platform)/`, sharing the site's navbar, footer and the dem
 | `/about` | Seven systems, one umbrella | Seven discipline symbols converge on the emblem (sticky scroll sequence): the emblem's four disciplines in front, the other three behind; the six activities as a programme board; activities and projects as a pair of columns for every year from the founding (2000) to today, with a readout you can move by pointer, drag or keyboard (sample figures), then the verified facts; the current President and Vice Presidents on the structure drawing (`#structure`) |
 | `/leadership` | The structure hall | President ↓ Vice Presidents ↓ committees drawn as a truss that erects itself on scroll; every seat vacant until confirmed |
 | `/disciplines` | The exhibition floor | A floor plan, then a 3D turntable of seven working machines beside scrolling chapters (each with its areas of practice); on phones and tablets the caption bar sits under the canvas; a network of the disciplines' shared projects |
-| `/activities` | The archive cabinet | Six drawers (one per activity) above a year-by-year gallery of prints with a lightbox; search, activity, year and discipline filters |
+| `/activities` | Archive (الأرشيف) | The society's historical archive: six drawers (one per activity) above a year-by-year gallery of prints with a lightbox; search, activity, year and discipline filters. Named Archive in the navbar and footer; the homepage's own Activities section is unchanged |
 | `/events`, `/events/[slug]` | The vertical timeline | One line through the year: past events above (the oldest folded away), a gold "today" marker, then upcoming events with the nearest one marked. The line fills as you read, a small light riding its front; nodes light as it reaches them. Filters by when, type and discipline. Detail: capacity dial and every registration state, with a check-in pass |
 | `/projects`, `/projects/[slug]` | The laboratory | "On the bench": the project's stage, recognition and one-line purpose beside its media viewer (3D model, videos, drawings, photos), above a catalogue of drawing sheets filterable by discipline, stage, year, type and technology. Detail: everything essential on the first screen (stage, award, at a glance, media), then problem, solution, technical approach, development journey (done → now → next), validation, awards, team and collaboration |
 | `/register` | Membership | Validated form beside a member card that fills as you type; error summary, duplicate-ID demo (`12345678`), success state |
@@ -54,13 +54,21 @@ Platform pages (`app/(platform)/`, sharing the site's navbar, footer and the dem
 | `/certificates`, `/certificates/[id]` | The document vault | Filed prototype certificates, a verification desk (try `ES-25-0077-F1QS`), shareable verification links; large preview with mock download |
 | `/network`, `/network/[id]` | Graduates who answer back | A career map (graduation year × industry) above graduate cards; mentorship request → sent → accepted. Profile: role, what they can help with, the same mentorship request (its state shared with the network page), graduates in the same field |
 
+**Coming soon.** `/projects`, `/members`, `/network`, `/certificates` and `/register` are not open
+yet: each shows a Coming Soon page (the module's drawing sheet still on the board, with a little
+slow motion; on `/register`, the member card turning over, Ahmed S. on the front and "Coming soon"
+on the back). The switch is `COMING_SOON` in `content/site.ts`; each page's full implementation
+is still in place below the switch, so removing a module from the list brings its page back. The
+Community menu and the phone menu tag these modules "Soon". Their detail pages (`/projects/[slug]`,
+`/members/[id]`, `/network/[id]`, `/certificates/[id]`) still render.
+
 Every filterable page keeps its filters in the URL (shareable, survives reload). Add
 `?state=loading`, `?state=empty` or `?state=error` to any listing to review that state.
 
 ## Navigation
 
 - **One navbar and one footer on every page**, the homepage included
-  (`components/layout/`). The bar: the brand (Home), Events, Activities, Projects, Disciplines,
+  (`components/layout/`). The bar: the brand (Home), Events, Archive, Projects, Disciplines,
   About (inside the Community menu below 1280px) and a **Community** menu (Members, Leadership,
   Graduate network, My profile, Certificates). The current section is underlined: `/events/x`
   marks Events, any community page marks Community. The menu opens with a click or ↓, moves
@@ -127,11 +135,12 @@ Arabic; change those too if they are also جماعات.
 | Society figures (home) | **Members, Visitors, Projects, Events: demonstration values** (1,250 · 18,400 · 86 · 140), each tagged "Demo figure" with a note that they are not verified. They count up on arrival. Replace `value`, add `reportingPeriod` and `source`, and remove `demo: true`. Visitors need real analytics, not a hand-made counter. | `content/stats.ts` → `SOCIETY_STATS` |
 | Society facts (About) | From the society's own overview: established 2000–01, 7 societies, 6 exhibitions and 6 gatherings (the last two qualified: reporting date unknown). | `content/stats.ts` → `SOCIETY_FACTS` |
 | Overview | The society's own photograph (`public/images/overview.jpg`) under a blue atmosphere with layered parallax. | `content/overview.ts` |
-| Activities | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **demonstration events**: titles, dates and attendance are samples tagged "Demo". Each gallery opens on its own society photograph; the society's other photographs repeat after it. أستوديو الخريجين's description is still to come. Add real events to an activity's `events` without `demo`. | `content/activities.ts` |
-| Archive (`/activities`) | The activities' **demonstration events**, with sample disciplines, summaries and galleries added for the archive. Real editions replace them as they are documented. | `content/activities.ts`, `content/platform/archive.ts` |
-| Leadership & structure | One President and three Vice Presidents, **all vacant**; no term, chairs or deputies. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts` |
+| Activities | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **the society's own photographs**, grouped into editions as their file names give them (Engineering Gathering 16, 2026; Engineering Programme, February 2025; Graduate Studio, 2025; Closing Evening, 2026). Photographs supplied without an edition or date are filed under their activity, undated. No attendance figures were supplied, so none are shown. أستوديو الخريجين's description is still to come. | `content/activities.ts` |
+| Archive (`/activities`) | One record per edition in `content/activities.ts`, with all its photographs in the lightbox; undated records are filed last under "Undated". The discipline filter appears once records carry disciplines. | `content/activities.ts` |
+| Leadership & structure | The President (سيف المرجبي) and the three Vice Presidents (عبدالرحمن القري، كوثر عبدواني، هيا الزدجالي), named and portrayed from the society's own portrait files; the English spellings are transliterations to confirm. No term, committee chairs or deputies yet: committee seats stay vacant. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts`, `public/images/leadership/` |
+| About: community photograph | Engineering Sablah, 2025 (السبلة الهندسية), beside the society's overview. | `content/media.ts` → `SOCIETY_PHOTOS` |
 | Events | **Sample listings**, labelled "Sample". Each opens its platform page, where registration is a prototype; nothing is submitted. | `content/events.ts` |
-| Projects | **Sample archive entries**, each opening its platform page. The discipline filter really filters them. | `content/projects.ts` |
+| Projects (homepage) | **The society's real projects**, from the teams' posters in /photos/proj: PLA/HA bone scaffolds (Grand Prize, Engineering Gathering), HydroGenix (Winner, INJAZ Oman 2026), T.A.M.R.A. (Best project, Electrical & Mechatronics) and compressor packing leakage (Best project, Mechanical & Industrial). Only what the files state is shown: discipline, year and team where given, no stage. Each poster (or HydroGenix's model photograph) is laid on the drawing board as a print. No project pages yet, so the cards don't link; the platform's sample project pages keep their own records. | `content/projects.ts`, `public/images/projects/` |
 | Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
 | Membership | "Join the Society" leads to the `/register` prototype everywhere; it stores and sends nothing, and no account is created. | `lib/routes.ts` |
 | Platform records | **All sample data**: the event catalogue, projects, 24 members (first name + initial only), 18 graduates (employers described by kind, never named), certificates and the archive details. One notice per page says so; certificates carry a PROTOTYPE banner and watermark and no university marks. | `content/platform/` |
@@ -234,7 +243,9 @@ lib/data/            the platform's async data layer and its fixed clock
 lib/i18n/            config, dictionaries (en, ar, platform-*, pages/*), server helper, plurals
 lib/                 routes (every internal address), motion constants, formatting,
                      media-query + WebGL helpers
-public/images/       the society's photographs (resized, metadata stripped)
+public/images/       the society's photographs: web copies of /photos (long edge ≤ 2400px,
+                     metadata stripped; portraits cut to head-and-shoulders squares).
+                     /photos itself holds the full-resolution sources and is not committed
 styles/              tokens.css, globals.css
 ```
 

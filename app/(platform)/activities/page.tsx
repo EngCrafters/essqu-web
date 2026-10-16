@@ -3,8 +3,8 @@ import { Suspense } from 'react'
 import { ScrollReveals } from '@/components/motion/ScrollReveals'
 import { ArchiveCabinet } from '@/components/pages/activities/ArchiveCabinet'
 import { ArchiveExplorer } from '@/components/pages/activities/ArchiveExplorer'
-import { PlatformHero, SampleNotice } from '@/components/platform/Platform'
-import { ACTIVITIES } from '@/content/activities'
+import { PlatformHero } from '@/components/platform/Platform'
+import { ACTIVITIES, leadPhoto } from '@/content/activities'
 import { getArchive } from '@/lib/data'
 import { getI18n } from '@/lib/i18n/server'
 
@@ -21,15 +21,13 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
   const drawers = ACTIVITIES.map((a) => ({
     ...activities.find((x) => x.id === a.id)!,
     count: entries.filter((e) => e.activity === a.id).length,
-    photo: a.events[0]?.image.src ?? '/images/activities/gathering.jpg',
+    photo: leadPhoto(a)?.src ?? '/images/activities/gathering.jpg',
   }))
 
   return (
     <>
       <Suspense fallback={null}>
-        <PlatformHero eyebrow={c.eyebrow} title={c.title} lead={<p>{c.lead}</p>} visual={<ArchiveCabinet drawers={drawers} />} tone="surface">
-          <SampleNotice />
-        </PlatformHero>
+        <PlatformHero eyebrow={c.eyebrow} title={c.title} lead={<p>{c.lead}</p>} visual={<ArchiveCabinet drawers={drawers} />} tone="surface" />
         <ArchiveExplorer entries={entries} activities={activities} state={state} />
       </Suspense>
       <ScrollReveals />

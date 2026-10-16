@@ -3,31 +3,33 @@ import type { MediaImage } from './media'
 
 /**
  * The society's six activities. Each one is shown on the homepage as an automatic slideshow
- * of its previous events (components/sections/ActivityGalleries.tsx). Dated, upcoming events
- * live in content/events.ts.
+ * of its photographs (components/sections/ActivityGalleries.tsx), and each of its editions is a
+ * record in the archive (/activities). Dated, upcoming events live in content/events.ts.
  *
  * EDITORIAL STATUS
  * - `nameAr` / `nameEn` are the society's official names for each activity.
  * - `description`: as supplied by the society. أستوديو الخريجين's description is still to come.
- * - `events`: previous events, newest or most notable first. None have been supplied yet, so
- *   every event is DEMONSTRATION content (`demo: true`): titles, dates and attendance are
- *   samples, each tagged "Demo" on the page. The photographs are the society's own; each
- *   activity opens on its own photograph, and the society's other photographs repeat after it.
+ * - `editions`: the society's own photographs, grouped by the edition their file names give
+ *   (for example "الملتقى الهندسي 16 _ 2026"). Titles and dates come from those names, only as
+ *   precisely as they state them; a photograph supplied without an edition or a date is filed
+ *   under its activity, undated. Nothing here is invented: no attendance figures were supplied,
+ *   so none are shown.
  *
- * To add a real event: put it in its activity's `events` (any number; two or more slide), with
- * its date as 'YYYY-MM-DD', its attendance, an authentic photograph, and no `demo` flag.
+ * To add an edition: give it an id, its title, its date ('YYYY', 'YYYY-MM' or 'YYYY-MM-DD',
+ * as precise as is known), its photographs (each slides on the homepage), and, if known, its
+ * attendance.
  */
 
 export type ActivityId = 'gathering' | 'programme' | 'graduate-workshops' | 'graduate-studio' | 'evenings' | 'competitions'
 
-export interface GalleryEvent {
+export interface ActivityEdition {
   id: string
   title: Localized
-  /** 'YYYY-MM-DD'. Shown as month and year. */
-  date: string
-  attendance: { count: number; kind: 'attendees' | 'visitors' }
-  image: MediaImage
-  demo?: boolean
+  /** 'YYYY', 'YYYY-MM' or 'YYYY-MM-DD'; left out when the source gives no date. */
+  date?: string
+  attendance?: { count: number; kind: 'attendees' | 'visitors' }
+  /** The edition's photographs, the first one leading. */
+  photos: MediaImage[]
 }
 
 export interface Activity {
@@ -36,23 +38,55 @@ export interface Activity {
   nameEn: string
   description: Localized
   descriptionStatus: 'confirmed' | 'needs-input'
-  events: GalleryEvent[]
+  editions: ActivityEdition[]
 }
 
-/** The society's own photographs (resized copies of the files at the project root). */
+/** One slide of an activity's slideshow: a photograph and the edition it belongs to. */
+export interface GallerySlide {
+  id: string
+  title: Localized
+  date?: string
+  attendance?: ActivityEdition['attendance']
+  image: MediaImage
+}
+
+/**
+ * The society's own photographs: web copies of the files in /photos (long edge at most
+ * 2400px, metadata removed), in public/images/activities.
+ */
 const PHOTO = {
+  gathering16: { src: '/images/activities/gathering-16-2026.jpg', width: 2400, height: 1600 },
   gathering: { src: '/images/activities/gathering.jpg', width: 1170, height: 762 },
+  programme2025a: { src: '/images/activities/programme-2025-1.jpg', width: 2400, height: 1350 },
+  programme2025b: { src: '/images/activities/programme-2025-2.jpg', width: 1347, height: 2400 },
   programme: { src: '/images/activities/programme.jpg', width: 2400, height: 1600 },
   workshops: { src: '/images/activities/graduate-workshops.jpg', width: 1600, height: 2400 },
+  studio2025a: { src: '/images/activities/graduate-studio-2025-1.jpg', width: 2400, height: 1600 },
+  studio2025b: { src: '/images/activities/graduate-studio-2025-2.jpg', width: 2400, height: 1600 },
+  studio2025c: { src: '/images/activities/graduate-studio-2025-3.jpg', width: 2400, height: 1600 },
   studio: { src: '/images/activities/graduate-studio.jpg', width: 2400, height: 1600 },
+  closing2026a: { src: '/images/activities/closing-evening-2026-hall.jpg', width: 1409, height: 730 },
+  closing2026b: { src: '/images/activities/closing-evening-2026-desk.jpg', width: 2400, height: 1601 },
   evenings: { src: '/images/activities/evenings.jpg', width: 1170, height: 652 },
   competitions: { src: '/images/activities/competitions.jpg', width: 2400, height: 1603 },
 } as const
 
-const ALT = {
+const ALT: Record<keyof typeof PHOTO, Localized> = {
+  gathering16: {
+    en: 'Students talk beside lit project posters at Engineering Gathering 16.',
+    ar: 'طلاب يتحاورون بجانب ملصقات مشاريع مضيئة في الملتقى الهندسي 16.',
+  },
   gathering: {
     en: 'An exhibition hall: visitors walk between lit display panels around a glowing geometric sculpture.',
     ar: 'قاعة معرض: زوّار يتجولون بين لوحات عرض مضيئة حول مجسّم هندسي متوهّج.',
+  },
+  programme2025a: {
+    en: 'A speaker presents to a full lecture theatre of students, a question slide with a QR code behind her.',
+    ar: 'متحدثة تقدّم عرضًا أمام قاعة محاضرات ممتلئة بالطلاب، وخلفها شريحة أسئلة برمز QR.',
+  },
+  programme2025b: {
+    en: 'A speaker with a microphone presents a map of Oman’s concession areas to the audience.',
+    ar: 'متحدث يحمل الميكروفون يعرض خريطة مناطق الامتياز في سلطنة عُمان على الحضور.',
   },
   programme: {
     en: 'A student presents “Reservoir Simulation Modelling” to classmates seated in a lecture room.',
@@ -62,9 +96,29 @@ const ALT = {
     en: 'Students working at computers in a lab; in the foreground, one models a 3D shape on a laptop.',
     ar: 'طلاب يعملون على الحواسيب في مختبر، وفي المقدمة طالب يصمّم مجسّمًا ثلاثي الأبعاد على حاسوبه المحمول.',
   },
+  studio2025a: {
+    en: 'Eleven graduates in white dishdashas and graduation bishts pose together for a studio portrait.',
+    ar: 'أحد عشر خريجًا بالدشداشة البيضاء وبشوت التخرج في صورة جماعية داخل الأستوديو.',
+  },
+  studio2025b: {
+    en: 'A friend adjusts the cap of a graduate in a purple gown, in a softly lit studio set.',
+    ar: 'صديقة تعدّل قبعة التخرج لخرّيجة ترتدي ثوبًا بنفسجيًا في ركن أستوديو بإضاءة هادئة.',
+  },
+  studio2025c: {
+    en: 'Two graduates embrace in front of a gilded sofa and a framed painting.',
+    ar: 'خرّيجان يتعانقان أمام أريكة مذهّبة ولوحة بإطار ذهبي.',
+  },
   studio: {
     en: 'A graduate in a bisht poses in a decorated photo corner, his reflection caught in a standing mirror.',
     ar: 'خرّيج يرتدي البشت في ركن تصوير مزيّن، وتنعكس صورته في مرآة قائمة.',
+  },
+  closing2026a: {
+    en: 'A full auditorium under blue light faces the stage at the closing evening.',
+    ar: 'قاعة ممتلئة تحت إضاءة زرقاء تتجه نحو المسرح في الأمسية الختامية.',
+  },
+  closing2026b: {
+    en: 'The closing evening seen from the control desk: a dark hall, the audience and the lit stage screen.',
+    ar: 'الأمسية الختامية من منصة التحكم: قاعة معتمة والجمهور وشاشة المسرح المضيئة.',
   },
   evenings: {
     en: 'A speaker stands on stage facing an audience holding up phone lights in a darkened hall.',
@@ -74,9 +128,9 @@ const ALT = {
     en: 'Two students inspect entries laid out on a display table in a large auditorium.',
     ar: 'طالبان يتفقّدان أعمالًا معروضة على طاولة في قاعة كبيرة.',
   },
-} as const
+}
 
-/** A society photograph with its description and a crop that suits the slide. */
+/** A society photograph with its description and a crop that keeps its subject in frame. */
 const photo = (key: keyof typeof PHOTO, focus?: string): MediaImage => ({ ...PHOTO[key], alt: ALT[key], focus })
 
 export const ACTIVITIES: Activity[] = [
@@ -89,30 +143,12 @@ export const ACTIVITIES: Activity[] = [
       ar: 'تجمّع يلتقي فيه طلاب التخصصات الهندسية المختلفة في مكان واحد.',
     },
     descriptionStatus: 'confirmed',
-    events: [
+    editions: [
       {
-        id: 'gathering-2025',
-        demo: true,
-        title: { en: 'Engineering Gathering 2025', ar: 'التجمع الهندسي 2025' },
-        date: '2025-01-20',
-        attendance: { count: 3200, kind: 'visitors' },
-        image: photo('gathering', '50% 40%'),
-      },
-      {
-        id: 'disciplines-open-day',
-        demo: true,
-        title: { en: 'Disciplines Open Day', ar: 'اليوم المفتوح للتخصصات الهندسية' },
-        date: '2024-10-15',
-        attendance: { count: 1400, kind: 'visitors' },
-        image: photo('competitions', '50% 25%'),
-      },
-      {
-        id: 'industry-meetup',
-        demo: true,
-        title: { en: 'Industry Meet-up', ar: 'لقاء القطاع الصناعي' },
-        date: '2025-03-11',
-        attendance: { count: 950, kind: 'attendees' },
-        image: photo('evenings', '30% 50%'),
+        id: 'gathering-16',
+        title: { en: 'Engineering Gathering 16', ar: 'الملتقى الهندسي 16' },
+        date: '2026',
+        photos: [photo('gathering16', '50% 42%'), photo('gathering', '50% 40%')],
       },
     ],
   },
@@ -125,30 +161,18 @@ export const ACTIVITIES: Activity[] = [
       ar: 'برنامج منظّم من الأنشطة الهندسية لطلاب الكلية من مختلف التخصصات.',
     },
     descriptionStatus: 'confirmed',
-    events: [
+    editions: [
+      {
+        id: 'programme-2025',
+        title: { en: 'Engineering Programme', ar: 'البرنامج الهندسي' },
+        date: '2025-02',
+        photos: [photo('programme2025a', '64% 50%'), photo('programme2025b', '50% 40%')],
+      },
       {
         id: 'reservoir-simulation',
-        demo: true,
+        // The talk's title is on its own slide in the photograph; the source gives no date.
         title: { en: 'Reservoir Simulation Modelling', ar: 'نمذجة محاكاة المكامن' },
-        date: '2025-02-18',
-        attendance: { count: 85, kind: 'attendees' },
-        image: photo('programme', '62% 45%'),
-      },
-      {
-        id: 'design-fundamentals',
-        demo: true,
-        title: { en: 'Engineering Design Fundamentals', ar: 'أساسيات التصميم الهندسي' },
-        date: '2024-11-05',
-        attendance: { count: 120, kind: 'attendees' },
-        image: photo('workshops', '50% 62%'),
-      },
-      {
-        id: 'presentation-skills',
-        demo: true,
-        title: { en: 'Technical Presentation Skills', ar: 'مهارات العرض التقني' },
-        date: '2025-04-02',
-        attendance: { count: 70, kind: 'attendees' },
-        image: photo('programme', '25% 70%'),
+        photos: [photo('programme', '58% 45%')],
       },
     ],
   },
@@ -161,30 +185,11 @@ export const ACTIVITIES: Activity[] = [
       ar: 'ورش عمل تصل الطلاب الحاليين بخريجي الجماعة.',
     },
     descriptionStatus: 'confirmed',
-    events: [
+    editions: [
       {
-        id: '3d-modelling',
-        demo: true,
-        title: { en: '3D Modelling Workshop', ar: 'ورشة النمذجة ثلاثية الأبعاد' },
-        date: '2025-02-04',
-        attendance: { count: 40, kind: 'attendees' },
-        image: photo('workshops', '50% 88%'),
-      },
-      {
-        id: 'campus-to-career',
-        demo: true,
-        title: { en: 'From Campus to Career', ar: 'من الجامعة إلى سوق العمل' },
-        date: '2024-12-10',
-        attendance: { count: 65, kind: 'attendees' },
-        image: photo('programme', '45% 60%'),
-      },
-      {
-        id: 'report-writing',
-        demo: true,
-        title: { en: 'Technical Report Writing', ar: 'كتابة التقارير الفنية' },
-        date: '2025-03-18',
-        attendance: { count: 45, kind: 'attendees' },
-        image: photo('workshops', '50% 55%'),
+        id: 'graduate-workshops',
+        title: { en: 'Graduate Workshops', ar: 'ورش الخريجين' },
+        photos: [photo('workshops', '50% 66%')],
       },
     ],
   },
@@ -198,30 +203,17 @@ export const ACTIVITIES: Activity[] = [
       ar: 'ستضيف الجماعة وصفًا لهذا البرنامج.',
     },
     descriptionStatus: 'needs-input',
-    events: [
+    editions: [
       {
-        id: 'graduates-corner',
-        demo: true,
-        title: { en: 'Graduates’ Corner', ar: 'ركن الخريجين' },
-        date: '2025-04-28',
-        attendance: { count: 780, kind: 'visitors' },
-        image: photo('studio', '62% 40%'),
+        id: 'graduate-studio-2025',
+        title: { en: 'Graduate Studio', ar: 'أستوديو الخريجين' },
+        date: '2025',
+        photos: [photo('studio2025a', '50% 46%'), photo('studio2025c', '50% 40%'), photo('studio2025b', '52% 38%')],
       },
       {
-        id: 'graduation-portraits',
-        demo: true,
-        title: { en: 'Graduation Portraits', ar: 'جلسة صور الخريجين' },
-        date: '2024-12-17',
-        attendance: { count: 260, kind: 'attendees' },
-        image: photo('studio', '20% 60%'),
-      },
-      {
-        id: 'graduation-projects',
-        demo: true,
-        title: { en: 'Graduation Projects Studio', ar: 'أستوديو مشاريع التخرج' },
-        date: '2025-05-06',
-        attendance: { count: 90, kind: 'attendees' },
-        image: photo('gathering', '70% 70%'),
+        id: 'graduate-studio',
+        title: { en: 'Graduate Studio', ar: 'أستوديو الخريجين' },
+        photos: [photo('studio', '62% 40%')],
       },
     ],
   },
@@ -234,30 +226,17 @@ export const ACTIVITIES: Activity[] = [
       ar: 'أمسيات تجمع أعضاء الجماعة.',
     },
     descriptionStatus: 'confirmed',
-    events: [
+    editions: [
       {
-        id: 'leadership-evening',
-        demo: true,
-        title: { en: 'Engineering Leadership Evening', ar: 'أمسية القيادة الهندسية' },
-        date: '2024-11-12',
-        attendance: { count: 420, kind: 'attendees' },
-        image: photo('evenings', '50% 30%'),
+        id: 'closing-evening-2026',
+        title: { en: 'Closing Evening', ar: 'الأمسية الختامية' },
+        date: '2026',
+        photos: [photo('closing2026a', '50% 46%'), photo('closing2026b', '56% 46%')],
       },
       {
-        id: 'ramadan-evening',
-        demo: true,
-        title: { en: 'Ramadan Evening', ar: 'الأمسية الرمضانية' },
-        date: '2025-03-15',
-        attendance: { count: 300, kind: 'attendees' },
-        image: photo('gathering', '50% 30%'),
-      },
-      {
-        id: 'innovation-evening',
-        demo: true,
-        title: { en: 'Innovation Talks Evening', ar: 'أمسية حوارات الابتكار' },
-        date: '2025-05-20',
-        attendance: { count: 260, kind: 'attendees' },
-        image: photo('evenings', '70% 60%'),
+        id: 'evenings',
+        title: { en: 'Evenings', ar: 'الأمسيات' },
+        photos: [photo('evenings', '50% 30%')],
       },
     ],
   },
@@ -270,30 +249,11 @@ export const ACTIVITIES: Activity[] = [
       ar: 'مسابقات تدعو الطلاب إلى اختبار مهاراتهم الهندسية.',
     },
     descriptionStatus: 'confirmed',
-    events: [
+    editions: [
       {
-        id: 'projects-challenge',
-        demo: true,
-        title: { en: 'Student Projects Challenge', ar: 'تحدي مشاريع الطلبة' },
-        date: '2024-10-22',
-        attendance: { count: 180, kind: 'attendees' },
-        image: photo('competitions', '55% 60%'),
-      },
-      {
-        id: 'robotics-challenge',
-        demo: true,
-        title: { en: 'Robotics Challenge', ar: 'تحدي الروبوتات' },
-        date: '2025-02-25',
-        attendance: { count: 220, kind: 'attendees' },
-        image: photo('workshops', '50% 80%'),
-      },
-      {
-        id: 'innovation-pitch',
-        demo: true,
-        title: { en: 'Innovation Pitch Contest', ar: 'مسابقة الأفكار الابتكارية' },
-        date: '2025-04-15',
-        attendance: { count: 310, kind: 'attendees' },
-        image: photo('programme', '60% 45%'),
+        id: 'competitions',
+        title: { en: 'Competitions', ar: 'المسابقات' },
+        photos: [photo('competitions', '55% 50%')],
       },
     ],
   },
@@ -301,18 +261,11 @@ export const ACTIVITIES: Activity[] = [
 
 export const ACTIVITY_BY_ID = Object.fromEntries(ACTIVITIES.map((a) => [a.id, a])) as Record<ActivityId, Activity>
 
-/**
- * Previous editions of these programmes, for the /activities archive. Add one record per
- * edition as it is documented; the archive's programme and year filters come from this data.
- */
-export interface ActivityEdition {
-  id: string
-  activity: ActivityId
-  title: Localized
-  year: number
-  summary?: Localized
-  image?: MediaImage
-  href?: string
-}
+/** An activity's slides: every photograph of every edition, newest edition first. */
+export const slidesOf = (activity: Activity): GallerySlide[] =>
+  activity.editions.flatMap((e) =>
+    e.photos.map((image, i) => ({ id: `${e.id}-${i + 1}`, title: e.title, date: e.date, attendance: e.attendance, image })),
+  )
 
-export const ACTIVITY_EDITIONS: ActivityEdition[] = []
+/** The photograph that represents an activity (its newest edition's lead photograph). */
+export const leadPhoto = (activity: Activity): MediaImage | undefined => activity.editions[0]?.photos[0]

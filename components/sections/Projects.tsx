@@ -17,7 +17,7 @@ export async function Projects() {
             <p className="preview-note">
               <span className="status-dot" aria-hidden="true" />
               <span>
-                <strong>{t.projects.sampleStrong}</strong> {t.projects.sampleBody}
+                <strong>{t.projects.noteStrong}</strong> {t.projects.noteBody}
               </span>
             </p>
           </div>

@@ -16,6 +16,10 @@ import type { Localized } from '@/lib/i18n'
  * Registration here is a prototype: `registration` is the event's state, and a visitor's own
  * registration is held only in the browser session (components/platform/DemoSession.tsx).
  * Capacities, registration counts and attendance are illustrative, not records.
+ *
+ * Photographs: only the Engineering Gathering exhibition carries one, of the gathering's own
+ * hall. The other sample events keep their drawings rather than borrow photographs of other
+ * occasions.
  */
 
 export type PlatformEventType = 'workshop' | 'talk' | 'site-visit' | 'competition' | 'seminar' | 'exhibition'
@@ -362,10 +366,6 @@ export const EVENT_CATALOGUE: PlatformEvent[] = [
       { time: '20:15', title: { en: 'Open conversation', ar: 'حوار مفتوح' } },
     ],
     drawing: 'careers-panel',
-    image: photo('/images/activities/evenings.jpg', 1170, 652, {
-      en: 'A speaker stands on stage facing an audience holding up phone lights in a darkened hall.',
-      ar: 'متحدّث يقف على المسرح أمام جمهور يرفع أضواء هواتفه في قاعة معتمة.',
-    }, '50% 30%'),
   },
   {
     slug: 'lab-safety-essentials',
@@ -397,10 +397,6 @@ export const EVENT_CATALOGUE: PlatformEvent[] = [
       { time: '14:45', title: { en: 'Station rotation', ar: 'التنقل بين المحطات' } },
     ],
     drawing: 'robotics-workshop',
-    image: photo('/images/activities/graduate-workshops.jpg', 1600, 2400, {
-      en: 'Students working at computers in a lab; in the foreground, one models a 3D shape on a laptop.',
-      ar: 'طلاب يعملون على الحواسيب في مختبر، وفي المقدمة طالب يصمّم مجسّمًا ثلاثي الأبعاد على حاسوبه المحمول.',
-    }, '50% 70%'),
   },
   {
     slug: 'campus-to-career-2026',
@@ -432,9 +428,5 @@ export const EVENT_CATALOGUE: PlatformEvent[] = [
       { time: '18:00', title: { en: 'Mock interviews', ar: 'مقابلات تجريبية' } },
     ],
     drawing: 'careers-panel',
-    image: photo('/images/activities/programme.jpg', 2400, 1600, {
-      en: 'A student presents “Reservoir Simulation Modelling” to classmates seated in a lecture room.',
-      ar: 'طالب يقدّم عرضًا بعنوان «نمذجة محاكاة المكامن» أمام زملائه في قاعة محاضرات.',
-    }, '40% 55%'),
   },
 ]
