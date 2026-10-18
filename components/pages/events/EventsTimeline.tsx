@@ -187,7 +187,7 @@ export function EventsTimeline({ events, held, state, now = DEMO_NOW }: { events
             <span className={styles.cardTitle}>{l(e.title)}</span>
             <span className={styles.cardMeta}>
               {eventTimesIsolated(e.start, e.end, intl)}
-              {e.location && ` · ${l(e.location)}`}
+              {e.location && <> · {l(e.location)}</>}
             </span>
             <span className={styles.cardFoot}>
               <span className={styles.cardKeys}>

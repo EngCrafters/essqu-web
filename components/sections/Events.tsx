@@ -164,7 +164,7 @@ function FeaturedEvent({ event, i18n }: Props) {
       <div className={styles.featuredText}>
         <p className={styles.type} data-part="text">
           {t.events.featured}
-          {event.type && ` · ${t.events.types[event.type]}`}
+          {event.type && <> · {t.events.types[event.type]}</>}
         </p>
         <EventTitle event={event} i18n={i18n} className={styles.featuredTitle} part="text" />
         <p className={styles.description} data-part="text">

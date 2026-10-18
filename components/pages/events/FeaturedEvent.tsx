@@ -47,7 +47,7 @@ export function FeaturedEvent({ event, held, now }: { event: EventView; held: st
         <span className={styles.featuredTitle}>{l(event.title)}</span>
         <span className={styles.cardMeta}>
           {d.weekday} · {eventTimesIsolated(event.start, event.end, intl)}
-          {event.location && ` · ${l(event.location)}`}
+          {event.location && <> · {l(event.location)}</>}
         </span>
         <span className={styles.featuredFoot}>
           {taken !== null && (
