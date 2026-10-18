@@ -1,4 +1,23 @@
-# ESWebsite — Engineering Society, Sultan Qaboos University
+# ESSQU Landing — Engineering Society, Sultan Qaboos University
+
+Independent public Landing, imported with source history from `s3q/ESWebsite` at `17bdcc4`.
+The original teammate checkout is unchanged. This repository is maintained separately from Core.
+
+Published events and registration use Core API v1. Set the variables in `.env.example` through
+Vercel or a private `.env.local`; see [`lib/core-api/README.md`](lib/core-api/README.md).
+`CORE_EVENTS_API_KEY` is server-only. The public URL variable contains no secret.
+No database credentials, service-role key or Core admin credentials belong here.
+
+Current pre-domain API: `https://engsoc-platform.vercel.app/v1`. Custom domains are deferred;
+later switching both API URL variables to `https://api.essqu.com/v1` requires a rebuild.
+Actual Landing deployment and live staging/production evidence are release-operator records;
+this source alone does not establish production API activation.
+
+Run `npm test` for hermetic contract tests and `npm run test:e2e` for desktop/mobile browser
+tests against a synthetic local HTTP Core fixture. No production registration test data is written.
+`/events` has upcoming/past cursor pages and `/events/[eventId]` has the registration form.
+Empty/unavailable API responses never fall back to sample events. Clearly labelled project and
+activity design galleries remain editorial demonstrations, separate from live event records.
 
 Landing site for the Engineering Society, built with Next.js (App Router, TypeScript), GSAP and
 React Three Fiber, in English and Arabic. Earlier drafts are kept:
@@ -8,7 +27,7 @@ React Three Fiber, in English and Arabic. Earlier drafts are kept:
 - **Draft 4 onward:** this repository's git history.
 
 Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). This is the public
-site only: no backend, authentication or admin tools.
+site only: event and registration authority is the separately deployed Core API; no local authentication or admin tools.
 
 ## Run
 
@@ -75,7 +94,7 @@ Arabic; change those too if they are also جماعات.
 | Activities | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **demonstration events**: titles, dates and attendance are samples tagged "Demo". Each gallery opens on its own society photograph; the society's other photographs repeat after it. أستوديو الخريجين's description is still to come. Add real events to an activity's `events` without `demo`. | `content/activities.ts` |
 | Archive | Empty until editions are documented. | `content/activities.ts` → `ACTIVITY_EDITIONS` |
 | Leadership & structure | One President and three Vice Presidents, **all vacant**; no term, chairs or deputies. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts` |
-| Events | **Sample listings**, labelled "Sample". Registration is a preview dialog; nothing is submitted. | `content/events.ts` |
+| Events | Live Core API listings, detail and registration; unavailable/empty states never substitute sample data. | `lib/core-api/` |
 | Projects | **Sample archive entries**. The discipline filter really filters them. | `content/projects.ts` |
 | Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
 | Membership | No registration flow yet. "Join the Society" opens a preview dialog. | `content/site.ts` → `membershipUrl` |

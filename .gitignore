@@ -20,3 +20,10 @@ next-env.d.ts
 
 # verification output
 artifacts/
+test-results/
+playwright-report/
+.env
+/supabase/.temp/
+.vercel
+.env*
+!.env.example

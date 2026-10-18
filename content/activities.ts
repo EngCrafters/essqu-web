@@ -4,7 +4,7 @@ import type { MediaImage } from './media'
 /**
  * The society's six activities. Each one is shown on the homepage as an automatic slideshow
  * of its previous events (components/sections/ActivityGalleries.tsx). Dated, upcoming events
- * live in content/events.ts.
+ * come from Core API v1. These labelled editorial galleries are not registration records.
  *
  * EDITORIAL STATUS
  * - `nameAr` / `nameEn` are the society's official names for each activity.
