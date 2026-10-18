@@ -8,16 +8,64 @@ Vercel or a private `.env.local`; see [`lib/core-api/README.md`](lib/core-api/RE
 `CORE_EVENTS_API_KEY` is server-only. The public URL variable contains no secret.
 No database credentials, service-role key or Core admin credentials belong here.
 
-Current pre-domain API: `https://engsoc-platform.vercel.app/v1`. Custom domains are deferred;
+Production Landing: [essqu-web.vercel.app](https://essqu-web.vercel.app).
+Its active Core API is `https://engsoc-platform.vercel.app/v1`. Custom domains are deferred;
 later switching both API URL variables to `https://api.essqu.com/v1` requires a rebuild.
-Actual Landing deployment and live staging/production evidence are release-operator records;
-this source alone does not establish production API activation.
 
 Run `npm test` for hermetic contract tests and `npm run test:e2e` for desktop/mobile browser
 tests against a synthetic local HTTP Core fixture. No production registration test data is written.
 `/events` has upcoming/past cursor pages and `/events/[eventId]` has the registration form.
 Empty/unavailable API responses never fall back to sample events. Clearly labelled project and
 activity design galleries remain editorial demonstrations, separate from live event records.
+
+## Pre-domain release evidence
+
+Production integration and final browser verification completed on October 19, 2026 (Asia/Dubai).
+Core migration 0024 is applied, the scoped production API client is installed server-side in Landing,
+and both applications are independently deployed and integrated through their Vercel URLs.
+
+| Surface                    | Current URL / state                                                         |
+| -------------------------- | --------------------------------------------------------------------------- |
+| Landing staging            | `https://essqu-web-git-staging-eng-crafters.vercel.app`                     |
+| Core staging API           | `https://engsoc-platform-git-staging-eng-crafters.vercel.app/v1`            |
+| Core production API        | `https://engsoc-platform.vercel.app/v1` — active                            |
+| Core production Admin/Auth | `https://engsoc-platform.vercel.app`                                        |
+| Landing production         | `https://essqu-web.vercel.app` — separate Vercel project `essqu-web`        |
+| Planned public domains     | `essqu.com`, `www.essqu.com`, `api.essqu.com`, `admin.essqu.com` — deferred |
+
+Landing implementation `6e0f683` and production-build verification fix `898870f` preserve the imported
+teammate history. [Landing PR 1](https://github.com/EngCrafters/essqu-web/pull/1) merged as `8f5c0bf`.
+[Production CI](https://github.com/EngCrafters/essqu-web/actions/runs/39161420446) passed and
+Vercel deployment `dpl_4Kj8rku9wS9iUUKdTwCHsaRcPU8M` reached Ready on that release.
+The checks include lint, types, formatting, 17 contract tests, a production Webpack build, and ten
+desktop/mobile browser tests against a synthetic local Core HTTP fixture. The production dependency
+audit reports zero vulnerabilities; five high development-only advisories remain.
+
+The full live staging HTTP and browser harness passed, including an actual confirmed registration
+submitted through Landing, registration state/error checks, the persisted rate limiter and concurrent
+requests competing for one remaining seat. Run-owned fixtures were removed; the original five staging
+registrations were retained. Staging provides live write/concurrency evidence without creating fake
+production attendee records.
+
+Production browser QA passed all four desktop/mobile English/Arabic cases: homepage, events,
+upcoming/past lists and real event detail. Production showed one upcoming and two past events;
+Arabic used RTL and inspected pages had no horizontal overflow or read-only console/page/HTTP errors.
+An in-memory comparison against the actual production read key, alongside credential-pattern checks,
+found zero exposure across 358 loaded HTML/RSC/JavaScript responses and inspected browser requests,
+local/session storage and cookies. Canceled prefetches were recorded separately from completed scans.
+
+Each production form transport check intercepted and aborted its Core POST **before network access**.
+All four requests had the exact public fields, a request ID, and no API key, cookies, platform token or
+client IP field. The UI showed its expected unavailable message after the deliberate abort and sent no
+automatic retry. These checks prove browser transport and failure handling, not a successful production
+registration: production writes were zero and the existing seven registrations were unchanged.
+
+Core remains the sole authority for release gates. See the
+[Core pre-domain release report](https://github.com/EngCrafters/engsoc-platform/blob/main/docs/api/PRE_DOMAIN_RELEASE_REPORT.md)
+for staging evidence, migration 0024, production API/security checks and the owner's narrow backup
+waiver. That waiver covers only the unchanged additive migration 0024; no managed backup or restore
+readiness is claimed. DNS/custom domains, final Auth origins and custom-host enforcement remain
+deferred to the documented cutover. The current Core Vercel Admin/Auth origin remains in place.
 
 Landing site for the Engineering Society, built with Next.js (App Router, TypeScript), GSAP and
 React Three Fiber, in English and Arabic. Earlier drafts are kept:
@@ -86,19 +134,19 @@ Arabic; change those too if they are also جماعات.
 
 ## What is real and what is a preview
 
-| Area | State | Where to change it |
-| --- | --- | --- |
-| Society figures (home) | **Members, Visitors, Projects, Events: demonstration values** (1,250 · 18,400 · 86 · 140), each tagged "Demo figure" with a note that they are not verified. They count up on arrival. Replace `value`, add `reportingPeriod` and `source`, and remove `demo: true`. Visitors need real analytics, not a hand-made counter. | `content/stats.ts` → `SOCIETY_STATS` |
-| Society facts (About) | From the society's own overview: established 2000–01, 7 societies, 6 exhibitions and 6 gatherings (the last two qualified: reporting date unknown). | `content/stats.ts` → `SOCIETY_FACTS` |
-| Overview | The society's own photograph (`public/images/overview.jpg`) under a blue atmosphere with layered parallax. | `content/overview.ts` |
-| Activities | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **demonstration events**: titles, dates and attendance are samples tagged "Demo". Each gallery opens on its own society photograph; the society's other photographs repeat after it. أستوديو الخريجين's description is still to come. Add real events to an activity's `events` without `demo`. | `content/activities.ts` |
-| Archive | Empty until editions are documented. | `content/activities.ts` → `ACTIVITY_EDITIONS` |
-| Leadership & structure | One President and three Vice Presidents, **all vacant**; no term, chairs or deputies. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts` |
-| Events | Live Core API listings, detail and registration; unavailable/empty states never substitute sample data. | `lib/core-api/` |
-| Projects | **Sample archive entries**. The discipline filter really filters them. | `content/projects.ts` |
-| Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
-| Membership | No registration flow yet. "Join the Society" opens a preview dialog. | `content/site.ts` → `membershipUrl` |
-| Social accounts | **No verified URLs.** Instagram and LinkedIn show in the footer, unlinked and marked "Link to come". Other platforms appear only once given a URL. | `content/social.ts` |
+| Area                   | State                                                                                                                                                                                                                                                                                                                                                                                                                                               | Where to change it                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Society figures (home) | **Members, Visitors, Projects, Events: demonstration values** (1,250 · 18,400 · 86 · 140), each tagged "Demo figure" with a note that they are not verified. They count up on arrival. Replace `value`, add `reportingPeriod` and `source`, and remove `demo: true`. Visitors need real analytics, not a hand-made counter.                                                                                                                         | `content/stats.ts` → `SOCIETY_STATS`          |
+| Society facts (About)  | From the society's own overview: established 2000–01, 7 societies, 6 exhibitions and 6 gatherings (the last two qualified: reporting date unknown).                                                                                                                                                                                                                                                                                                 | `content/stats.ts` → `SOCIETY_FACTS`          |
+| Overview               | The society's own photograph (`public/images/overview.jpg`) under a blue atmosphere with layered parallax.                                                                                                                                                                                                                                                                                                                                          | `content/overview.ts`                         |
+| Activities             | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **demonstration events**: titles, dates and attendance are samples tagged "Demo". Each gallery opens on its own society photograph; the society's other photographs repeat after it. أستوديو الخريجين's description is still to come. Add real events to an activity's `events` without `demo`. | `content/activities.ts`                       |
+| Archive                | Empty until editions are documented.                                                                                                                                                                                                                                                                                                                                                                                                                | `content/activities.ts` → `ACTIVITY_EDITIONS` |
+| Leadership & structure | One President and three Vice Presidents, **all vacant**; no term, chairs or deputies. فريق التصوير is listed once (the brief listed it twice).                                                                                                                                                                                                                                                                                                      | `content/structure.ts`                        |
+| Events                 | Live Core API listings, detail and registration; unavailable/empty states never substitute sample data.                                                                                                                                                                                                                                                                                                                                             | `lib/core-api/`                               |
+| Projects               | **Sample archive entries**. The discipline filter really filters them.                                                                                                                                                                                                                                                                                                                                                                              | `content/projects.ts`                         |
+| Disciplines            | The seven disciplines from Draft 1's content, not an official SQU list.                                                                                                                                                                                                                                                                                                                                                                             | `content/disciplines.ts`                      |
+| Membership             | No registration flow yet. "Join the Society" opens a preview dialog.                                                                                                                                                                                                                                                                                                                                                                                | `content/site.ts` → `membershipUrl`           |
+| Social accounts        | **No verified URLs.** Instagram and LinkedIn show in the footer, unlinked and marked "Link to come". Other platforms appear only once given a URL.                                                                                                                                                                                                                                                                                                  | `content/social.ts`                           |
 
 Social URLs are validated: https, on the platform's own domain, pointing to a profile path.
 
