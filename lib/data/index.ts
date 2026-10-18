@@ -1,32 +1,39 @@
 import { ACTIVITIES, type ActivityId } from '@/content/activities'
 import type { DisciplineId } from '@/content/disciplines'
+import { EVENTS as HOME_SAMPLE_EVENTS, type HomeEvent } from '@/content/events'
 import type { MediaImage } from '@/content/media'
 import { CERTIFICATES, type Certificate } from '@/content/platform/certificates'
-import { EVENT_CATALOGUE, type PlatformEvent } from '@/content/platform/events'
+import { EVENT_CATALOGUE, type EventView, type PlatformEvent } from '@/content/platform/events'
 import { GRADUATES, type Graduate } from '@/content/platform/graduates'
 import { DEMO_MEMBER_ID, MEMBERS, type AttendanceStatus, type Member } from '@/content/platform/members'
 import { PROJECT_CATALOGUE, type Project } from '@/content/platform/projects'
 import { YEARLY_RECORD, type YearRecord } from '@/content/platform/record'
+import { toEventView, toHomeEvent } from '@/lib/core-api/adapter'
+import { getCoreConfig } from '@/lib/core-api/config.server'
+import { getCoreEvent, getRegistrationBaseUrl, listCoreEvents } from '@/lib/core-api/events.server'
 import type { Localized } from '@/lib/i18n'
 import { routes } from '@/lib/routes'
 import { DEMO_NOW } from './clock'
 
 /**
  * The platform's data access. Every page reads through these functions, never from content/
- * directly, so connecting the real API means replacing the bodies here (fetch, auth headers,
- * error handling) while the pages and their components stay as they are.
+ * directly, so the pages and their components don't know where a record came from.
  *
- * Today they return the local sample records from content/platform. They are async on purpose:
- * pages already await them exactly as they will await the API.
+ * Events are connected to the Core platform (lib/core-api): the homepage's events, /events and
+ * /events/[slug] read through `getHomeEvents`, `getEventsTimeline` and `getEventPage`, which
+ * return Core's published events when it is configured, the sample catalogue in sample mode, and
+ * an honest `unavailable` otherwise (never sample events in its place). Everything else, including
+ * `getEvents`/`getEvent` (the sample catalogue behind the sample profile and the Disciplines
+ * page's figures), still returns the local sample records from content/platform.
  */
 
-export type { Certificate, Graduate, Member, PlatformEvent, Project }
+export type { Certificate, EventView, Graduate, Member, PlatformEvent, Project }
 export type { AttendanceStatus }
 
 export { DEMO_NOW }
 const NOW = new Date(DEMO_NOW).getTime()
 
-// ---------------------------------------------------------------- events
+// ---------------------------------------------------------------- events (sample catalogue)
 
 export type EventPhase = 'upcoming' | 'past'
 
@@ -46,21 +53,111 @@ export async function getEvent(slug: string): Promise<PlatformEvent | null> {
   return EVENT_CATALOGUE.find((e) => e.slug === slug) ?? null
 }
 
-/** Events that share a discipline or an activity, nearest in time first. */
-export async function getRelatedEvents(event: PlatformEvent, limit = 3): Promise<PlatformEvent[]> {
+/**
+ * Events related to this one, nearest in time first. Sample records relate by shared discipline,
+ * activity and type; Core events carry none of those, so they relate by organising committee.
+ */
+function relatedTo<T extends EventView>(event: EventView, candidates: readonly T[], limit: number): T[] {
   const t = new Date(event.start).getTime()
-  return EVENT_CATALOGUE.filter((e) => e.slug !== event.slug)
+  const sameCommittee = (e: T) =>
+    Boolean((e.organizer && e.organizer === event.organizer) || (e.organizerName && e.organizerName.en === event.organizerName?.en))
+  return candidates
+    .filter((e) => e.slug !== event.slug)
     .map((e) => ({
       e,
-      score:
-        e.disciplines.filter((d) => event.disciplines.includes(d)).length * 2 +
-        (e.activity && e.activity === event.activity ? 3 : 0) +
-        (e.type === event.type ? 1 : 0),
+      score: event.sample
+        ? e.disciplines.filter((d) => event.disciplines.includes(d)).length * 2 +
+          (e.activity && e.activity === event.activity ? 3 : 0) +
+          (e.type === event.type ? 1 : 0)
+        : sameCommittee(e)
+          ? 1
+          : 0,
     }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score || Math.abs(new Date(a.e.start).getTime() - t) - Math.abs(new Date(b.e.start).getTime() - t))
     .slice(0, limit)
     .map((x) => x.e)
+}
+
+/** Sample events that share a discipline or an activity, nearest in time first. */
+export async function getRelatedEvents(event: PlatformEvent, limit = 3): Promise<PlatformEvent[]> {
+  return relatedTo(event, EVENT_CATALOGUE, limit)
+}
+
+// ---------------------------------------------------------------- events (Core or sample)
+
+export type EventSource = 'core' | 'sample'
+
+/**
+ * How an event page's registration panel registers: the prototype that lives in the browser tab
+ * (sample events), Core's public API (`baseUrl` includes /v1; no secret involved), or not at all.
+ */
+export type RegistrationTransport = { kind: 'sample' } | { kind: 'core'; baseUrl: string } | { kind: 'unavailable' }
+
+/**
+ * "Today" for the events pages: the prototype's fixed date for sample events, the real time for
+ * Core's. Computed once on the server and handed to client components, so server and browser
+ * agree on what is past.
+ */
+function eventsNow(source: EventSource) {
+  return source === 'sample' ? DEMO_NOW : new Date().toISOString()
+}
+
+function eventSource(): EventSource | null {
+  const mode = getCoreConfig().mode
+  return mode === 'core' ? 'core' : mode === 'sample' ? 'sample' : null
+}
+
+function registrationTransport(source: EventSource): RegistrationTransport {
+  if (source === 'sample') return { kind: 'sample' }
+  const baseUrl = getRegistrationBaseUrl()
+  return baseUrl ? { kind: 'core', baseUrl } : { kind: 'unavailable' }
+}
+
+export type EventsResult<T> = { status: 'ok'; source: EventSource; events: T[]; now: string } | { status: 'unavailable' }
+
+/** The homepage's events: the next few upcoming, soonest first (the first one is featured). */
+export async function getHomeEvents(limit = 4): Promise<EventsResult<HomeEvent>> {
+  const source = eventSource()
+  if (source === 'sample') return { status: 'ok', source, events: HOME_SAMPLE_EVENTS, now: eventsNow(source) }
+  if (source === null) return { status: 'unavailable' }
+  const result = await listCoreEvents('upcoming')
+  if (result.status !== 'ok') return { status: 'unavailable' }
+  return { status: 'ok', source, events: result.events.slice(0, limit).map(toHomeEvent), now: eventsNow(source) }
+}
+
+/** /events: every event on the timeline, past and upcoming, soonest first. */
+export async function getEventsTimeline(): Promise<EventsResult<EventView>> {
+  const source = eventSource()
+  if (source === 'sample') return { status: 'ok', source, events: await getEvents(), now: eventsNow(source) }
+  if (source === null) return { status: 'unavailable' }
+  const result = await listCoreEvents('all')
+  if (result.status !== 'ok') return { status: 'unavailable' }
+  const events = result.events.map(toEventView).sort((a, b) => a.start.localeCompare(b.start))
+  return { status: 'ok', source, events, now: eventsNow(source) }
+}
+
+export type EventPageResult =
+  | { status: 'ok'; source: EventSource; event: EventView; related: EventView[]; registration: RegistrationTransport; now: string }
+  | { status: 'not-found' }
+  | { status: 'unavailable' }
+
+/** /events/[slug]: one event, related events and how to register. */
+export async function getEventPage(slug: string): Promise<EventPageResult> {
+  const source = eventSource()
+  if (source === 'sample') {
+    const event = await getEvent(slug)
+    if (!event) return { status: 'not-found' }
+    return { status: 'ok', source, event, related: await getRelatedEvents(event), registration: registrationTransport(source), now: eventsNow(source) }
+  }
+  if (source === null) return { status: 'unavailable' }
+  const result = await getCoreEvent(slug)
+  if (result.status !== 'ok') return { status: result.status }
+  const event = toEventView(result.event)
+  // Related events come from the timeline's (cached) list; if that fails the page still stands.
+  const list = await listCoreEvents('all')
+  const related = list.status === 'ok' ? relatedTo(event, list.events.map(toEventView), 3) : []
+  return { status: 'ok', source, event, related, registration: registrationTransport(source), now: eventsNow(source) }
 }
 
 // ---------------------------------------------------------------- projects

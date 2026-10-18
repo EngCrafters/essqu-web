@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { EVENTS, type SocietyEvent } from '@/content/events'
-import { eventDateParts, eventTimeRange } from '@/lib/format'
+import type { HomeEvent } from '@/content/events'
+import { getHomeEvents } from '@/lib/data'
+import { eventDateParts, eventTimes } from '@/lib/format'
 import type { I18n } from '@/lib/i18n'
 import { getI18n } from '@/lib/i18n/server'
 import { IconArrowRight, IconClock, IconPin } from '@/components/ui/icons'
@@ -8,10 +9,15 @@ import { ItemMedia } from '@/components/ui/Plate'
 import { routes } from '@/lib/routes'
 import styles from './Events.module.css'
 
+/**
+ * The next events, from the Core platform when it is connected (lib/data → lib/core-api), or the
+ * sample listings in sample mode. If Core can't be reached the section says so and the rest of the
+ * homepage is unaffected.
+ */
 export async function Events() {
-  const i18n = await getI18n()
+  const [i18n, result] = await Promise.all([getI18n(), getHomeEvents()])
   const { t } = i18n
-  const [featured, ...rest] = EVENTS
+  const [featured, ...rest] = result.status === 'ok' ? result.events : []
 
   return (
     <section id="events" className={`section ${styles.section}`} aria-labelledby="events-title">
@@ -20,17 +26,23 @@ export async function Events() {
           <h2 id="events-title" className="section-title" data-reveal="heading">
             {t.events.title}
           </h2>
-          <div className={styles.headAside} data-reveal="rise">
-            <p className="preview-note">
-              <span className="status-dot" aria-hidden="true" />
-              <span>
-                <strong>{t.events.sampleStrong}</strong> {t.events.sampleBody}
-              </span>
-            </p>
-          </div>
+          {result.status === 'ok' && result.source === 'sample' && (
+            <div className={styles.headAside} data-reveal="rise">
+              <p className="preview-note">
+                <span className="status-dot" aria-hidden="true" />
+                <span>
+                  <strong>{t.events.sampleStrong}</strong> {t.events.sampleBody}
+                </span>
+              </p>
+            </div>
+          )}
         </header>
 
-        {featured ? (
+        {result.status === 'unavailable' ? (
+          <p className={styles.empty} role="status">
+            {t.events.unavailable}
+          </p>
+        ) : featured ? (
           <>
             <FeaturedEvent event={featured} i18n={i18n} />
             {rest.length > 0 && (
@@ -55,7 +67,7 @@ export async function Events() {
   )
 }
 
-type Props = { event: SocietyEvent; i18n: I18n }
+type Props = { event: HomeEvent; i18n: I18n }
 
 function Meta({ event, i18n, className }: Props & { className?: string }) {
   const { t, l, intl } = i18n
@@ -70,37 +82,40 @@ function Meta({ event, i18n, className }: Props & { className?: string }) {
         <dd>
           <time dateTime={event.start}>{date.long}</time>
           {t.common.comma}
-          <span dir="ltr">{eventTimeRange(event.start, event.end, intl)}</span>{' '}
+          <span dir="ltr">{eventTimes(event.start, event.end, intl)}</span>{' '}
           <span className={styles.tz}>{t.events.timezone}</span>
         </dd>
       </div>
-      <div>
-        <dt>
-          <IconPin className={styles.metaIcon} />
-          <span className="visually-hidden">{t.events.location}</span>
-        </dt>
-        <dd>{l(event.location)}</dd>
-      </div>
+      {event.location && (
+        <div>
+          <dt>
+            <IconPin className={styles.metaIcon} />
+            <span className="visually-hidden">{t.events.location}</span>
+          </dt>
+          <dd>{l(event.location)}</dd>
+        </div>
+      )}
     </dl>
   )
 }
 
-/** The event's own page holds its (prototype) registration, so the action opens it there. */
+/**
+ * The event's own page holds its registration, so the action opens it there: the prototype for
+ * sample listings, Core's registration for published events (labelled by its state).
+ */
 function Register({ event, i18n, variant }: Props & { variant: 'primary' | 'secondary' }) {
   const { t, l } = i18n
   const title = l(event.title)
+  const label = event.registration === 'preview' ? t.events.previewRegistration : t.events.actions[event.registration]
+  const href = event.registration === 'closed' ? routes.event(event.id) : `${routes.event(event.id)}#register`
   return (
     <div className={styles.register}>
       <p className={styles.status}>
         <span className="status-dot" aria-hidden="true" />
         {t.events.registration[event.registration]}
       </p>
-      <Link
-        href={`${routes.event(event.id)}#register`}
-        className={`btn btn--${variant} btn--compact`}
-        aria-label={t.events.previewFor(t.events.previewRegistration, title)}
-      >
-        {t.events.previewRegistration}
+      <Link href={href} className={`btn btn--${variant} btn--compact`} aria-label={t.events.previewFor(label, title)}>
+        {label}
         <IconArrowRight className="btn__arrow" />
       </Link>
     </div>
@@ -148,7 +163,8 @@ function FeaturedEvent({ event, i18n }: Props) {
       </div>
       <div className={styles.featuredText}>
         <p className={styles.type} data-part="text">
-          {t.events.featured} · {t.events.types[event.type]}
+          {t.events.featured}
+          {event.type && ` · ${t.events.types[event.type]}`}
         </p>
         <EventTitle event={event} i18n={i18n} className={styles.featuredTitle} part="text" />
         <p className={styles.description} data-part="text">
@@ -175,10 +191,12 @@ function EventRow({ event, i18n }: Props) {
         <span className={styles.rowMonth}>{date.month}</span>
       </p>
       <div className={styles.rowMain}>
-        <p className={styles.type}>
-          {t.events.types[event.type]}
-          {event.sample && <span className="chip chip--sample">{t.common.sample}</span>}
-        </p>
+        {(event.type || event.sample) && (
+          <p className={styles.type}>
+            {event.type && t.events.types[event.type]}
+            {event.sample && <span className="chip chip--sample">{t.common.sample}</span>}
+          </p>
+        )}
         <EventTitle event={event} i18n={i18n} className={styles.rowTitle} />
         <p className={styles.description}>{l(event.description)}</p>
       </div>

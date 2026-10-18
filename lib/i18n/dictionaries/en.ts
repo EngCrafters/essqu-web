@@ -100,6 +100,9 @@ export const en = {
     },
     previewRegistration: 'Preview registration',
     previewFor: (label: string, title: string) => `${label} for ${title}`,
+    /** Events published through the platform: the action follows the event's registration state. */
+    actions: { open: 'Register', waitlist: 'Join the waitlist', closed: 'View event' },
+    unavailable: 'Events can’t be shown right now. Please check back shortly.',
   },
 
   projects: {

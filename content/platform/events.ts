@@ -20,6 +20,11 @@ import type { Localized } from '@/lib/i18n'
  * Photographs: only the Engineering Gathering exhibition carries one, of the gathering's own
  * hall. The other sample events keep their drawings rather than borrow photographs of other
  * occasions.
+ *
+ * Connected to Core (lib/core-api, CORE_API_BASE_URL set), the homepage's events and /events read
+ * the events published through the platform instead, and these records are not shown there. They
+ * remain the "sample" mode for local development and design review, and the records behind the
+ * sample profile (/profile) and the Disciplines page's sample figures.
  */
 
 export type PlatformEventType = 'workshop' | 'talk' | 'site-visit' | 'competition' | 'seminar' | 'exhibition'
@@ -33,24 +38,34 @@ export interface ScheduleItem {
   title: Localized
 }
 
-export interface PlatformEvent {
+/**
+ * An event as the events pages show it: either a sample record below or an event published
+ * through the Core platform (lib/core-api/adapter.ts). Core's public contract carries less than a
+ * sample record (no type, end time, capacity, programme, disciplines or photograph), so those
+ * fields are optional here and the pages simply leave out what an event doesn't have.
+ */
+export interface EventView {
+  /** The address: a sample slug, or the Core event's id. */
   slug: string
-  sample: true
+  /** True for the sample records; false for events published through Core. */
+  sample: boolean
   title: Localized
-  type: PlatformEventType
-  /** ISO 8601 with the Oman offset. */
+  type?: PlatformEventType
+  /** ISO 8601 with an offset. */
   start: string
-  end: string
-  location: Localized
+  end?: string
+  location: Localized | null
   summary: Localized
   /** Longer description, as paragraphs. */
   about: Localized[]
   disciplines: DisciplineId[]
   activity?: ActivityId
   /** A committee id from content/structure.ts. */
-  organizer: string
-  capacity: number
-  registered: number
+  organizer?: string
+  /** The organising committee's name when it isn't one of content/structure.ts's committees. */
+  organizerName?: Localized
+  capacity?: number
+  registered?: number
   waitlist?: number
   registration: EventRegistration
   /** Past events only: how many attended (illustrative). */
@@ -60,6 +75,19 @@ export interface PlatformEvent {
   image?: MediaImage
   featured?: boolean
 }
+
+/** A sample record: every field the prototype's pages were designed around is present. */
+export interface PlatformEvent extends EventView {
+  sample: true
+  type: PlatformEventType
+  end: string
+  location: Localized
+  organizer: string
+  capacity: number
+  registered: number
+}
+
+export const isSampleEvent = (e: EventView): e is PlatformEvent => e.sample
 
 const home = (id: string) => {
   const e = EVENTS.find((x) => x.id === id)

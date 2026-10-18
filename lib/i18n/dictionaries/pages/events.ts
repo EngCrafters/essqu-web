@@ -140,6 +140,35 @@ export const eventsEn = {
   passEvent: 'Event',
   passCode: 'Pass',
   passHint: 'Organisers scan this at the door; your attendance then appears in your profile.',
+
+  // Events published through the platform (Core): real registration, no pass or profile yet.
+  completedNoteCore: 'This event has finished.',
+  registeredNoteCore: 'Your place is confirmed under the name and email you entered.',
+  formName: 'Full name',
+  formEmail: 'Email',
+  formPrivacy: 'Your name and email go to the Engineering Society’s event platform to record this registration.',
+  sending: 'Sending…',
+  fieldErrors: {
+    attendeeName: {
+      required: 'Enter your full name.',
+      'too-long': 'Use 200 characters or fewer.',
+      invalid: 'Remove any special characters from your name.',
+    },
+    attendeeEmail: {
+      required: 'Enter your email address.',
+      'too-long': 'Use 254 characters or fewer.',
+      invalid: 'Enter an email address like name@example.com.',
+    },
+  },
+  outcome: {
+    conflict:
+      'This registration couldn’t be completed. You may already be registered or on the waitlist, or the last place or registration may have just closed. Refresh the page to see the event as it is now.',
+    invalid: 'Check your name and email, then try again.',
+    notFound: 'This event is no longer open for registration.',
+    rateLimited: 'Too many registration attempts from this connection. Please try again in a few minutes.',
+    rateLimitedIn: (minutes: number) => `Too many registration attempts from this connection. Please try again in ${pluralEn(minutes, 'minute', 'minutes')}.`,
+    unavailable: 'Your registration couldn’t be confirmed just now. Please try again in a moment.',
+  },
 }
 
 export type EventsCopy = typeof eventsEn
@@ -228,4 +257,32 @@ export const eventsAr: EventsCopy = {
   passEvent: 'الفعالية',
   passCode: 'البطاقة',
   passHint: 'يمسحها المنظمون عند الباب، ثم يظهر حضورك في ملفك.',
+
+  completedNoteCore: 'انتهت هذه الفعالية.',
+  registeredNoteCore: 'تم تأكيد مقعدك بالاسم والبريد الإلكتروني اللذين أدخلتهما.',
+  formName: 'الاسم الكامل',
+  formEmail: 'البريد الإلكتروني',
+  formPrivacy: 'يُرسَل اسمك وبريدك الإلكتروني إلى منصة فعاليات الجماعة الهندسية لتسجيل هذا الحجز.',
+  sending: 'جارٍ الإرسال…',
+  fieldErrors: {
+    attendeeName: {
+      required: 'أدخل اسمك الكامل.',
+      'too-long': 'استخدم 200 حرف أو أقل.',
+      invalid: 'أزل أي رموز خاصة من اسمك.',
+    },
+    attendeeEmail: {
+      required: 'أدخل بريدك الإلكتروني.',
+      'too-long': 'استخدم 254 حرفًا أو أقل.',
+      invalid: 'أدخل بريدًا إلكترونيًا مثل name@example.com.',
+    },
+  },
+  outcome: {
+    conflict:
+      'تعذّر إتمام هذا التسجيل. ربما سجّلت مسبقًا أو انضممت إلى قائمة الانتظار، أو ربما شُغل آخر مقعد أو أُغلق التسجيل للتو. حدّث الصفحة لترى حالة الفعالية الآن.',
+    invalid: 'تحقّق من اسمك وبريدك الإلكتروني ثم حاول مجددًا.',
+    notFound: 'لم تعد هذه الفعالية متاحة للتسجيل.',
+    rateLimited: 'محاولات تسجيل كثيرة من هذا الاتصال. يُرجى المحاولة بعد بضع دقائق.',
+    rateLimitedIn: (minutes: number) => `محاولات تسجيل كثيرة من هذا الاتصال. يُرجى المحاولة بعد ${arCount(minutes, 'دقيقة واحدة', 'دقيقتين', 'دقائق', 'دقيقة')}.`,
+    unavailable: 'تعذّر تأكيد تسجيلك الآن. يُرجى المحاولة بعد قليل.',
+  },
 }

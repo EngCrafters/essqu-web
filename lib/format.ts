@@ -78,3 +78,27 @@ export function formatPartialDate(date: string, intl: string) {
 export function timeRangeIsolated(startIso: string, endIso: string, intl: string) {
   return `\u2066${eventTimeRange(startIso, endIso, intl)}\u2069`
 }
+
+/**
+ * An event's time: its range when the end is known, otherwise its start alone (events from the
+ * Core platform publish a start time only).
+ */
+export function eventTimes(startIso: string, endIso: string | undefined, intl: string) {
+  return endIso ? eventTimeRange(startIso, endIso, intl) : formats(intl).time.format(new Date(startIso))
+}
+
+const monthKeyFormat = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit' })
+
+/**
+ * 'YYYY-MM' of an instant in Oman time. Core sends UTC timestamps, so slicing the string would
+ * file an event at 01:00 on the 1st (Oman time) under the previous month.
+ */
+export function omanMonthKey(iso: string) {
+  const parts = monthKeyFormat.formatToParts(new Date(iso))
+  return `${parts.find((p) => p.type === 'year')?.value}-${parts.find((p) => p.type === 'month')?.value}`
+}
+
+/** `eventTimes` in a left-to-right isolate, like `timeRangeIsolated`. */
+export function eventTimesIsolated(startIso: string, endIso: string | undefined, intl: string) {
+  return `\u2066${eventTimes(startIso, endIso, intl)}\u2069`
+}

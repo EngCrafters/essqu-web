@@ -95,6 +95,8 @@ export const ar: Dictionary = {
     },
     previewRegistration: 'معاينة التسجيل',
     previewFor: (label: string, title: string) => `${label}: ${title}`,
+    actions: { open: 'سجّل', waitlist: 'انضم إلى قائمة الانتظار', closed: 'عرض الفعالية' },
+    unavailable: 'تعذّر عرض الفعاليات الآن. يُرجى المحاولة بعد قليل.',
   },
 
   projects: {

@@ -5,7 +5,9 @@ import { EventsTimeline } from '@/components/pages/events/EventsTimeline'
 import { FeaturedEvent } from '@/components/pages/events/FeaturedEvent'
 import styles from '@/components/pages/events/Events.module.css'
 import { PlatformHero, SampleNotice } from '@/components/platform/Platform'
-import { DEMO_NOW, eventPhase, getCurrentMember, getEvents } from '@/lib/data'
+import { isPast } from '@/components/platform/registration'
+import { getCurrentMember, getEventsTimeline } from '@/lib/data'
+import { omanMonthKey } from '@/lib/format'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,13 +18,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function EventsPage({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
   const { t } = await getI18n()
   const c = t.platform.eventsPage
-  const [{ state }, events, me] = await Promise.all([searchParams, getEvents(), getCurrentMember()])
-  // Events the sample member already holds a place at, from their records.
-  const held = me.attendance.filter((a) => a.status === 'registered').map((a) => a.event.slug)
-  const upcoming = events.filter((e) => eventPhase(e) === 'upcoming')
+  const [{ state }, listing] = await Promise.all([searchParams, getEventsTimeline()])
+  const ok = listing.status === 'ok'
+  const events = ok ? listing.events : []
+  const now = ok ? listing.now : new Date().toISOString()
+  // Events the sample member already holds a place at, from their records. Sample mode only:
+  // nobody is signed in to the Core platform.
+  const held = ok && listing.source === 'sample' ? (await getCurrentMember()).attendance.filter((a) => a.status === 'registered').map((a) => a.event.slug) : []
+  const upcoming = events.filter((e) => !isPast(e, now))
   const featured = upcoming.find((e) => e.featured) ?? upcoming[0]
-  const thisMonth = upcoming.filter((e) => e.start.slice(0, 7) === DEMO_NOW.slice(0, 7)).length
-  const open = upcoming.filter((e) => e.registration === 'open' && e.registered < e.capacity).length
+  const thisMonth = upcoming.filter((e) => omanMonthKey(e.start) === omanMonthKey(now)).length
+  const open = upcoming.filter((e) => e.registration === 'open' && (e.capacity === undefined || e.registered === undefined || e.registered < e.capacity)).length
 
   return (
     <>
@@ -31,26 +37,29 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
         title={c.title}
         lead={<p>{c.lead}</p>}
         tone="surface"
-        visual={featured ? <FeaturedEvent event={featured} held={held} /> : undefined}
+        visual={featured ? <FeaturedEvent event={featured} held={held} now={now} /> : undefined}
       >
-        <dl className={styles.heroStats}>
-          <div>
-            <dt>{c.stats.upcoming}</dt>
-            <dd>{upcoming.length}</dd>
-          </div>
-          <div>
-            <dt>{c.stats.thisMonth}</dt>
-            <dd>{thisMonth}</dd>
-          </div>
-          <div>
-            <dt>{c.stats.open}</dt>
-            <dd>{open}</dd>
-          </div>
-        </dl>
-        <SampleNotice />
+        {ok && (
+          <dl className={styles.heroStats}>
+            <div>
+              <dt>{c.stats.upcoming}</dt>
+              <dd>{upcoming.length}</dd>
+            </div>
+            <div>
+              <dt>{c.stats.thisMonth}</dt>
+              <dd>{thisMonth}</dd>
+            </div>
+            <div>
+              <dt>{c.stats.open}</dt>
+              <dd>{open}</dd>
+            </div>
+          </dl>
+        )}
+        {ok && listing.source === 'sample' && <SampleNotice />}
       </PlatformHero>
       <Suspense fallback={null}>
-        <EventsTimeline events={events} held={held} state={state} />
+        {/* Core unreachable: the timeline's own error state, with its retry. */}
+        <EventsTimeline events={events} held={held} state={ok ? state : 'error'} now={now} />
       </Suspense>
       <ScrollReveals />
     </>

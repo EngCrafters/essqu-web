@@ -104,6 +104,11 @@
   font-weight: 600;
 }
 
+/* An event that publishes no capacity has no seat bar: the action keeps its place at the end. */
+.featuredCta:only-child {
+  margin-inline-start: auto;
+}
+
 :global(html[dir='rtl']) .featuredCta :global(.btn__arrow) {
   transform: scaleX(-1);
 }
@@ -866,6 +871,100 @@
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.done:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Registration form for events from the Core platform: the membership form's field styling
+   (components/pages/register/Register.module.css), so both forms read as one design. */
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.field > label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-button);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  transition:
+    border-color var(--dur-hover) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out);
+}
+
+.field input[dir='ltr'] {
+  text-align: start;
+}
+
+:global(html[dir='rtl']) .field input[dir='ltr'] {
+  text-align: right;
+}
+
+.field input:focus-visible {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+.field input:disabled {
+  opacity: 0.7;
+}
+
+.field[data-invalid] input {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 3px rgb(179 38 30 / 0.08);
+}
+
+.fieldError,
+.formError {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #b3261e;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.fieldError::before,
+.formError::before {
+  content: '!';
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #b3261e;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.formError {
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border-radius: 12px;
+  background: rgb(179 38 30 / 0.06);
 }
 
 @media (min-width: 64rem) {

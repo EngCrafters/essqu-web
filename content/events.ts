@@ -8,6 +8,10 @@ import type { MediaImage } from './media'
  * reviewed; every one is rendered with a visible "Sample" label and a preview-only
  * registration action. Replace with published events once the events module exists.
  * Type and registration labels are interface copy: `t.events.types` / `t.events.registration`.
+ *
+ * The events module now exists: with the Core API configured (lib/core-api), the homepage shows
+ * the events published through the platform and these entries are not used. They remain the
+ * homepage's "sample" mode for local development and design review.
  */
 
 export type EventType = 'workshop' | 'talk' | 'site-visit' | 'competition'
@@ -29,6 +33,17 @@ export interface SocietyEvent {
   drawing: DrawingId
   /** An authentic event photograph, when the society supplies one; replaces the drawing. */
   image?: MediaImage
+}
+
+/**
+ * What the homepage's events section renders: a sample entry above, or an event published through
+ * the Core platform (lib/core-api/adapter.ts), which has no type or end time and may have no
+ * location yet. The section leaves out whatever an event doesn't have.
+ */
+export type HomeEvent = Omit<SocietyEvent, 'type' | 'end' | 'location'> & {
+  type?: EventType
+  end?: string
+  location: Localized | null
 }
 
 export const EVENTS: SocietyEvent[] = [
