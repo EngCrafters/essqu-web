@@ -9,10 +9,13 @@ Earlier drafts are kept:
 - **Draft 2 / Draft 3** (Next.js): `drafts/draft-2-source.zip`, `drafts/draft-3-source.zip`.
 - **Draft 4 onward:** this repository's git history.
 
-Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). There is no backend,
-authentication, database, API route or admin tool: the platform pages run on local sample data,
-and every action (registering, requesting mentorship, applying to join) happens in the browser
-tab only. See **Platform prototype** below.
+Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). **Events and event
+registration come from the Core platform** (`engsoc-platform`, `api.essqu.com/v1`) when it is
+configured: see [`integration/`](integration/INTEGRATION_ARCHITECTURE.md) and `lib/core-api/`.
+This site has no database, authentication, API route or admin tool of its own; committees manage
+events in Core's admin. Every other platform page still runs on local sample data, and its
+actions (requesting mentorship, applying to join) happen in the browser tab only. See
+**Platform prototype** below.
 
 ## Run
 
@@ -23,7 +26,12 @@ npm run build      # production build (includes type checking)
 npm start          # serve the production build
 npm run lint
 npm run typecheck
+npm test           # unit tests for the Core API integration (Node's built-in runner)
 ```
+
+With no `CORE_API_BASE_URL`, `npm run dev` shows the sample events. To read a Core API instead,
+copy `.env.example` to `.env.local` and set `CORE_API_BASE_URL` and `CORE_EVENTS_API_KEY`
+(server-only; see `integration/DEPLOYMENT_GUIDE.md`).
 
 **Testing on a phone:** run `npm run dev` and open the **Network** URL it prints (for example
 `http://192.168.8.158:3000`) on a phone on the same Wi-Fi. Next.js blocks dev-only assets for
@@ -139,7 +147,7 @@ Arabic; change those too if they are also جماعات.
 | Archive (`/activities`) | One record per edition in `content/activities.ts`, with all its photographs in the lightbox; undated records are filed last under "Undated". The discipline filter appears once records carry disciplines. | `content/activities.ts` |
 | Leadership & structure | The President (سيف المرجبي) and the three Vice Presidents (عبدالرحمن القري، كوثر عبدواني، هيا الزدجالي), named and portrayed from the society's own portrait files; the English spellings are transliterations to confirm. No term, committee chairs or deputies yet: committee seats stay vacant. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts`, `public/images/leadership/` |
 | About: community photograph | Engineering Sablah, 2025 (السبلة الهندسية), beside the society's overview. | `content/media.ts` → `SOCIETY_PHOTOS` |
-| Events | **Sample listings**, labelled "Sample". Each opens its platform page, where registration is a prototype; nothing is submitted. | `content/events.ts` |
+| Events | **From the Core platform** when configured: the homepage section, `/events` and each event page show published events, and registration is sent to Core. Fields Core doesn't publish (type, end time, capacity, programme, disciplines, photographs) are left out rather than invented. In sample mode (local development, or `CORE_API_MODE=sample`; never in production) the **sample listings**, labelled "Sample", with the in-tab prototype registration. | Core admin (`admin.essqu.com`); samples: `content/events.ts`, `content/platform/events.ts` |
 | Projects (homepage) | **The society's real projects**, from the teams' posters in /photos/proj: PLA/HA bone scaffolds (Grand Prize, Engineering Gathering), HydroGenix (Winner, INJAZ Oman 2026), T.A.M.R.A. (Best project, Electrical & Mechatronics) and compressor packing leakage (Best project, Mechanical & Industrial). Only what the files state is shown: discipline, year and team where given, no stage. Each poster (or HydroGenix's model photograph) is laid on the drawing board as a print. No project pages yet, so the cards don't link; the platform's sample project pages keep their own records. | `content/projects.ts`, `public/images/projects/` |
 | Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
 | Membership | "Join the Society" leads to the `/register` prototype everywhere; it stores and sends nothing, and no account is created. | `lib/routes.ts` |
@@ -155,8 +163,10 @@ Social URLs are validated: https, on the platform's own domain, pointing to a pr
 ## Platform prototype
 
 - **Data layer:** pages read only through the async functions in `lib/data/index.ts`
-  (`getEvents()`, `getProject(slug)`, `getMemberProfile(id)`, `verifyCertificate(code)`…). They
-  return the sample records today; connecting the real API means replacing those bodies.
+  (`getEventsTimeline()`, `getProject(slug)`, `getMemberProfile(id)`, `verifyCertificate(code)`…).
+  The event functions (`getHomeEvents`, `getEventsTimeline`, `getEventPage`) read the Core API
+  through `lib/core-api/`; the rest return the sample records, and connecting a future API means
+  replacing those bodies the same way.
 - **Demo session:** `components/platform/DemoSession.tsx` holds what the visitor did in this tab
   (registrations, cancellations, mentorship requests, a completed membership form) in
   sessionStorage. No form data is ever stored. The sample signed-in member is Huda S. (`m-07`).
