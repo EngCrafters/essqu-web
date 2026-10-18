@@ -74,19 +74,18 @@ const server = createServer(async (req, res) => {
   res.end('{}')
 })
 server.listen(4301, '127.0.0.1')
-const child = spawn(
-  process.execPath,
-  ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', '4300'],
-  {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      CORE_API_BASE_URL: 'http://127.0.0.1:4301/v1',
-      CORE_EVENTS_API_KEY: 'local-e2e-secret-not-production',
-      NEXT_PUBLIC_CORE_API_BASE_URL: 'http://127.0.0.1:4301/v1',
-    },
+const options = {
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    CORE_API_BASE_URL: 'http://127.0.0.1:4301/v1',
+    CORE_EVENTS_API_KEY: 'local-e2e-secret-not-production',
+    NEXT_PUBLIC_CORE_API_BASE_URL: 'http://127.0.0.1:4301/v1',
   },
-)
+}
+// Exercise the shipped production mode. Webpack avoids the Next 16.4.2
+// Turbopack font-query resolver failure observed on the Ubuntu CI runner.
+let child = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'build', '--webpack'], options)
 const stop = () => {
   child.kill()
   server.close()
@@ -94,4 +93,12 @@ const stop = () => {
 }
 process.on('SIGTERM', stop)
 process.on('SIGINT', stop)
+await new Promise((resolve, reject) =>
+  child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error('Local fixture production build failed')))),
+)
+child = spawn(
+  process.execPath,
+  ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '4300'],
+  options,
+)
 child.on('exit', () => server.close())

@@ -5,7 +5,7 @@
   "description": "Engineering Society, Sultan Qaboos University — landing page, Draft 2 (Next.js App Router).",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

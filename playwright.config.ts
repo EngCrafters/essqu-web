@@ -12,6 +12,6 @@ export default defineConfig({
     command: 'node scripts/e2e-servers.mjs',
     url: 'http://127.0.0.1:4300/events',
     reuseExistingServer: false,
-    timeout: 120000,
+    timeout: 180000,
   },
 })

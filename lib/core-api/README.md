@@ -11,3 +11,5 @@ The source of truth is Core `docs/api/openapi.v1.yaml` and `LANDING_HANDOFF_V1.m
 Pre-domain configuration uses the Core Vercel `/v1` URL for both URL variables. Later set both URLs to `https://api.essqu.com/v1` and rebuild; the key remains server-only. Core must allow the exact Landing origin through `CORE_API_ALLOWED_ORIGINS`. No wildcard is required. Landing holds no database URL, service-role key or admin credential.
 
 Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`. CI requires no live credential. Real staging cross-project E2E and production activation are separately gated release operations; unit tests alone do not prove them.
+
+`npm run test:e2e` builds and starts the production bundle against the synthetic local HTTP fixture. Both this harness and ordinary production builds use Webpack because Next 16.4.2's Turbopack font-query resolver failed on Ubuntu CI. This changes the build tool, not the font design or API contract.
