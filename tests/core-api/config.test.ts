@@ -16,31 +16,19 @@ describe('resolveCoreConfig', () => {
     })
   })
 
-  it('uses the sample catalogue in local development with nothing configured', () => {
-    assert.deepEqual(resolveCoreConfig({ NODE_ENV: 'development' }), { mode: 'sample' })
+  it('has no sample mode: with nothing configured, every environment is unconfigured', () => {
+    for (const env of [{ NODE_ENV: 'development' }, { NODE_ENV: 'production' }, { NODE_ENV: 'production', VERCEL_ENV: 'preview' }, { NODE_ENV: 'production', VERCEL_ENV: 'production' }])
+      assert.deepEqual(resolveCoreConfig(env), { mode: 'unconfigured', problem: 'missing-base-url' }, JSON.stringify(env))
   })
 
-  it('never falls back to samples outside development', () => {
-    assert.deepEqual(resolveCoreConfig({ NODE_ENV: 'production' }), { mode: 'unconfigured', problem: 'missing-base-url' })
-    assert.deepEqual(resolveCoreConfig({ NODE_ENV: 'production', VERCEL_ENV: 'preview' }), { mode: 'unconfigured', problem: 'missing-base-url' })
-  })
-
-  it('refuses sample mode on a Vercel production deployment, whatever is asked', () => {
-    assert.deepEqual(resolveCoreConfig({ CORE_API_MODE: 'sample', VERCEL_ENV: 'production' }), { mode: 'unconfigured', problem: 'sample-not-allowed' })
-    assert.deepEqual(resolveCoreConfig({ NODE_ENV: 'development', VERCEL_ENV: 'production' }), { mode: 'unconfigured', problem: 'missing-base-url' })
-  })
-
-  it('allows explicit sample mode for previews and design review', () => {
-    assert.deepEqual(resolveCoreConfig({ CORE_API_MODE: 'sample', VERCEL_ENV: 'preview', ...CORE }), { mode: 'sample' })
+  it('ignores the retired CORE_API_MODE=sample', () => {
+    assert.deepEqual(resolveCoreConfig({ CORE_API_MODE: 'sample', NODE_ENV: 'development' }), { mode: 'unconfigured', problem: 'missing-base-url' })
+    assert.equal(resolveCoreConfig({ CORE_API_MODE: 'sample', VERCEL_ENV: 'preview', ...CORE }).mode, 'core')
   })
 
   it('requires the server key for Core mode', () => {
     assert.deepEqual(resolveCoreConfig({ CORE_API_BASE_URL: CORE.CORE_API_BASE_URL }), { mode: 'unconfigured', problem: 'missing-api-key' })
     assert.deepEqual(resolveCoreConfig({ ...CORE, CORE_EVENTS_API_KEY: 'two words' }), { mode: 'unconfigured', problem: 'invalid-api-key' })
-  })
-
-  it('rejects an unknown mode', () => {
-    assert.deepEqual(resolveCoreConfig({ ...CORE, CORE_API_MODE: 'fixtures' }), { mode: 'unconfigured', problem: 'invalid-mode' })
   })
 
   it('keeps timeout and cache lifetime within bounds', () => {

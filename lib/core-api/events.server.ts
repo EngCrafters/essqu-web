@@ -24,14 +24,13 @@ export const eventTag = (id: string) => `core-event:${id}`
  */
 export const PAGE_LIMITS = { upcoming: 5, past: 1 } as const
 
-export type Unavailable = { status: 'unavailable'; reason: CoreErrorKind | ConfigProblem | 'not-core-mode' }
+export type Unavailable = { status: 'unavailable'; reason: CoreErrorKind | ConfigProblem }
 export type CoreListResult = { status: 'ok'; events: CoreEvent[] } | Unavailable
 export type CoreDetailResult = { status: 'ok'; event: CoreEvent } | { status: 'not-found' } | Unavailable
 
 function coreConfig(): CoreModeConfig | Unavailable {
   const config = getCoreConfig()
-  if (config.mode === 'core') return config
-  return { status: 'unavailable', reason: config.mode === 'unconfigured' ? config.problem : 'not-core-mode' }
+  return config.mode === 'core' ? config : { status: 'unavailable', reason: config.problem }
 }
 
 async function listPeriod(config: CoreModeConfig, period: 'upcoming' | 'past'): Promise<CoreEvent[]> {

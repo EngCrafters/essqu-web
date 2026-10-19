@@ -30,11 +30,11 @@ Browser form ─► registration.ts ─► POST {CORE_API_BASE_URL}/events/{id}/
 
 | Mode | When | Events | Registration |
 | --- | --- | --- | --- |
-| `core` | `CORE_API_BASE_URL` (with `/v1`) and `CORE_EVENTS_API_KEY` set | Core | Browser → Core |
-| `sample` | `next dev` with nothing set, or `CORE_API_MODE=sample` (never on Vercel production) | `content/` samples, labelled "Sample" | The in-tab prototype |
-| `unconfigured` | anything else | "Events can't be shown right now" | none |
+| `core` | `CORE_API_BASE_URL` (with `/v1`, production `https://api.essqu.com/v1`) and `CORE_EVENTS_API_KEY` set | Core | Browser → Core |
+| `unconfigured` | anything else, including `next dev` with nothing set (the problem is logged once) | "Events can't be shown right now" | none |
 
-There is no hard-coded Core URL, no fallback to one, and no `NEXT_PUBLIC_` variable.
+There is no sample mode: the public event pages never show the sample catalogue, in any
+environment. There is no hard-coded Core URL, no fallback to one, and no `NEXT_PUBLIC_` variable.
 
 ## Rules
 

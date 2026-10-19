@@ -19,7 +19,9 @@ describe('unconfigured production', () => {
     try {
       assert.deepEqual(await getHomeEvents(), { status: 'unavailable' })
       assert.deepEqual(await getEventsTimeline(), { status: 'unavailable' })
-      assert.deepEqual(await getEventPage('intro-robotics-workshop'), { status: 'unavailable' })
+      assert.deepEqual(await getEventPage('11111111-1111-4111-8111-111111111111'), { status: 'unavailable' })
+      // A sample event's address can never be a Core event, configured or not.
+      assert.deepEqual(await getEventPage('intro-robotics-workshop'), { status: 'not-found' })
       assert.equal(fetched, false)
     } finally {
       globalThis.fetch = realFetch

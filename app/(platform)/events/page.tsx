@@ -22,8 +22,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
   const ok = listing.status === 'ok'
   const events = ok ? listing.events : []
   const now = ok ? listing.now : new Date().toISOString()
-  // Events the sample member already holds a place at, from their records. Sample mode only:
-  // nobody is signed in to the Core platform.
+  // Events the sample member already holds a place at: only for sample listings, which the public
+  // timeline no longer receives (nobody is signed in to the Core platform).
   const held = ok && listing.source === 'sample' ? (await getCurrentMember()).attendance.filter((a) => a.status === 'registered').map((a) => a.event.slug) : []
   const upcoming = events.filter((e) => !isPast(e, now))
   const featured = upcoming.find((e) => e.featured) ?? upcoming[0]

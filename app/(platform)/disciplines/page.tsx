@@ -8,7 +8,7 @@ import styles from '@/components/pages/disciplines/Disciplines.module.css'
 import { CtaBand, PlatformHero, SampleNotice } from '@/components/platform/Platform'
 import { IconArrowRight } from '@/components/ui/icons'
 import { DISCIPLINES, type DisciplineId } from '@/content/disciplines'
-import { eventPhase, getEvents, getMembers, getProjects } from '@/lib/data'
+import { getMembers, getProjects } from '@/lib/data'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,15 +19,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DisciplinesPage() {
   const { t } = await getI18n()
   const c = t.platform.disciplinesPage
-  const [projects, events, members] = await Promise.all([getProjects(), getEvents(), getMembers()])
+  const [projects, members] = await Promise.all([getProjects(), getMembers()])
 
+  // No events figure: events come from Core, which doesn't publish their disciplines yet, and the
+  // sample catalogue's counts are not shown in their place.
   const involves = (ds: DisciplineId[], d: DisciplineId) => ds.includes(d)
   const counts = Object.fromEntries(
     DISCIPLINES.map((d) => [
       d.id,
       {
         projects: projects.filter((p) => involves([p.discipline, ...(p.alsoDisciplines ?? [])], d.id)).length,
-        events: events.filter((e) => eventPhase(e) === 'upcoming' && involves(e.disciplines, d.id)).length,
         members: members.filter((m) => m.discipline === d.id).length,
       },
     ]),

@@ -33,7 +33,8 @@ const ACCENTS = DISCIPLINES.map((d) => DISCIPLINE_COLOR[d.id])
 
 export interface DisciplineCounts {
   projects: number
-  events: number
+  /** Absent until Core publishes an event's disciplines; the line is left out meanwhile. */
+  events?: number
   members: number
 }
 
@@ -204,12 +205,14 @@ export function DisciplinesExhibit({ counts }: { counts: Record<DisciplineId, Di
                       <IconArrowRight className="btn__arrow" />
                     </Link>
                   </li>
-                  <li>
-                    <Link href={`/events?discipline=${d.id}`} className={styles.ledgerLink}>
-                      {c.events(n.events)}
-                      <IconArrowRight className="btn__arrow" />
-                    </Link>
-                  </li>
+                  {n.events !== undefined && (
+                    <li>
+                      <Link href={`/events?discipline=${d.id}`} className={styles.ledgerLink}>
+                        {c.events(n.events)}
+                        <IconArrowRight className="btn__arrow" />
+                      </Link>
+                    </li>
+                  )}
                   <li>
                     <Link href={`/members?discipline=${d.id}`} className={styles.ledgerLink}>
                       {c.members(n.members)}

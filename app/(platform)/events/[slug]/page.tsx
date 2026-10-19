@@ -59,7 +59,8 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   }
 
   const { event, related, registration, now } = page
-  // The sample member's registrations exist only in sample mode; nobody is signed in to Core.
+  // The sample member's registrations exist only for sample events, which public pages no longer
+  // receive; nobody is signed in to Core.
   const held = event.sample ? (await getCurrentMember()).attendance.filter((a) => a.status === 'registered').map((a) => a.event.slug) : []
   const d = eventDateParts(event.start, intl)
   const committee = COMMITTEES.find((x) => x.id === event.organizer)

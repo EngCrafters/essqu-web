@@ -2,21 +2,19 @@ import 'server-only'
 
 /*
  * Core API configuration: read from the server environment once, validated, and resolved into
- * one of three modes. Nothing here reaches the browser except the public API base URL, and only
- * for registration (see events.server.ts → getRegistrationEndpoint).
+ * one of two modes. Nothing here reaches the browser except the public API base URL, and only
+ * for registration (see events.server.ts → getRegistrationBaseUrl).
  *
  *   core          CORE_API_BASE_URL and CORE_EVENTS_API_KEY are set: events come from Core.
- *   sample        The site's own sample catalogue (content/), labelled "Sample" on every page,
- *                 with the browser-only prototype registration. Local development with nothing
- *                 configured, or CORE_API_MODE=sample. Never on a Vercel production deployment.
  *   unconfigured  Anything else: event surfaces show an honest "can't be shown right now" state
- *                 and the rest of the site renders normally. Never a fallback to sample events.
+ *                 and the rest of the site renders normally. The problem is logged once.
  *
- * There is no hard-coded Core URL and no silent fallback to one. The key is server-only; there is
- * no NEXT_PUBLIC_ variant, by design.
+ * There is no sample mode: the public event pages show Core's published events and nothing else,
+ * in development, Preview and Production alike. There is no hard-coded Core URL and no silent
+ * fallback to one. The key is server-only; there is no NEXT_PUBLIC_ variant, by design.
  */
 
-export type ConfigProblem = 'missing-base-url' | 'invalid-base-url' | 'insecure-base-url' | 'missing-api-key' | 'invalid-api-key' | 'invalid-mode' | 'sample-not-allowed'
+export type ConfigProblem = 'missing-base-url' | 'invalid-base-url' | 'insecure-base-url' | 'missing-api-key' | 'invalid-api-key'
 
 export interface CoreModeConfig {
   mode: 'core'
@@ -29,7 +27,7 @@ export interface CoreModeConfig {
   revalidateSeconds: number
 }
 
-export type CoreConfig = CoreModeConfig | { mode: 'sample' } | { mode: 'unconfigured'; problem: ConfigProblem }
+export type CoreConfig = CoreModeConfig | { mode: 'unconfigured'; problem: ConfigProblem }
 
 type Env = Record<string, string | undefined>
 
@@ -41,11 +39,6 @@ function intInRange(value: string | undefined, fallback: number, min: number, ma
   if (value === undefined || value.trim() === '') return fallback
   const n = Number(value)
   return Number.isInteger(n) && n >= min && n <= max ? n : fallback
-}
-
-/** Sample events may be shown anywhere except a Vercel production deployment. */
-export function sampleAllowed(env: Env) {
-  return env.VERCEL_ENV !== 'production'
 }
 
 /** Validates CORE_API_BASE_URL; returns the normalised value or the problem. */
@@ -72,16 +65,8 @@ export function normaliseBaseUrl(raw: string, env: Env): { ok: true; value: stri
 
 /** Pure: resolves the configuration from an environment object (tests pass their own). */
 export function resolveCoreConfig(env: Env): CoreConfig {
-  const mode = env.CORE_API_MODE?.trim().toLowerCase() || undefined
-  if (mode && mode !== 'core' && mode !== 'sample') return { mode: 'unconfigured', problem: 'invalid-mode' }
-  if (mode === 'sample') return sampleAllowed(env) ? { mode: 'sample' } : { mode: 'unconfigured', problem: 'sample-not-allowed' }
-
   const rawBase = env.CORE_API_BASE_URL?.trim()
-  if (!rawBase) {
-    // Local development works with no Core at all; nowhere else falls back to samples.
-    if (!mode && env.NODE_ENV === 'development' && sampleAllowed(env)) return { mode: 'sample' }
-    return { mode: 'unconfigured', problem: 'missing-base-url' }
-  }
+  if (!rawBase) return { mode: 'unconfigured', problem: 'missing-base-url' }
 
   const base = normaliseBaseUrl(rawBase, env)
   if (!base.ok) return { mode: 'unconfigured', problem: base.problem }
@@ -105,6 +90,11 @@ let resolved: CoreConfig | null = null
 
 /** This deployment's configuration, resolved once per server process. */
 export function getCoreConfig(): CoreConfig {
-  resolved ??= resolveCoreConfig(process.env)
+  if (!resolved) {
+    resolved = resolveCoreConfig(process.env)
+    // Said once, so a Preview or a dev server missing its variables says why events are absent.
+    // The problem's name only: never a URL or a key.
+    if (resolved.mode === 'unconfigured') console.warn(JSON.stringify({ source: 'core-api', unconfigured: resolved.problem }))
+  }
   return resolved
 }
