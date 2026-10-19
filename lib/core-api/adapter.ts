@@ -96,8 +96,15 @@ export function toEventView(event: CoreEvent): EventView {
   }
 }
 
+/** The committee's name as shown: the site's bilingual name for one it lists, otherwise Core's. */
+export function organiserName(committeeName: string): Localized | undefined {
+  const { organizer, organizerName } = organiserFor(committeeName)
+  return organizer ? COMMITTEES.find((c) => c.id === organizer)?.name : organizerName
+}
+
 /** The homepage's events section. */
 export function toHomeEvent(event: CoreEvent): HomeEvent {
+  const organiser = organiserName(event.committeeName)
   return {
     id: event.id,
     sample: false,
@@ -107,5 +114,6 @@ export function toHomeEvent(event: CoreEvent): HomeEvent {
     description: both(splitDescription(event.description).summary),
     registration: event.availability,
     drawing: drawingFor(event.id),
+    ...(organiser ? { organiser } : {}),
   }
 }

@@ -44,6 +44,8 @@ export type HomeEvent = Omit<SocietyEvent, 'type' | 'end' | 'location'> & {
   type?: EventType
   end?: string
   location: Localized | null
+  /** The organising committee's name, for an event from Core (which has no type to show instead). */
+  organiser?: Localized
 }
 
 export const EVENTS: SocietyEvent[] = [

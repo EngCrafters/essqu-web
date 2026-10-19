@@ -84,4 +84,10 @@ describe('toHomeEvent', () => {
     assert.equal(home.type, undefined)
     assert.equal(home.end, undefined)
   })
+
+  it('names the organising committee: the site’s bilingual name, or Core’s as written', () => {
+    assert.deepEqual(toHomeEvent(event({ committeeName: 'Media Committee' })).organiser, { en: 'Media Committee', ar: 'اللجنة الإعلامية' })
+    assert.deepEqual(toHomeEvent(event({ committeeName: 'Evening Committee' })).organiser, { en: 'Evening Committee', ar: 'Evening Committee' })
+    assert.equal('organiser' in toHomeEvent(event({ committeeName: '' })), false)
+  })
 })

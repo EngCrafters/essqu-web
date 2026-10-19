@@ -10,9 +10,9 @@ import { routes } from '@/lib/routes'
 import styles from './Events.module.css'
 
 /**
- * The next events, from the Core platform when it is connected (lib/data → lib/core-api), or the
- * sample listings in sample mode. If Core can't be reached the section says so and the rest of the
- * homepage is unaffected.
+ * The next events, from the Core platform (lib/data → lib/core-api). If Core isn't configured or
+ * can't be reached the section says so and the rest of the homepage is unaffected; it never shows
+ * sample listings in their place.
  */
 export async function Events() {
   const [i18n, result] = await Promise.all([getI18n(), getHomeEvents()])
@@ -164,7 +164,17 @@ function FeaturedEvent({ event, i18n }: Props) {
       <div className={styles.featuredText}>
         <p className={styles.type} data-part="text">
           {t.events.featured}
-          {event.type && <> · {t.events.types[event.type]}</>}
+          {/* Sample listings carry a type; Core events (which have none) their committee. */}
+          {event.type ? (
+            <> · {t.events.types[event.type]}</>
+          ) : (
+            event.organiser && (
+              <>
+                {' · '}
+                <bdi>{l(event.organiser)}</bdi>
+              </>
+            )
+          )}
         </p>
         <EventTitle event={event} i18n={i18n} className={styles.featuredTitle} part="text" />
         <p className={styles.description} data-part="text">
@@ -191,9 +201,9 @@ function EventRow({ event, i18n }: Props) {
         <span className={styles.rowMonth}>{date.month}</span>
       </p>
       <div className={styles.rowMain}>
-        {(event.type || event.sample) && (
+        {(event.type || event.organiser || event.sample) && (
           <p className={styles.type}>
-            {event.type && t.events.types[event.type]}
+            {event.type ? t.events.types[event.type] : event.organiser && <bdi>{l(event.organiser)}</bdi>}
             {event.sample && <span className="chip chip--sample">{t.common.sample}</span>}
           </p>
         )}
