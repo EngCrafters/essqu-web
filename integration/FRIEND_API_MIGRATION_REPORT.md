@@ -4,6 +4,8 @@ Date: 19 October 2026 · Branch: `migration/friend-api-integration` (from `feat/
 
 **Result: migrated and verified against a synthetic Core. The real Core was only probed read-only, with no credentials.**
 
+> Later the same day: the production API is now `https://api.essqu.com/v1`, sample events were removed from every public surface, and deployment notes were added. See [LIVE_CORE_AND_DEPLOYMENT.md](LIVE_CORE_AND_DEPLOYMENT.md).
+
 ## 1. Starting point
 
 | | `ESWebsite` (destination) | `essqu-web` (source) |
