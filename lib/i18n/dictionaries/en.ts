@@ -1,4 +1,5 @@
 import { pluralEn } from '../plural'
+import { platformEn } from './platform-en'
 
 /**
  * English interface copy. The Arabic dictionary has the same shape (TypeScript enforces it),
@@ -41,7 +42,7 @@ export const en = {
       events: 'Events',
       projects: 'Projects',
       disciplines: 'Disciplines',
-      activities: 'Activities',
+      activities: 'Archive',
       about: 'About',
     },
     join: 'Join the Society',
@@ -51,6 +52,8 @@ export const en = {
     home: ', home',
     language: 'Language',
     switchTo: 'Switch to English',
+    homePage: 'Home',
+    breadcrumb: 'Breadcrumb',
   },
 
   hero: {
@@ -97,24 +100,23 @@ export const en = {
     },
     previewRegistration: 'Preview registration',
     previewFor: (label: string, title: string) => `${label} for ${title}`,
-    dialogTitle: 'Registration isn’t open yet',
-    dialogSample:
-      ' is a sample listing. When event registration launches in Phase 1, you’ll register right here and see your confirmation instantly on the same page.',
-    dialogNothing: 'Nothing has been submitted, and no place has been reserved.',
+    /** Events published through the platform: the action follows the event's registration state. */
+    actions: { open: 'Register', waitlist: 'Join the waitlist', closed: 'View event' },
+    unavailable: 'Events can’t be shown right now. Please check back shortly.',
   },
 
   projects: {
     title: 'Built by our community.',
     lead: 'Projects and publications, kept with their discipline, year and team so each generation can build on the last instead of starting over.',
-    sampleStrong: 'Sample entries.',
-    sampleBody: 'The archive opens in Phase 3; these examples show how finished work will be preserved.',
+    noteStrong: 'Award-winning work.',
+    noteBody: 'Projects recognised in the society’s exhibitions and beyond. Full project pages are coming soon.',
     filterLabel: 'Filter projects by discipline',
     all: 'All',
-    showingAll: (n: number) => `Showing all ${n} sample projects`,
-    showingIn: (n: number, discipline: string) => `Showing ${pluralEn(n, 'sample project', 'sample projects')} in ${discipline}`,
-    alsoInArchive: 'Also in the archive',
-    onlyOne: 'This is the only sample project in this discipline.',
-    archiveOpens: 'Full archive entry opens in Phase 3',
+    showingAll: (n: number) => `Showing all ${pluralEn(n, 'project', 'projects')}`,
+    showingIn: (n: number, discipline: string) => `Showing ${pluralEn(n, 'project', 'projects')} in ${discipline}`,
+    alsoInArchive: 'More projects',
+    onlyOne: 'This is the only project in this discipline so far.',
+    archiveOpens: 'Full project page coming soon',
     discipline: 'Discipline',
     year: 'Year',
     team: 'Team',
@@ -123,8 +125,8 @@ export const en = {
 
   disciplines: {
     title: 'Different disciplines. Shared ambition.',
-    sampleProjects: 'Sample projects',
-    sampleProjectsIn: (name: string) => `Sample projects in ${name}`,
+    sampleProjects: 'Projects',
+    sampleProjectsIn: (name: string) => `Projects in ${name}`,
   },
 
   activities: {
@@ -136,9 +138,6 @@ export const en = {
     photosBody: 'They’ll appear with each programme once the society supplies and confirms them.',
     explorePrevious: 'Explore Previous Activities',
     previousEditions: 'Previous editions',
-    demoStrong: 'Demonstration events.',
-    demoBody: 'Titles, dates and attendance are samples showing how past events will appear; the photographs are the society’s own.',
-    demo: 'Demo',
     date: 'Date',
     attendance: 'Attendance',
     attendees: (n: number, shown: string) => `${shown} ${n === 1 ? 'attendee' : 'attendees'}`,
@@ -174,15 +173,6 @@ export const en = {
     body: 'Membership starts with one permanent profile: your events, certificates and projects in one place, carried forward every year. Member registration is part of the platform’s first release.',
     join: 'Join the Society',
     exploreEvents: 'Explore Events',
-    dialogTitle: 'Membership registration opens soon',
-    dialogIntro: 'Registration isn’t open on this site yet, and nothing you do here is submitted.',
-    dialogWhenOpen: 'When it opens, you’ll:',
-    dialogSteps: [
-      'create one profile with your name, university email, student ID, year and major;',
-      'receive a confirmation email with your platform login;',
-      'keep that same profile, and its history, every year after.',
-    ],
-    dialogNext: 'Explore events',
   },
 
   footer: {
@@ -194,6 +184,7 @@ export const en = {
     navLabel: 'Footer',
     copyright: (year: number, name: string, affiliation: string) => `© ${year} ${name}, ${affiliation}.`,
     previewSite: 'Preview site. Platform features arrive in phases.',
+    groups: { society: 'Society', explore: 'Explore', community: 'Community' },
   },
 
   about: {
@@ -219,6 +210,9 @@ export const en = {
     noMatch: 'No editions match these filters.',
     viewEdition: 'View this edition',
   },
+
+  /** Everything beyond the homepage: see platform-en.ts. */
+  platform: platformEn,
 }
 
 export type Dictionary = typeof en

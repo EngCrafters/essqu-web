@@ -10,8 +10,10 @@ next-env.d.ts
 # logs
 *.log
 
-# local env
-.env*.local
+# local env: real values are never committed (the example is)
+.env*
+!.env.example
+.vercel
 
 # editor / OS
 .DS_Store
@@ -20,10 +22,6 @@ next-env.d.ts
 
 # verification output
 artifacts/
-test-results/
-playwright-report/
-.env
-/supabase/.temp/
-.vercel
-.env*
-!.env.example
+
+# source photographs (full resolution, some private): the site uses the web copies in public/images
+/photos/

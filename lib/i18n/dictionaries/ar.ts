@@ -1,5 +1,6 @@
 import { pluralAr } from '../plural'
 import type { Dictionary } from './en'
+import { platformAr } from './platform-ar'
 
 /** واجهة الموقع بالعربية. البنية مطابقة للقاموس الإنجليزي، ويتحقق TypeScript من اكتمالها. */
 export const ar: Dictionary = {
@@ -36,7 +37,7 @@ export const ar: Dictionary = {
       events: 'الفعاليات',
       projects: 'المشاريع',
       disciplines: 'التخصصات',
-      activities: 'الأنشطة',
+      activities: 'الأرشيف',
       about: 'من نحن',
     },
     join: 'انضم إلى الجماعة',
@@ -46,6 +47,8 @@ export const ar: Dictionary = {
     home: '، الصفحة الرئيسية',
     language: 'اللغة',
     switchTo: 'التبديل إلى العربية',
+    homePage: 'الرئيسية',
+    breadcrumb: 'مسار التنقل',
   },
 
   hero: {
@@ -92,31 +95,29 @@ export const ar: Dictionary = {
     },
     previewRegistration: 'معاينة التسجيل',
     previewFor: (label: string, title: string) => `${label}: ${title}`,
-    dialogTitle: 'التسجيل لم يُفتح بعد',
-    dialogSample:
-      ' فعالية تجريبية للعرض فقط. عند إطلاق التسجيل في المرحلة الأولى، ستسجّل من هنا مباشرةً ويظهر لك تأكيد التسجيل فورًا في الصفحة نفسها.',
-    dialogNothing: 'لم يُرسَل أي طلب، ولم يُحجز أي مقعد.',
+    actions: { open: 'سجّل', waitlist: 'انضم إلى قائمة الانتظار', closed: 'عرض الفعالية' },
+    unavailable: 'تعذّر عرض الفعاليات الآن. يُرجى المحاولة بعد قليل.',
   },
 
   projects: {
     title: 'من صنع مجتمعنا.',
     lead: 'مشاريع ومنشورات محفوظة مع تخصصها وسنتها وفريقها، ليبني كل جيل على ما أنجزه من سبقه بدل أن يبدأ من الصفر.',
-    sampleStrong: 'أمثلة تجريبية.',
-    sampleBody: 'يُفتتح الأرشيف في المرحلة الثالثة، وتوضّح هذه الأمثلة كيف ستُحفظ الأعمال المنجزة.',
+    noteStrong: 'أعمال فائزة.',
+    noteBody: 'مشاريع نالت التقدير في معارض الجماعة وخارجها. صفحات المشاريع الكاملة قريبًا.',
     filterLabel: 'تصفية المشاريع حسب التخصص',
     all: 'الكل',
-    showingAll: (n: number) => `عرض جميع المشاريع التجريبية (${n})`,
+    showingAll: (n: number) => `عرض جميع المشاريع (${n})`,
     showingIn: (n: number, discipline: string) =>
       `عرض ${pluralAr(n, {
-        one: () => 'مشروع تجريبي واحد',
-        two: () => 'مشروعين تجريبيين',
-        few: (c) => `${c} مشاريع تجريبية`,
-        many: (c) => `${c} مشروعًا تجريبيًا`,
-        other: (c) => `${c} مشروع تجريبي`,
+        one: () => 'مشروع واحد',
+        two: () => 'مشروعين',
+        few: (c) => `${c} مشاريع`,
+        many: (c) => `${c} مشروعًا`,
+        other: (c) => `${c} مشروع`,
       })} في ${discipline}`,
-    alsoInArchive: 'أيضًا في الأرشيف',
-    onlyOne: 'هذا هو المشروع التجريبي الوحيد في هذا التخصص.',
-    archiveOpens: 'يُتاح السجل الكامل في الأرشيف مع المرحلة الثالثة',
+    alsoInArchive: 'مشاريع أخرى',
+    onlyOne: 'هذا هو المشروع الوحيد في هذا التخصص حتى الآن.',
+    archiveOpens: 'صفحة المشروع الكاملة قريبًا',
     discipline: 'التخصص',
     year: 'السنة',
     team: 'الفريق',
@@ -132,8 +133,8 @@ export const ar: Dictionary = {
 
   disciplines: {
     title: 'تخصصات مختلفة، وطموح مشترك.',
-    sampleProjects: 'مشاريع تجريبية',
-    sampleProjectsIn: (name: string) => `مشاريع تجريبية في تخصص ${name}`,
+    sampleProjects: 'المشاريع',
+    sampleProjectsIn: (name: string) => `المشاريع في تخصص ${name}`,
   },
 
   activities: {
@@ -145,9 +146,6 @@ export const ar: Dictionary = {
     photosBody: 'ستظهر مع كل برنامج بعد أن توفّرها الجماعة وتؤكدها.',
     explorePrevious: 'استكشف الأنشطة السابقة',
     previousEditions: 'النسخ السابقة',
-    demoStrong: 'فعاليات توضيحية.',
-    demoBody: 'العناوين والتواريخ وأعداد الحضور أمثلة توضّح طريقة عرض الفعاليات السابقة، أما الصور فمن أرشيف الجماعة.',
-    demo: 'توضيحي',
     date: 'التاريخ',
     attendance: 'الحضور',
     attendees: (n: number, shown: string) =>
@@ -196,15 +194,6 @@ export const ar: Dictionary = {
     body: 'تبدأ العضوية بملف شخصي دائم واحد يجمع فعالياتك وشهاداتك ومشاريعك في مكان واحد، ويرافقك عامًا بعد عام. تسجيل الأعضاء جزء من الإصدار الأول للمنصة.',
     join: 'انضم إلى الجماعة',
     exploreEvents: 'استكشف الفعاليات',
-    dialogTitle: 'يُفتح تسجيل العضوية قريبًا',
-    dialogIntro: 'التسجيل غير متاح في هذا الموقع بعد، ولن يُرسَل أي شيء تفعله هنا.',
-    dialogWhenOpen: 'عند افتتاحه، ستتمكّن من:',
-    dialogSteps: [
-      'إنشاء ملف شخصي واحد يتضمن اسمك وبريدك الجامعي ورقمك الجامعي وسنتك الدراسية وتخصصك؛',
-      'استلام رسالة تأكيد على بريدك تتضمن بيانات الدخول إلى المنصة؛',
-      'الاحتفاظ بالملف نفسه وسجلّه في كل عام يليه.',
-    ],
-    dialogNext: 'استكشف الفعاليات',
   },
 
   footer: {
@@ -216,6 +205,7 @@ export const ar: Dictionary = {
     navLabel: 'روابط التذييل',
     copyright: (year: number, name: string, affiliation: string) => `© ${year} ${name}، ${affiliation}.`,
     previewSite: 'نسخة تجريبية من الموقع، وتصل ميزات المنصة على مراحل.',
+    groups: { society: 'الجماعة', explore: 'استكشف', community: 'المجتمع' },
   },
 
   about: {
@@ -249,4 +239,6 @@ export const ar: Dictionary = {
     noMatch: 'لا توجد نسخ تطابق هذه التصفية.',
     viewEdition: 'اعرض هذه النسخة',
   },
+
+  platform: platformAr,
 }

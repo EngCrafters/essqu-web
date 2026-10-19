@@ -1,15 +1,71 @@
-export type CoreEvent = {
+/**
+ * The Core Public API v1 contract, as the landing consumes it. Source of truth: the Core
+ * repository's `docs/api/openapi.v1.yaml` (engsoc-platform). Within v1 Core promises that no field
+ * is removed, no type changes and no error code changes meaning; anything else is a /v2.
+ *
+ * These are wire shapes only. Components never see them: `adapter.ts` turns them into the site's
+ * own view model.
+ */
+
+/** Derived by Core from status, capacity and the waitlist. Never inferred on the landing. */
+export type CoreAvailability = 'open' | 'waitlist' | 'closed'
+
+/** `components/schemas/Event`. */
+export interface CoreEvent {
+  /** UUID. */
   id: string
+  /** Single-language text, as the committee wrote it. */
   title: string
+  /** Plain text; blank lines separate paragraphs. */
   description: string
+  /** ISO 8601 date-time with offset (the event's start; v1 has no end time). */
   eventDate: string
   location: string | null
   committeeName: string
-  availability: 'open' | 'waitlist' | 'closed'
+  availability: CoreAvailability
 }
-export type EventPage = { data: CoreEvent[]; meta: { nextCursor: string | null } }
-export type ConflictReason =
-  'already-registered' | 'already-waitlisted' | 'event-full' | 'registration-closed' | 'registration-available'
-export type RegistrationResult =
-  | { ok: true; status: 'confirmed' | 'waitlisted' }
-  | { ok: false; code: string; reason?: ConflictReason; requestId?: string; retryAfter?: number }
+
+/** `components/schemas/EventList`. Pages hold at most 20 events; pass `nextCursor` back verbatim. */
+export interface CoreEventList {
+  data: CoreEvent[]
+  meta: { nextCursor: string | null }
+}
+
+/** `components/schemas/Problem` `code`: the complete public error vocabulary of v1. */
+export type CoreProblemCode =
+  | 'bad-request'
+  | 'unsupported-media-type'
+  | 'payload-too-large'
+  | 'invalid-fields'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'not-found'
+  | 'conflict'
+  | 'rate-limited'
+  | 'service-unavailable'
+
+/**
+ * `components/schemas/Problem` `reason`: an optional, stable detail Core adds to a registration
+ * 409 (`code` stays `conflict`). Older Core deployments omit it; an unknown one is ignored.
+ */
+export type CoreConflictReason = 'already-registered' | 'already-waitlisted' | 'event-full' | 'registration-closed' | 'registration-available'
+
+/** RFC 9457 problem details. `type` and `requestId` are never shown to visitors. */
+export interface CoreProblem {
+  status: number
+  code: CoreProblemCode
+  requestId: string
+  /** Only ever present with `code: 'conflict'`. */
+  reason?: CoreConflictReason
+  errors?: { field: string; code: string }[]
+}
+
+/** POST /events/{eventId}/registrations request body. Core rejects any other field. */
+export interface CoreRegistrationRequest {
+  attendeeName: string
+  attendeeEmail: string
+  intent: 'register' | 'join_waitlist'
+}
+
+/** 201 response `data.status`. */
+export type CoreRegistrationStatus = 'confirmed' | 'waitlisted'

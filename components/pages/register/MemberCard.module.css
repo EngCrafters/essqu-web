@@ -1,0 +1,393 @@
+/* /register while membership is not open: the member card, both sides, turning in perspective.
+   The faces keep the register card's own design (Register.module.css); sizes here follow the
+   card's width, so it reads the same at 320px and on a desktop. */
+
+.figure {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin: 0;
+}
+
+/* The stage leaves room for the card's dimension lines and for the lift of a turn. */
+.stage {
+  --turn: 1600ms;
+  --pad-top: 2.5rem;
+  --pad-end: 2.75rem;
+  --pad-bottom: 2.25rem;
+  position: relative;
+  width: min(100%, 33rem);
+  padding-block: var(--pad-top) var(--pad-bottom);
+  padding-inline: 0 var(--pad-end);
+}
+
+@media (max-width: 29.99rem) {
+  .stage {
+    --pad-top: 2.25rem;
+    --pad-end: 2rem;
+  }
+}
+
+/* ---------------------------------------------------------------- dimension lines (ISO ID-1) */
+
+.dimWidth,
+.dimHeight {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: #6f560a;
+  font-family: var(--font-display-latin);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.dimWidth {
+  top: 0.5rem;
+  inset-inline: 0 var(--pad-end);
+  height: 1.25rem;
+  border-inline: 1.5px solid var(--accent-gold);
+}
+
+.dimHeight {
+  inset-block: var(--pad-top) var(--pad-bottom);
+  inset-inline-end: 0.375rem;
+  width: 1.25rem;
+  border-block: 1.5px solid var(--accent-gold);
+}
+
+.dimWidth::before,
+.dimHeight::before {
+  content: '';
+  position: absolute;
+}
+
+.dimWidth::before {
+  inset-inline: 0;
+  top: 50%;
+  border-top: 1px dashed var(--accent-gold);
+}
+
+.dimHeight::before {
+  inset-block: 0;
+  left: 50%;
+  border-left: 1px dashed var(--accent-gold);
+}
+
+.dimWidth span,
+.dimHeight span {
+  position: relative;
+  padding: 2px 6px;
+  background: var(--background);
+}
+
+.dimHeight span {
+  padding: 6px 2px;
+  writing-mode: vertical-rl;
+}
+
+/* ---------------------------------------------------------------- the card and its turn */
+
+.lift {
+  position: relative;
+  z-index: 1;
+  container-type: inline-size;
+  perspective: 1800px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.flip {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform var(--turn) cubic-bezier(0.62, 0.02, 0.24, 1);
+}
+
+.flip[data-back] {
+  transform: rotateY(180deg);
+}
+
+/* In Arabic the card turns towards the reading direction. */
+:global(html[dir='rtl']) .flip[data-back] {
+  transform: rotateY(-180deg);
+}
+
+/* Each face hides its own back, so neither is ever seen mirrored. */
+.flip .face {
+  grid-area: 1 / 1;
+  min-height: 0;
+  aspect-ratio: 1.586;
+  gap: 3cqi;
+  padding: 5.5cqi;
+  border-radius: 4.4cqi;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(0deg);
+}
+
+.flip .back {
+  transform: rotateY(180deg);
+}
+
+/* Going edge-on, the card lifts a little and its shadow narrows on the paper. */
+.lift[data-lift='a'] {
+  animation: lift-a var(--turn) cubic-bezier(0.45, 0, 0.3, 1);
+}
+
+.lift[data-lift='b'] {
+  animation: lift-b var(--turn) cubic-bezier(0.45, 0, 0.3, 1);
+}
+
+.shadow {
+  position: absolute;
+  inset-inline: 8% calc(var(--pad-end) + 8%);
+  bottom: calc(var(--pad-bottom) - 1.4rem);
+  height: 1.1rem;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(16 33 61 / 0.3), transparent);
+}
+
+.shadow[data-lift='a'] {
+  animation: shadow-a var(--turn) cubic-bezier(0.45, 0, 0.3, 1);
+}
+
+.shadow[data-lift='b'] {
+  animation: shadow-b var(--turn) cubic-bezier(0.45, 0, 0.3, 1);
+}
+
+@keyframes lift-a {
+  50% {
+    translate: 0 -12px;
+    scale: 1.035;
+  }
+}
+
+@keyframes lift-b {
+  50% {
+    translate: 0 -12px;
+    scale: 1.035;
+  }
+}
+
+@keyframes shadow-a {
+  50% {
+    scale: 0.4 0.8;
+    opacity: 0.55;
+  }
+}
+
+@keyframes shadow-b {
+  50% {
+    scale: 0.4 0.8;
+    opacity: 0.55;
+  }
+}
+
+/* ---------------------------------------------------------------- front: sizes by card width */
+
+.face .top {
+  font-size: max(0.5625rem, 2.5cqi);
+}
+
+.face .symbol,
+.face .symbol svg {
+  width: 13cqi;
+  height: 13cqi;
+}
+
+.face .name {
+  font-size: clamp(1rem, 6cqi, 1.875rem);
+}
+
+.face .discipline {
+  font-size: max(0.6875rem, 3cqi);
+}
+
+.face .facts dt {
+  font-size: max(0.5rem, 2.2cqi);
+}
+
+.face .facts dd {
+  font-size: max(0.6875rem, 3.2cqi);
+}
+
+.face .number {
+  font-family: var(--font-display-latin);
+  letter-spacing: 0.04em;
+  text-align: start;
+}
+
+/* One line of interests: a chip that would wrap to a second line is left off. */
+.face .interests {
+  max-height: calc(max(0.625rem, 2.5cqi) * 1.4 + 4px);
+  overflow: hidden;
+}
+
+.face .interests span {
+  font-size: max(0.625rem, 2.5cqi);
+  line-height: 1.4;
+}
+
+@container (max-width: 300px) {
+  .face .interests {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- back */
+
+.flip .back {
+  grid-template-rows: 16cqi minmax(0, 1fr) auto;
+  align-content: stretch;
+}
+
+/* The magnetic band across the top, as on any member card. */
+.band {
+  position: absolute;
+  inset-inline: 0;
+  top: 5.5cqi;
+  height: 9cqi;
+  background: linear-gradient(180deg, #0b1730, #13284f 55%, #0b1730);
+  box-shadow: inset 0 -1px 0 rgb(203 163 38 / 0.45);
+}
+
+.backMain {
+  display: grid;
+  grid-row: 2;
+  align-content: center;
+  justify-items: center;
+  gap: 2cqi;
+  text-align: center;
+}
+
+.soon {
+  position: relative;
+  padding-bottom: 2.2cqi;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 9.4cqi, 3rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.soon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 14cqi;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-gold);
+  translate: -50% 0;
+}
+
+.soonBody {
+  max-width: 34ch;
+  color: var(--atmo-text-secondary);
+  font-size: max(0.6875rem, 2.9cqi);
+  line-height: 1.4;
+}
+
+.backFoot {
+  display: flex;
+  grid-row: 3;
+  align-items: center;
+  gap: 2.4cqi;
+}
+
+.seal {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 9cqi;
+  height: 9cqi;
+  border-radius: 50%;
+  background: #f7f8f2;
+  box-shadow: 0 0 0 1.5px var(--accent-gold);
+}
+
+.seal img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+.backWho {
+  display: grid;
+  line-height: 1.2;
+}
+
+.backSociety {
+  font-family: var(--font-display);
+  font-size: max(0.6875rem, 3cqi);
+  font-weight: 600;
+}
+
+.backUniversity {
+  color: var(--atmo-text-secondary);
+  font-size: max(0.5625rem, 2.4cqi);
+}
+
+/* Gold registration corners, as on the society's drawings. */
+.corners {
+  position: absolute;
+  inset: 3cqi;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--accent-gold), var(--accent-gold)) top left / 4cqi 1.5px no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) top left / 1.5px 4cqi no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) top right / 4cqi 1.5px no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) top right / 1.5px 4cqi no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) bottom left / 4cqi 1.5px no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) bottom left / 1.5px 4cqi no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) bottom right / 4cqi 1.5px no-repeat,
+    linear-gradient(var(--accent-gold), var(--accent-gold)) bottom right / 1.5px 4cqi no-repeat;
+  opacity: 0.8;
+}
+
+.face .goldStripe {
+  background: var(--accent-gold);
+}
+
+/* ---------------------------------------------------------------- controls */
+
+.controls {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.turnIcon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.caption {
+  max-width: 44ch;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flip {
+    transition: none;
+  }
+
+  .lift[data-lift],
+  .shadow[data-lift] {
+    animation: none;
+  }
+}

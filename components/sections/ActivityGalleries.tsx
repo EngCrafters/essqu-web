@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useRef } from 'react'
-import type { Activity } from '@/content/activities'
+import { slidesOf, type Activity } from '@/content/activities'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { DESKTOP_QUERY, FINE_POINTER_QUERY, MOTION } from '@/lib/motion'
 import { SLIDE_MS, Slideshow } from './Slideshow'
@@ -158,7 +158,7 @@ export function ActivityGalleries({ galleries }: { galleries: Activity[] }) {
             <Slideshow
               id={gallery.id}
               label={name}
-              events={gallery.events}
+              events={slidesOf(gallery)}
               ratio={RATIO[layout]}
               sizes={SIZES[layout]}
               delay={delay}

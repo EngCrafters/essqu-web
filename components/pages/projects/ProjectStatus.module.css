@@ -1,0 +1,163 @@
+/* Project stage and recognition, in light (catalogue, detail) and dark (the bench) tones. */
+
+.stage {
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --rest: var(--border-strong);
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.stage[data-tone='dark'] {
+  --ink: var(--on-dark);
+  --muted: var(--atmo-text-secondary);
+  --rest: rgb(247 248 242 / 0.22);
+}
+
+.stageName {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.stageKicker {
+  color: var(--muted);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stageValue {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.stage[data-compact] .stageValue {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+
+/* A drafting scale: one step per stage, filled behind, a gold mark at the current one. */
+.track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 15rem;
+}
+
+.track li {
+  position: relative;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--rest);
+}
+
+.track li[data-state='done'] {
+  background: var(--ink);
+}
+
+.track li[data-state='current'] {
+  background: var(--accent-gold);
+}
+
+.track li[data-state='current']::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  inset-inline-start: 50%;
+  width: 2px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--accent-gold);
+  translate: -50% 0;
+}
+
+:global(html[dir='rtl']) .track li[data-state='current']::after {
+  translate: 50% 0;
+}
+
+.stage[data-compact] .track {
+  max-width: 9rem;
+}
+
+.stage[data-compact] .track li {
+  height: 4px;
+}
+
+/* Recognition. */
+.award {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, auto) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-gold) 10%, var(--surface));
+  color: var(--text-primary);
+  font-size: var(--text-small);
+}
+
+.award[data-tone='dark'] {
+  background: rgb(203 163 38 / 0.12);
+  color: var(--on-dark);
+}
+
+a.award:hover {
+  border-color: var(--accent-gold);
+}
+
+.medal {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--accent-gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.medal path:last-child {
+  fill: var(--accent-gold);
+  stroke: none;
+}
+
+.awardText {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.awardText strong {
+  font-weight: 700;
+}
+
+/* Narrow screens: the sample tag drops under the text instead of wrapping the medal away. */
+@media (max-width: 29.99rem) {
+  .award {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .awardSample {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.awardSample {
+  padding: 1px var(--space-2);
+  border: 1px dashed currentColor;
+  border-radius: var(--radius-chip);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  opacity: 0.75;
+}

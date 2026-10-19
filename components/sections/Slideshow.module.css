@@ -144,16 +144,6 @@
   color: var(--accent-gold);
 }
 
-.demo {
-  margin-inline-start: auto;
-  padding: 3px var(--space-3);
-  border: 1px dashed rgb(247 248 242 / 0.5);
-  border-radius: var(--radius-chip);
-  color: var(--on-dark);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
 
 /* The caption of the incoming slide settles in just after its photograph. */
 @keyframes caption-in {

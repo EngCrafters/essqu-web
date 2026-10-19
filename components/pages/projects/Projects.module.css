@@ -1,0 +1,300 @@
+/* /projects — the laboratory. */
+
+/* ---------------------------------------------------------------- the bench (hero) */
+
+.lab {
+  padding-top: calc(var(--nav-offset) + var(--nav-height) + clamp(var(--space-7), 5vw, var(--space-9)));
+  padding-bottom: clamp(var(--space-8), 6vw, var(--space-10));
+  background:
+    radial-gradient(70% 60% at 70% 45%, rgb(84 136 255 / 0.18), transparent 70%),
+    linear-gradient(var(--atmo-grid) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, var(--atmo-grid) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(170deg, #0f2550, var(--section-dark) 70%);
+  color: var(--on-dark);
+  scroll-margin-top: 0;
+}
+
+.labGrid {
+  display: grid;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.labCopy {
+  display: grid;
+  align-content: start;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 18px;
+  height: 2px;
+  background: var(--accent-gold);
+}
+
+.title {
+  max-width: 14ch;
+  color: var(--on-dark);
+  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.5rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+}
+
+.lead {
+  max-width: 46ch;
+  margin-top: var(--space-5);
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-lead);
+}
+
+.benchCard {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: var(--space-5);
+  border: 1px solid var(--border-on-dark);
+  border-inline-start: 3px solid var(--key);
+  border-radius: var(--radius-card);
+  background: var(--surface-on-dark);
+}
+
+.benchKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.key {
+  width: 9px;
+  height: 9px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--key);
+}
+
+.benchTitle {
+  color: var(--on-dark);
+  font-size: var(--text-h3);
+}
+
+.benchMeta {
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.benchSummary {
+  max-width: 50ch;
+  color: var(--on-dark);
+  opacity: 0.86;
+}
+
+.benchMedia {
+  min-width: 0;
+}
+
+@media (min-width: 64rem) {
+  .labGrid {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: clamp(var(--space-8), 5vw, var(--space-10));
+  }
+}
+
+/* ---------------------------------------------------------------- catalogue */
+
+.catalogue {
+  padding-block: var(--space-9) var(--section-space);
+}
+
+.catalogueGrid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.catalogueTitle {
+  font-size: var(--text-h3);
+}
+
+.sidebar {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.sidebarFilters {
+  display: none;
+}
+
+.sheetTrigger {
+  display: block;
+}
+
+.results {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+}
+
+.resultsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+}
+
+.sort {
+  min-width: 12rem;
+}
+
+@media (min-width: 64rem) {
+  .catalogueGrid {
+    grid-template-columns: 17rem minmax(0, 1fr);
+    column-gap: var(--space-9);
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: calc(var(--nav-offset) + var(--nav-height) + var(--space-5));
+    max-height: calc(100svh - var(--nav-offset) - var(--nav-height) - var(--space-8));
+    overflow-y: auto;
+    padding-inline-end: var(--space-2);
+    gap: var(--space-5);
+    scrollbar-width: thin;
+  }
+
+  .sidebarFilters {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .sheetTrigger {
+    display: none;
+  }
+}
+
+.sheets {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .sheets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* A drawing sheet: a bordered frame with a title block, like the real thing. */
+.sheetCard {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1.5px solid var(--text-primary);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: 6px 6px 0 rgb(19 35 60 / 0.06);
+  transition:
+    box-shadow 320ms var(--ease-out),
+    transform 320ms var(--ease-out);
+}
+
+.sheetCard:hover {
+  box-shadow: 10px 10px 0 color-mix(in srgb, var(--key) 20%, transparent);
+  transform: translate(-2px, -2px);
+}
+
+.sheetCard[data-bench] {
+  box-shadow: 8px 8px 0 color-mix(in srgb, var(--key) 32%, transparent);
+}
+
+.sheetMedia {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  margin: 8px;
+  border: 1px solid var(--border-strong);
+}
+
+.sheetPlate {
+  border-radius: 0;
+}
+
+.sheetNo {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  padding: 3px var(--space-2);
+  border-inline-end: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-display-latin);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sheetFeatured {
+  position: absolute;
+  top: var(--space-2);
+  inset-inline-end: var(--space-2);
+}
+
+.sheetBody {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+.sheetTitle {
+  font-size: var(--text-h4);
+  line-height: var(--leading-heading);
+}
+
+.sheetLink:hover {
+  color: var(--brand-primary);
+}
+
+.sheetLink:focus-visible {
+  outline-offset: 3px;
+}
+
+.sheetSummary {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+}
+
+.sheetBlock {
+  margin-top: var(--space-1);
+}
+
+.sheetStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.benchButton {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
+.sample {
+  margin-top: var(--space-6);
+}

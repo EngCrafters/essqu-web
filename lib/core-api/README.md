@@ -1,15 +1,48 @@
-# Core API integration
+# lib/core-api — the website's only door to the Core platform
 
-Core owns events, registration, capacity, waitlists and audit. The server-only `server.ts` reads Core `/v1/events` and detail with `CORE_EVENTS_API_KEY`; explicit DTO validation strips any unexpected fields. It makes one list call, never per-event lookups, has an eight-second timeout, retries a 503 once, and uses no persistent cache. Availability remains Core's decision.
+Events and registrations belong to the **Core platform** (`engsoc-platform`, `api.essqu.com`).
+This module is the one place the website reads events from and sends registrations to. Pages and
+components never call `fetch` for Core data; they read through `lib/data` (`getHomeEvents`,
+`getEventsTimeline`, `getEventPage`), which uses this module.
 
-Protected Vercel previews additionally use `@vercel/oidc` to attach the short-lived `x-vercel-trusted-oidc-idp-token` server-to-server when `VERCEL_ENV=preview` and Core is on `.vercel.app`. Core's Trusted Sources must allow Landing preview → Core preview. This platform token never reaches browser registration and does not replace the scoped Core key. See [Vercel Trusted Sources](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/trusted-sources).
+Contract: Core's `docs/api/openapi.v1.yaml` and `docs/api/LANDING_HANDOFF_V1.md`. Architecture and
+decisions: [`integration/INTEGRATION_ARCHITECTURE.md`](../../integration/INTEGRATION_ARCHITECTURE.md).
 
-`registration.ts` posts directly from the browser to `NEXT_PUBLIC_CORE_API_BASE_URL` with no bearer key, cookies or IP field. It uses a twelve-second timeout and never retries automatically. The form requires an explicit Register/Join waitlist action, handles safe conflict reasons and older generic conflicts, and announces results accessibly in English/Arabic. No attendee data is stored in localStorage or logged.
+```text
+Core API v1 JSON ─► schemas.ts (validate) ─► adapter.ts (view model) ─► lib/data ─► pages
+        ▲
+ client.server.ts (GET: key, timeout, retry once on 503, Next.js data cache)
 
-The source of truth is Core `docs/api/openapi.v1.yaml` and `LANDING_HANDOFF_V1.md`. Empty or unavailable Core never falls back to sample events. Other explicitly labelled activity/project demonstration galleries are editorial design content, independent of registration.
+Browser form ─► registration.ts ─► POST {CORE_API_BASE_URL}/events/{id}/registrations (no key, no cookie)
+```
 
-Pre-domain configuration uses the Core Vercel `/v1` URL for both URL variables. Later set both URLs to `https://api.essqu.com/v1` and rebuild; the key remains server-only. Core must allow the exact Landing origin through `CORE_API_ALLOWED_ORIGINS`. No wildcard is required. Landing holds no database URL, service-role key or admin credential.
+| File | Runs on | Does |
+| --- | --- | --- |
+| `config.server.ts` | server | Reads and validates the environment once: `core`, `sample` or `unconfigured`. |
+| `client.server.ts` | server | The only server-side HTTP call to Core: bearer key, 4 s timeout, one retry on 503 or a dropped connection, Next.js caching (30 s, tags `core-events` / `core-event:{id}`), safe logging. |
+| `events.server.ts` | server | `listCoreEvents('upcoming' \| 'all')`, `getCoreEvent(id)`, `getRegistrationBaseUrl()`. Never throw: failures become `unavailable`. |
+| `schemas.ts` | both | Runtime validation of Core's JSON; a bad event is dropped, a bad envelope is `invalid-response`. |
+| `adapter.ts` | server | Core DTO → `EventView` / `HomeEvent`. Presentation only; invents nothing. |
+| `registration.ts` | browser | Form checks matching Core's, the request body, one POST, Core's answer → an outcome. Never retried. |
+| `errors.ts`, `types.ts` | both | Error vocabulary; the v1 wire types. |
 
-Run `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`. CI requires no live credential. Real staging cross-project E2E and production activation are separately gated release operations; unit tests alone do not prove them.
+## Modes
 
-`npm run test:e2e` builds and starts the production bundle against the synthetic local HTTP fixture. Both this harness and ordinary production builds use Webpack because Next 16.4.2's Turbopack font-query resolver failed on Ubuntu CI. This changes the build tool, not the font design or API contract.
+| Mode | When | Events | Registration |
+| --- | --- | --- | --- |
+| `core` | `CORE_API_BASE_URL` (with `/v1`, production `https://api.essqu.com/v1`) and `CORE_EVENTS_API_KEY` set | Core | Browser → Core |
+| `unconfigured` | anything else, including `next dev` with nothing set (the problem is logged once) | "Events can't be shown right now" | none |
+
+There is no sample mode: the public event pages never show the sample catalogue, in any
+environment. There is no hard-coded Core URL, no fallback to one, and no `NEXT_PUBLIC_` variable.
+
+## Rules
+
+- Core is authoritative: the website decides nothing about places, waitlists or duplicates, and
+  shows nothing Core didn't send (no capacity, counts, type, end time, programme or images).
+- The key is attached in `client.server.ts` only; registration carries no secret.
+- Nothing logged contains the key, a response body or a visitor's details.
+
+## Tests
+
+`npm test` (Node's built-in runner, no extra dependency): `tests/core-api/*` and `tests/data/*`.

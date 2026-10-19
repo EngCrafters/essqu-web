@@ -4,97 +4,132 @@ import type { Localized } from '@/lib/i18n'
 import type { MediaImage } from './media'
 
 /**
- * SAMPLE CONTENT. The project and magazine archive is PRD Phase 3 (UC-05/UC-06) and has no
- * entries yet. These illustrative projects show how archived work will carry discipline,
- * year and team metadata. Team members are intentionally not named: public views never
- * expose personal details (PRD NFR-04). Every card is labelled "Sample".
+ * The society's projects on the homepage: real work, from the teams' own posters and the file
+ * names in /photos/proj ("المشروع الفائز بالجائزه الكبرى للملتقى", "الفائز بانجاز عمان 2026"…).
+ * Latin names inside Arabic text are wrapped in directional isolates (\u2066…\u2069) so their
+ * punctuation stays with them.
+ *
+ * Only what those files state is recorded. A project's discipline, year or team size is left
+ * out where the files don't give it (the card then omits that detail), and no stage is shown,
+ * because none is stated. Titles are the teams' own, shortened for the card where they are long;
+ * `fullTitle` keeps the original. The Arabic text is a faithful translation of the English
+ * posters, for the teams to review.
+ *
+ * The projects have no pages yet (the Projects module is coming soon), so `href` stays null and
+ * each card says its page is on the way. Set `href` to `routes.project(id)` once a page exists.
  */
 
 export interface ArchiveProject {
   id: string
+  /** Illustrative content rather than a real project (none on the homepage today). */
   sample: boolean
   title: Localized
-  discipline: DisciplineId
-  year: string
+  /** The title as the team wrote it, when the card shows a shorter one. */
+  fullTitle?: Localized
+  discipline?: DisciplineId
+  year?: string
   /** Number of team members; the label ("Team of 5") is interface copy. */
-  teamSize: number
+  teamSize?: number
   summary: Localized
-  /** Link to a project detail page once the archive exists. */
+  /** The recognition the project received, as the source names it. */
+  award?: Localized
+  /** The project's page on the platform (/projects/[slug]), once it has one. */
   href: string | null
-  drawing: DrawingId
-  /** An authentic project photograph, when available; replaces the drawing. */
+  /** The drawing shown when the project has no photograph or print. */
+  drawing?: DrawingId
+  /** An authentic project photograph, shown full-bleed. */
   image?: MediaImage
+  /** The team's poster or a product photograph, laid on the drawing board as a print. */
+  print?: MediaImage
 }
 
+const t = (en: string, ar: string): Localized => ({ en, ar })
+
+/** The teams' posters and product photograph: web copies in public/images/projects. */
+const poster = (file: string, title: Localized): MediaImage => ({
+  src: `/images/projects/${file}`,
+  width: 1540,
+  height: 976,
+  alt: { en: `The project’s poster: “${title.en}”.`, ar: `ملصق المشروع: «${title.ar}».` },
+  focus: '50% 0%',
+})
+
+const PLA_HA = t(
+  'Development, Testing, and Optimization of PLA/HA Composite Materials for 3D Printed Biomedical Scaffolds',
+  'تطوير مواد PLA/HA المركّبة واختبارها وتحسينها لسقالات طبية حيوية مطبوعة بالطباعة ثلاثية الأبعاد',
+)
+const TAMRA = t(
+  'A Framework for Embodied AI and Hybrid Hardware Synthesis in Autonomous Service Robotics: T.A.M.R.A. — Task-Agnostic Modular Robotic Apparatus',
+  'إطار للذكاء الاصطناعي المجسَّد وتوليف العتاد الهجين في الروبوتات الخدمية ذاتية الحركة: \u2066T.A.M.R.A.\u2069، منصة روبوتية معيارية غير مقيّدة بمهمة',
+)
+const PACKING = t(
+  'Investigation and Mitigation of Packing Leakage in Reciprocating Gas Compressors',
+  'دراسة تسرّب الحشوات في ضواغط الغاز الترددية والحدّ منه',
+)
+
+/** Newest recognition first; the first project is the section's featured piece. */
 export const PROJECTS: ArchiveProject[] = [
   {
-    id: 'line-following-rover',
-    sample: true,
-    title: { en: 'Autonomous line-following rover', ar: 'مركبة ذاتية لتتبّع الخطوط' },
-    discipline: 'mechatronics',
-    year: '2025–26',
+    id: 'pla-ha-bone-scaffolds',
+    sample: false,
+    title: t('PLA/HA composite for 3D-printed bone scaffolds', 'مركّب PLA/HA لسقالات عظمية مطبوعة ثلاثيًا'),
+    fullTitle: PLA_HA,
+    summary: t(
+      'Biodegradable PLA reinforced with hydroxyapatite, formulated and tested for 3D-printed scaffolds in bone-tissue engineering.',
+      'مادة PLA قابلة للتحلل الحيوي مدعّمة بالهيدروكسيأباتيت، طُوّرت واختُبرت لطباعة سقالات ثلاثية الأبعاد لهندسة الأنسجة العظمية.',
+    ),
+    award: t('Grand Prize · Engineering Gathering', 'الجائزة الكبرى · الملتقى الهندسي'),
+    href: null,
+    print: poster('pla-ha-scaffolds-poster.jpg', PLA_HA),
+  },
+  {
+    id: 'hydrogenix',
+    sample: false,
+    title: t('HydroGenix', 'HydroGenix'),
+    year: '2026',
     teamSize: 5,
-    summary: {
-      en: 'A competition rover that combines infrared sensing with PID steering, documented with wiring diagrams, code and test logs so next year’s team starts from a working baseline.',
-      ar: 'مركبة مسابقات تجمع بين الاستشعار بالأشعة تحت الحمراء والتوجيه بمتحكّم PID، وموثّقة بمخططات التوصيل والشيفرة وسجلات الاختبار ليبدأ فريق العام القادم من أساس يعمل.',
-    },
+    summary: t(
+      'A tank for storing and transporting green liquid hydrogen, with multi-layer insulation, a pressure-balancing piston and real-time sensor monitoring.',
+      'خزان لتخزين الهيدروجين الأخضر السائل ونقله، بعزل حراري متعدد الطبقات ومكبس لموازنة الضغط ومراقبة لحظية بالمستشعرات.',
+    ),
+    award: t('Winner · INJAZ Oman 2026', 'الفائز · إنجاز عُمان 2026'),
     href: null,
-    drawing: 'rover',
+    print: {
+      src: '/images/projects/hydrogenix-model.jpg',
+      width: 412,
+      height: 259,
+      alt: t(
+        'A white 3D-printed model of the HydroGenix liquid hydrogen cylinder.',
+        'نموذج أبيض مطبوع بالطباعة ثلاثية الأبعاد لأسطوانة الهيدروجين السائل من HydroGenix.',
+      ),
+    },
   },
   {
-    id: 'water-quality-node',
-    sample: true,
-    title: { en: 'Low-cost water-quality sensor node', ar: 'وحدة استشعار منخفضة التكلفة لجودة المياه' },
-    discipline: 'electrical',
-    year: '2025',
-    teamSize: 3,
-    summary: {
-      en: 'A solar-powered board that logs turbidity and temperature and reports readings over a low-power radio link.',
-      ar: 'لوحة تعمل بالطاقة الشمسية تسجّل العكارة ودرجة الحرارة، وترسل القراءات عبر وصلة لاسلكية منخفضة الاستهلاك.',
-    },
+    id: 'tamra',
+    sample: false,
+    title: t('T.A.M.R.A. modular service robot', '\u2066T.A.M.R.A.\u2069: روبوت خدمي معياري'),
+    fullTitle: TAMRA,
+    discipline: 'mechatronics',
+    summary: t(
+      'A modular service robot that brings embodied AI to autonomous platforms, developed first for healthcare settings.',
+      'روبوت خدمي معياري يوظّف الذكاء الاصطناعي المجسَّد على المنصات ذاتية الحركة، طُوِّر أولًا لبيئات الرعاية الصحية.',
+    ),
+    award: t('Best project · Electrical & Mechatronics', 'أفضل مشروع · قسم الكهرباء والميكاترونكس'),
     href: null,
-    drawing: 'sensor-node',
+    print: poster('tamra-poster.jpg', TAMRA),
   },
   {
-    id: 'seismic-truss-model',
-    sample: true,
-    title: { en: 'Seismic-resistant truss model', ar: 'نموذج جملون مقاوم للزلازل' },
-    discipline: 'civil',
-    year: '2024',
-    teamSize: 6,
-    summary: {
-      en: 'A scale truss tested on a shake table, comparing bracing layouts for stiffness against weight.',
-      ar: 'جملون مصغّر اختُبر على طاولة اهتزاز لمقارنة أنماط التدعيم من حيث الصلابة مقابل الوزن.',
-    },
-    href: null,
-    drawing: 'truss',
-  },
-  {
-    id: 'shelter-cooling-study',
-    sample: true,
-    title: { en: 'Passive cooling study for campus shelters', ar: 'دراسة التبريد السلبي لمظلات الحرم الجامعي' },
+    id: 'compressor-packing-leakage',
+    sample: false,
+    title: t('Packing leakage in reciprocating gas compressors', 'تسرّب الحشوات في ضواغط الغاز الترددية'),
+    fullTitle: PACKING,
     discipline: 'mechanical',
-    year: '2025',
-    teamSize: 4,
-    summary: {
-      en: 'Measured shade, airflow and surface temperatures to propose a lower-energy shelter design.',
-      ar: 'قياس الظل وحركة الهواء ودرجات حرارة الأسطح لاقتراح تصميم مظلة أقل استهلاكًا للطاقة.',
-    },
+    summary: t(
+      'A study of gas leakage through compressor packing that uses FMEA, fluid–structure interaction and CFD to guide an improved seal design.',
+      'دراسة لتسرّب الغاز عبر حشوات الضواغط تستخدم تحليل أنماط الفشل (FMEA) والتفاعل بين المائع والهيكل وديناميكا الموائع الحسابية لتوجيه تصميم أفضل لمنع التسرب.',
+    ),
+    award: t('Best project · Mechanical & Industrial', 'أفضل مشروع · قسم الميكانيك والصناعي'),
     href: null,
-    drawing: 'shelter',
-  },
-  {
-    id: 'produced-water-bench',
-    sample: true,
-    title: { en: 'Produced-water treatment bench model', ar: 'نموذج مخبري لمعالجة المياه المصاحبة' },
-    discipline: 'chemical',
-    year: '2024',
-    teamSize: 4,
-    summary: {
-      en: 'A bench-scale separation process that estimates how much oilfield water could be treated for reuse.',
-      ar: 'عملية فصل على نطاق مخبري تقدّر كمية مياه الحقول النفطية التي يمكن معالجتها لإعادة استخدامها.',
-    },
-    href: null,
-    drawing: 'water-bench',
+    print: poster('packing-leakage-poster.jpg', PACKING),
   },
 ]
