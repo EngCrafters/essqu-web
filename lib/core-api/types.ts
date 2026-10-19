@@ -44,11 +44,19 @@ export type CoreProblemCode =
   | 'rate-limited'
   | 'service-unavailable'
 
+/**
+ * `components/schemas/Problem` `reason`: an optional, stable detail Core adds to a registration
+ * 409 (`code` stays `conflict`). Older Core deployments omit it; an unknown one is ignored.
+ */
+export type CoreConflictReason = 'already-registered' | 'already-waitlisted' | 'event-full' | 'registration-closed' | 'registration-available'
+
 /** RFC 9457 problem details. `type` and `requestId` are never shown to visitors. */
 export interface CoreProblem {
   status: number
   code: CoreProblemCode
   requestId: string
+  /** Only ever present with `code: 'conflict'`. */
+  reason?: CoreConflictReason
   errors?: { field: string; code: string }[]
 }
 

@@ -1,5 +1,5 @@
 import { parseProblem, parseRegistrationStatus } from './schemas'
-import type { CoreRegistrationRequest } from './types'
+import type { CoreConflictReason, CoreRegistrationRequest } from './types'
 
 /*
  * Registration, browser side. The visitor's browser posts straight to Core:
@@ -21,8 +21,12 @@ export type FieldProblem = 'required' | 'too-long' | 'invalid'
 export type RegistrationOutcome =
   | { kind: 'confirmed' }
   | { kind: 'waitlisted' }
-  /** 409: already registered or waitlisted, full, closed… Core deliberately doesn't say which. */
-  | { kind: 'conflict' }
+  /**
+   * 409: already registered or waitlisted, full, closed, or a place is free after all. Current Core
+   * names which in `reason`; without one (an older Core, or a reason this site doesn't know) the
+   * visitor gets the general message.
+   */
+  | { kind: 'conflict'; reason?: CoreConflictReason }
   /** 422: the fields Core named, if it named any. */
   | { kind: 'invalid'; fields: RegistrationField[] }
   /** 404: the event is no longer public. */
@@ -67,20 +71,31 @@ export function outcomeFor(status: number, body: unknown, retryAfter: string | n
     const result = parseRegistrationStatus(body)
     return result ? { kind: result } : { kind: 'unavailable' }
   }
-  const code = parseProblem(body)?.code
-  if (status === 409 || code === 'conflict') return { kind: 'conflict' }
+  const problem = parseProblem(body)
+  const code = problem?.code
+  if (status === 409 || code === 'conflict') return problem?.reason ? { kind: 'conflict', reason: problem.reason } : { kind: 'conflict' }
   if (status === 404 || code === 'not-found') return { kind: 'not-found' }
   if (status === 429 || code === 'rate-limited') {
     const seconds = retryAfter === null ? NaN : Number(retryAfter)
     return { kind: 'rate-limited', retryAfterSeconds: Number.isInteger(seconds) && seconds > 0 ? seconds : null }
   }
   if (status === 422 || code === 'invalid-fields') {
-    const named = parseProblem(body)?.errors?.map((e) => e.field) ?? []
+    const named = problem?.errors?.map((e) => e.field) ?? []
     return { kind: 'invalid', fields: FIELDS.filter((f) => named.includes(f)) }
   }
   // 400/413/415 would be a bug on this side, 403 an origin Core doesn't allow; to a visitor all
   // of these, like a 503, mean "this can't be done right now".
   return { kind: 'unavailable' }
+}
+
+/**
+ * A fresh correlation id for one submission, which Core echoes and logs so a failure can be traced
+ * across both systems (Core accepts 8–128 of `A-Za-z0-9._-`; a UUID fits). `randomUUID` exists only
+ * in secure contexts, so a plain-HTTP address (a phone on the LAN in development) sends none.
+ */
+function requestIdHeader(): Record<string, string> {
+  const id = globalThis.crypto?.randomUUID?.()
+  return id ? { 'X-Request-Id': id } : {}
 }
 
 /**
@@ -96,7 +111,7 @@ export async function submitRegistration(
   try {
     const response = await fetchImpl(`${baseUrl}/events/${encodeURIComponent(eventId)}/registrations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...requestIdHeader() },
       body: JSON.stringify(body),
       credentials: 'omit',
       mode: 'cors',

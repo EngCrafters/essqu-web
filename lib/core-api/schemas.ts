@@ -1,4 +1,4 @@
-import type { CoreAvailability, CoreEvent, CoreEventList, CoreProblem, CoreProblemCode, CoreRegistrationStatus } from './types'
+import type { CoreAvailability, CoreConflictReason, CoreEvent, CoreEventList, CoreProblem, CoreProblemCode, CoreRegistrationStatus } from './types'
 
 /*
  * Runtime validation of Core's JSON at the HTTP boundary. A response that isn't the v1 shape
@@ -22,6 +22,7 @@ const PROBLEM_CODES: readonly CoreProblemCode[] = [
   'rate-limited',
   'service-unavailable',
 ]
+const CONFLICT_REASONS: readonly CoreConflictReason[] = ['already-registered', 'already-waitlisted', 'event-full', 'registration-closed', 'registration-available']
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -85,10 +86,16 @@ export function parseProblem(input: unknown): CoreProblem | null {
   const errors = Array.isArray(input.errors)
     ? input.errors.filter((e): e is { field: string; code: string } => isRecord(e) && typeof e.field === 'string' && typeof e.code === 'string')
     : undefined
+  // A reason means something only on a conflict, and only from the published vocabulary.
+  const reason =
+    input.code === 'conflict' && typeof input.reason === 'string' && CONFLICT_REASONS.includes(input.reason as CoreConflictReason)
+      ? (input.reason as CoreConflictReason)
+      : undefined
   return {
     status: typeof input.status === 'number' ? input.status : 0,
     code: input.code as CoreProblemCode,
     requestId: typeof input.requestId === 'string' ? input.requestId : '',
+    ...(reason ? { reason } : {}),
     ...(errors?.length ? { errors } : {}),
   }
 }

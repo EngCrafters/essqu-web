@@ -84,6 +84,16 @@ describe('parseProblem', () => {
     assert.equal(parseProblem({ code: 'EVENT_FULL' }), null)
     assert.equal(parseProblem('<html>'), null)
   })
+
+  it('reads a registration conflict’s reason, and only a known one on a conflict', () => {
+    for (const reason of ['already-registered', 'already-waitlisted', 'event-full', 'registration-closed', 'registration-available']) {
+      assert.equal(parseProblem(problem(409, 'conflict', { reason }))?.reason, reason, reason)
+    }
+    assert.equal('reason' in parseProblem(problem(409, 'conflict'))!, false)
+    assert.equal('reason' in parseProblem(problem(409, 'conflict', { reason: 'EVENT_FULL' }))!, false)
+    assert.equal('reason' in parseProblem(problem(409, 'conflict', { reason: 42 }))!, false)
+    assert.equal('reason' in parseProblem(problem(422, 'invalid-fields', { reason: 'event-full' }))!, false)
+  })
 })
 
 describe('parseRegistrationStatus', () => {

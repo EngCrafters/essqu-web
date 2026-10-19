@@ -55,6 +55,15 @@ describe('outcomeFor', () => {
     }
   })
 
+  it('carries Core’s conflict reason, and falls back to a plain conflict without one', () => {
+    for (const reason of ['already-registered', 'already-waitlisted', 'event-full', 'registration-closed', 'registration-available'] as const) {
+      assert.deepEqual(outcomeFor(409, problem(409, 'conflict', { reason }), null), { kind: 'conflict', reason }, reason)
+    }
+    // An older Core (no reason), a reason this site doesn't know, or no usable body at all.
+    assert.deepEqual(outcomeFor(409, problem(409, 'conflict', { reason: 'event-cancelled' }), null), { kind: 'conflict' })
+    assert.deepEqual(outcomeFor(409, null, null), { kind: 'conflict' })
+  })
+
   it('names the rejected fields of a 422', () => {
     const body = problem(422, 'invalid-fields', { errors: [{ field: 'attendeeEmail', code: 'invalid' }, { field: 'intent', code: 'invalid' }] })
     assert.deepEqual(outcomeFor(422, body, null), { kind: 'invalid', fields: ['attendeeEmail'] })
@@ -77,6 +86,24 @@ describe('submitRegistration', () => {
     assert.equal(headers['Content-Type'], 'application/json')
     assert.equal(Object.keys(headers).some((h) => h.toLowerCase() === 'authorization'), false)
     assert.deepEqual(JSON.parse(String(call!.init.body)), { attendeeName: 'T', attendeeEmail: 't@example.test', intent: 'register' })
+  })
+
+  it('sends a fresh correlation id in the form Core accepts', async () => {
+    const { impl, calls } = fakeFetch(() => json({ data: { status: 'confirmed' } }, 201))
+    const body = { attendeeName: 'T', attendeeEmail: 't@example.test', intent: 'register' } as const
+    await submitRegistration(BASE, IDS.open, body, impl)
+    await submitRegistration(BASE, IDS.open, body, impl)
+    const ids = calls.map((c) => (c.init.headers as Record<string, string>)['X-Request-Id'])
+    for (const id of ids) assert.match(id ?? '', /^[A-Za-z0-9._-]{8,128}$/)
+    assert.notEqual(ids[0], ids[1])
+  })
+
+  it('carries a 409 reason from the response', async () => {
+    const { impl } = fakeFetch(() => json(problem(409, 'conflict', { reason: 'event-full' }), 409))
+    assert.deepEqual(await submitRegistration(BASE, IDS.open, { attendeeName: 'T', attendeeEmail: 't@example.test', intent: 'register' }, impl), {
+      kind: 'conflict',
+      reason: 'event-full',
+    })
   })
 
   it('never retries a failure and never throws', async () => {
