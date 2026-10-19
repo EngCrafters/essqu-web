@@ -163,6 +163,12 @@ export const eventsEn = {
   outcome: {
     conflict:
       'This registration couldn’t be completed. You may already be registered or on the waitlist, or the last place or registration may have just closed. Refresh the page to see the event as it is now.',
+    // Core names the conflict (its 409 `reason`); the general message above covers any other.
+    alreadyRegistered: 'This email is already registered for this event.',
+    alreadyWaitlisted: 'This email is already on the waitlist for this event.',
+    eventFull: 'The last place has just been taken. You can join the waitlist instead.',
+    registrationAvailable: 'A place is free after all, so there’s no need to wait. You can register instead.',
+    registrationClosed: 'Registration for this event has just closed.',
     invalid: 'Check your name and email, then try again.',
     notFound: 'This event is no longer open for registration.',
     rateLimited: 'Too many registration attempts from this connection. Please try again in a few minutes.',
@@ -279,6 +285,11 @@ export const eventsAr: EventsCopy = {
   outcome: {
     conflict:
       'تعذّر إتمام هذا التسجيل. ربما سجّلت مسبقًا أو انضممت إلى قائمة الانتظار، أو ربما شُغل آخر مقعد أو أُغلق التسجيل للتو. حدّث الصفحة لترى حالة الفعالية الآن.',
+    alreadyRegistered: 'هذا البريد الإلكتروني مسجّل بالفعل في هذه الفعالية.',
+    alreadyWaitlisted: 'هذا البريد الإلكتروني موجود بالفعل في قائمة انتظار هذه الفعالية.',
+    eventFull: 'شُغل آخر مقعد للتو. يمكنك الانضمام إلى قائمة الانتظار بدلًا من ذلك.',
+    registrationAvailable: 'يتوفر مقعد بالفعل، فلا حاجة إلى الانتظار. يمكنك التسجيل بدلًا من ذلك.',
+    registrationClosed: 'أُغلق التسجيل في هذه الفعالية للتو.',
     invalid: 'تحقّق من اسمك وبريدك الإلكتروني ثم حاول مجددًا.',
     notFound: 'لم تعد هذه الفعالية متاحة للتسجيل.',
     rateLimited: 'محاولات تسجيل كثيرة من هذا الاتصال. يُرجى المحاولة بعد بضع دقائق.',

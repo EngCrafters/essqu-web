@@ -25,6 +25,9 @@ import styles from './Events.module.css'
 
 type Dialog = null | 'confirm' | 'cancel'
 
+/** Wall-clock milliseconds, for event handlers only (never read while rendering). */
+const wallClock = () => Date.now()
+
 /**
  * The registration panel. Sample events keep the prototype, which lives in this browser tab only;
  * events published through the Core platform register for real, straight from the browser to
@@ -212,12 +215,17 @@ function SampleRegistration({ event, held }: { event: PlatformEvent; held: strin
  * answers, a pending request can't be sent twice, and nothing typed is kept after success. Core
  * publishes no capacity or count, issues no check-in pass and has no member accounts or
  * cancellation yet, so the dial, the pass, "your events" and "cancel" don't appear here.
+ *
+ * When Core says why a registration conflicted, the panel follows it: full → the waitlist is
+ * offered (joined only by a second, explicit submit), a place is free → register, closed → closed.
  */
 function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: string; baseUrl: string | null }) {
   const { t, l } = useI18n()
   const c = t.platform.eventsPage
   const formId = useId()
   const [open, setOpen] = useState(false)
+  /** The event's availability as Core last reported it: from the page, or from a 409 since. */
+  const [availability, setAvailability] = useState(event.registration)
   const [values, setValues] = useState({ name: '', email: '' })
   const [touched, setTouched] = useState<Partial<Record<RegistrationField, boolean>>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -227,6 +235,8 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
   const [failure, setFailure] = useState<string | null>(null)
   const [result, setResult] = useState<'confirmed' | 'waitlisted' | null>(null)
   const inFlight = useRef(false)
+  /** After a 429 with Retry-After: until when a submission would only be refused again. */
+  const retryAt = useRef(0)
   const doneRef = useRef<HTMLParagraphElement>(null)
   const fieldRefs = useRef<Partial<Record<RegistrationField, HTMLInputElement | null>>>({})
 
@@ -236,8 +246,10 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
     if (result) doneRef.current?.focus()
   }, [result])
 
-  const status: EventStatus = result === 'confirmed' ? 'registered' : result === 'waitlisted' ? 'waitlisted' : eventStatus(event, undefined, now)
-  const waitlist = event.registration === 'waitlist'
+  const status: EventStatus =
+    result === 'confirmed' ? 'registered' : result === 'waitlisted' ? 'waitlisted' : eventStatus({ ...event, registration: availability }, undefined, now)
+  const waitlist = availability === 'waitlist'
+  const closed = availability === 'closed' || availability === 'full'
   const problems = validateRegistration(values)
   const problemFor = (field: RegistrationField): FieldProblem | undefined =>
     (submitted || touched[field] ? problems[field] : undefined) ?? (rejected.includes(field) ? 'invalid' : undefined)
@@ -263,6 +275,9 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
       fieldRefs.current[firstInvalid]?.focus()
       return
     }
+    // Core would refuse it again; say so without sending.
+    const wait = retryAt.current - wallClock()
+    if (wait > 0) return fail(c.outcome.rateLimitedIn(Math.ceil(wait / 60000)))
     inFlight.current = true
     setPending(true)
     const outcome = await submitRegistration(baseUrl, event.slug, registrationBody({ ...values, waitlist }))
@@ -282,10 +297,28 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
         if (outcome.fields[0]) requestAnimationFrame(() => fieldRefs.current[outcome.fields[0]!]?.focus())
         return
       case 'conflict':
-        return fail(c.outcome.conflict)
+        switch (outcome.reason) {
+          case 'already-registered':
+            return fail(c.outcome.alreadyRegistered)
+          case 'already-waitlisted':
+            return fail(c.outcome.alreadyWaitlisted)
+          // The dialog turns into the waitlist one; nothing is sent until the visitor submits it.
+          case 'event-full':
+            setAvailability('waitlist')
+            return fail(c.outcome.eventFull)
+          case 'registration-available':
+            setAvailability('open')
+            return fail(c.outcome.registrationAvailable)
+          case 'registration-closed':
+            setAvailability('closed')
+            return fail(c.outcome.registrationClosed)
+          default:
+            return fail(c.outcome.conflict)
+        }
       case 'not-found':
         return fail(c.outcome.notFound)
       case 'rate-limited':
+        if (outcome.retryAfterSeconds) retryAt.current = wallClock() + outcome.retryAfterSeconds * 1000
         return fail(outcome.retryAfterSeconds ? c.outcome.rateLimitedIn(Math.ceil(outcome.retryAfterSeconds / 60)) : c.outcome.rateLimited)
       case 'unavailable':
         return fail(c.outcome.unavailable)
@@ -376,7 +409,7 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
             <button type="button" className="btn btn--secondary" onClick={close}>
               {t.platform.common.cancel}
             </button>
-            <button type="submit" form={formId} className="btn btn--primary" disabled={pending} aria-disabled={pending}>
+            <button type="submit" form={formId} className="btn btn--primary" disabled={pending || closed} aria-disabled={pending || closed}>
               {pending ? c.sending : waitlist ? c.confirmWaitlist : c.confirm}
             </button>
           </>
