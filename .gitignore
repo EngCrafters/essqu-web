@@ -10,8 +10,10 @@ next-env.d.ts
 # logs
 *.log
 
-# local env
-.env*.local
+# local env: real values are never committed (the example is)
+.env*
+!.env.example
+.vercel
 
 # editor / OS
 .DS_Store
