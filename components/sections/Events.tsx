@@ -69,6 +69,13 @@ export async function Events() {
 
 type Props = { event: HomeEvent; i18n: I18n }
 
+/**
+ * A name written in either script, isolated from the text around it (a Latin committee name in an
+ * Arabic line). Unicode isolate marks rather than <bdi>, so it stays in the same text run: the
+ * eyebrow line is a flex row, and an element would be spaced apart as a separate item.
+ */
+const isolate = (text: string) => `⁨${text}⁩`
+
 function Meta({ event, i18n, className }: Props & { className?: string }) {
   const { t, l, intl } = i18n
   const date = eventDateParts(event.start, intl)
@@ -165,16 +172,7 @@ function FeaturedEvent({ event, i18n }: Props) {
         <p className={styles.type} data-part="text">
           {t.events.featured}
           {/* Sample listings carry a type; Core events (which have none) their committee. */}
-          {event.type ? (
-            <> · {t.events.types[event.type]}</>
-          ) : (
-            event.organiser && (
-              <>
-                {' · '}
-                <bdi>{l(event.organiser)}</bdi>
-              </>
-            )
-          )}
+          {event.type ? <> · {t.events.types[event.type]}</> : event.organiser && ` · ${isolate(l(event.organiser))}`}
         </p>
         <EventTitle event={event} i18n={i18n} className={styles.featuredTitle} part="text" />
         <p className={styles.description} data-part="text">
@@ -203,7 +201,7 @@ function EventRow({ event, i18n }: Props) {
       <div className={styles.rowMain}>
         {(event.type || event.organiser || event.sample) && (
           <p className={styles.type}>
-            {event.type ? t.events.types[event.type] : event.organiser && <bdi>{l(event.organiser)}</bdi>}
+            {event.type ? t.events.types[event.type] : event.organiser && isolate(l(event.organiser))}
             {event.sample && <span className="chip chip--sample">{t.common.sample}</span>}
           </p>
         )}
