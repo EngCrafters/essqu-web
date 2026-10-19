@@ -18,11 +18,11 @@ export const EVENTS_TAG = 'core-events'
 export const eventTag = (id: string) => `core-event:${id}`
 
 /**
- * Core pages hold 20 events. Upcoming events are followed for up to five pages (100 events, far
- * beyond a society's calendar); past events stop at the 20 most recent, which is all the
- * timeline shows before "Show earlier events" folds them away anyway.
+ * Core pages hold 20 events, and each period's `nextCursor` is followed for up to five pages (100
+ * events, far beyond a society's calendar; the timeline folds older past events away). A list
+ * that still had a cursor at the limit is logged, so a truncated archive is noticed.
  */
-export const PAGE_LIMITS = { upcoming: 5, past: 1 } as const
+export const PAGE_LIMITS = { upcoming: 5, past: 5 } as const
 
 export type Unavailable = { status: 'unavailable'; reason: CoreErrorKind | ConfigProblem }
 export type CoreListResult = { status: 'ok'; events: CoreEvent[] } | Unavailable
@@ -48,6 +48,7 @@ async function listPeriod(config: CoreModeConfig, period: 'upcoming' | 'past'): 
     cursor = parsed.value.meta.nextCursor
     if (!cursor) break
   }
+  if (cursor) console.warn(JSON.stringify({ source: 'core-api', route: `GET /events?period=${period}`, truncatedAfterPages: PAGE_LIMITS[period] }))
   return events
 }
 

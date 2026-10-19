@@ -54,10 +54,22 @@ describe('listCoreEvents', () => {
     assert.deepEqual((calls[0]!.init as { next?: unknown }).next, { revalidate: 30, tags: ['core-events'] })
   })
 
-  it('bounds how many pages it follows', async () => {
+  it('bounds how many pages it follows, and says when a list was cut short', async () => {
     const calls = use(() => json(list([coreEvent()], 'more')))
     await listCoreEvents('upcoming')
     assert.equal(calls.length, PAGE_LIMITS.upcoming)
+    assert.ok(logged.some((l) => l.includes('truncatedAfterPages')))
+  })
+
+  it('follows past pages too, so the archive is not cut at the first 20', async () => {
+    const calls = use((call) =>
+      call.url.includes('period=past')
+        ? json(list([coreEvent({ id: IDS.past, availability: 'closed' })], new URL(call.url).searchParams.has('cursor') ? null : 'older'))
+        : json(list([])),
+    )
+    await listCoreEvents('all')
+    assert.equal(calls.filter((c) => c.url.includes('period=past')).length, 2)
+    assert.equal(logged.some((l) => l.includes('truncatedAfterPages')), false)
   })
 
   it('adds recent past events for the timeline, each event once', async () => {
