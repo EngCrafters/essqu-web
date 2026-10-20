@@ -1,7 +1,8 @@
 # lib/core-api — the website's only door to the Core platform
 
-Events and registrations belong to the **Core platform** (`engsoc-platform`, `api.essqu.com`).
-This module is the one place the website reads events from and sends registrations to. Pages and
+Events, registrations and membership applications belong to the **Core platform** (`engsoc-platform`, `api.essqu.com`).
+This module is the one place the website reads events from and sends registrations and
+membership applications to. Pages and
 components never call `fetch` for Core data; they read through `lib/data` (`getHomeEvents`,
 `getEventsTimeline`, `getEventPage`), which uses this module.
 
@@ -14,6 +15,9 @@ Core API v1 JSON ─► schemas.ts (validate) ─► adapter.ts (view model) ─
  client.server.ts (GET: key, timeout, retry once on 503, Next.js data cache)
 
 Browser form ─► registration.ts ─► POST {CORE_API_BASE_URL}/events/{id}/registrations (no key, no cookie)
+
+/register ─► membership.ts ─► POST {CORE_API_BASE_URL}/membership-applications (multipart, no key, no cookie)
+                          └─► POST {CORE_API_BASE_URL}/membership-applications/status ({statusToken})
 ```
 
 | File | Runs on | Does |
@@ -24,6 +28,7 @@ Browser form ─► registration.ts ─► POST {CORE_API_BASE_URL}/events/{id}/
 | `schemas.ts` | both | Runtime validation of Core's JSON; a bad event is dropped, a bad envelope is `invalid-response`. |
 | `adapter.ts` | server | Core DTO → `EventView` / `HomeEvent`. Presentation only; invents nothing. |
 | `registration.ts` | browser | Form checks matching Core's, the request body, one POST, Core's answer → an outcome. Never retried. |
+| `membership.ts` | browser | The membership application: file signature and size checks, photo re-encoding to JPEG (drops metadata), the exact form fields, one upload with progress, Core's answer → an outcome, the status check, and the status token in `localStorage`. Never retried. See [`integration/MEMBERSHIP_REGISTRATION.md`](../../integration/MEMBERSHIP_REGISTRATION.md). |
 | `errors.ts`, `types.ts` | both | Error vocabulary; the v1 wire types. |
 
 ## Modes
@@ -40,7 +45,10 @@ environment. There is no hard-coded Core URL, no fallback to one, and no `NEXT_P
 
 - Core is authoritative: the website decides nothing about places, waitlists or duplicates, and
   shows nothing Core didn't send (no capacity, counts, type, end time, programme or images).
-- The key is attached in `client.server.ts` only; registration carries no secret.
+- The key is attached in `client.server.ts` only; registration and membership applications carry
+  no secret.
+- The membership status token stays in the applicant's browser: request bodies only, never a URL
+  or a log.
 - Nothing logged contains the key, a response body or a visitor's details.
 
 ## Tests

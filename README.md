@@ -56,16 +56,16 @@ Platform pages (`app/(platform)/`, sharing the site's navbar, footer and the dem
 | `/activities` | Archive (الأرشيف) | The society's historical archive: six drawers (one per activity) above a year-by-year gallery of prints with a lightbox; search, activity, year and discipline filters. Named Archive in the navbar and footer; the homepage's own Activities section is unchanged |
 | `/events`, `/events/[slug]` | The vertical timeline | One line through the year: past events above (the oldest folded away), a gold "today" marker, then upcoming events with the nearest one marked. The line fills as you read, a small light riding its front; nodes light as it reaches them. Filters by when, type and discipline. Detail: capacity dial and every registration state, with a check-in pass |
 | `/projects`, `/projects/[slug]` | The laboratory | "On the bench": the project's stage, recognition and one-line purpose beside its media viewer (3D model, videos, drawings, photos), above a catalogue of drawing sheets filterable by discipline, stage, year, type and technology. Detail: everything essential on the first screen (stage, award, at a glance, media), then problem, solution, technical approach, development journey (done → now → next), validation, awards, team and collaboration |
-| `/register` | Membership | Validated form beside a member card that fills as you type; error summary, duplicate-ID demo (`12345678`), success state |
+| `/register` | Membership | The membership application, sent to the Core platform with a photo or scan of the SQU ID card; the member card fills as you type; error summary, upload progress, review status for returning applicants ([integration/MEMBERSHIP_REGISTRATION.md](integration/MEMBERSHIP_REGISTRATION.md)) |
 | `/members`, `/members/[id]` | The community network | Members clustered by discipline and linked by shared projects, above a filterable roll. Profile: the journey Joined → Participated → Attended → Built → Earned → Graduated |
 | `/profile`, `/profile/events` | Your profile | The same journey with private parts; attendance log (registered, attended, absent, pending), certificate eligibility, check-in passes |
 | `/certificates`, `/certificates/[id]` | The document vault | Filed prototype certificates, a verification desk (try `ES-25-0077-F1QS`), shareable verification links; large preview with mock download |
 | `/network`, `/network/[id]` | Graduates who answer back | A career map (graduation year × industry) above graduate cards; mentorship request → sent → accepted. Profile: role, what they can help with, the same mentorship request (its state shared with the network page), graduates in the same field |
 
-**Coming soon.** `/projects`, `/members`, `/network`, `/certificates` and `/register` are not open
-yet: each shows a Coming Soon page (the module's drawing sheet still on the board, with a little
-slow motion; on `/register`, the member card turning over, Ahmed S. on the front and "Coming soon"
-on the back). The switch is `COMING_SOON` in `content/site.ts`; each page's full implementation
+**Coming soon.** `/projects`, `/members`, `/network` and `/certificates` are not open yet: each
+shows a Coming Soon page (the module's drawing sheet still on the board, with a little slow
+motion). `/register` is open; its Coming Soon state (the member card turning over) returns if
+`register` is added back to the list. The switch is `COMING_SOON` in `content/site.ts`; each page's full implementation
 is still in place below the switch, so removing a module from the list brings its page back. The
 Community menu and the phone menu tag these modules "Soon". Their detail pages (`/projects/[slug]`,
 `/members/[id]`, `/network/[id]`, `/certificates/[id]`) still render.
@@ -150,7 +150,7 @@ Arabic; change those too if they are also جماعات.
 | Events | **From the Core platform only** (`https://api.essqu.com/v1`): the homepage section, `/events` and each event page show published events, and registration is sent to Core. Without Core (not configured, or unreachable) they say events can't be shown right now; **sample events are never shown**, in any environment. Fields Core doesn't publish (type, end time, capacity, programme, disciplines, photographs) are left out rather than invented; the designs for them stay in the components. The sample records remain only for the prototype profile pages. | Core admin (`admin.essqu.com`); prototype records: `content/events.ts`, `content/platform/events.ts` |
 | Projects (homepage) | **The society's real projects**, from the teams' posters in /photos/proj: PLA/HA bone scaffolds (Grand Prize, Engineering Gathering), HydroGenix (Winner, INJAZ Oman 2026), T.A.M.R.A. (Best project, Electrical & Mechatronics) and compressor packing leakage (Best project, Mechanical & Industrial). Only what the files state is shown: discipline, year and team where given, no stage. Each poster (or HydroGenix's model photograph) is laid on the drawing board as a print. No project pages yet, so the cards don't link; the platform's sample project pages keep their own records. | `content/projects.ts`, `public/images/projects/` |
 | Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
-| Membership | "Join the Society" leads to the `/register` prototype everywhere; it stores and sends nothing, and no account is created. | `lib/routes.ts` |
+| Membership | **Real applications to the Core platform.** "Join the Society" leads to `/register`, which sends the form and the applicant's SQU ID card to Core. The society reviews it there; an account exists only after approval and activation. The website stores nothing but the applicant's status token in their own browser. | Core admin (`/admin/membership`); `lib/core-api/membership.ts` |
 | Platform records | **All sample data**: the event catalogue, projects, 24 members (first name + initial only), 18 graduates (employers described by kind, never named), certificates and the archive details. One notice per page says so; certificates carry a PROTOTYPE banner and watermark and no university marks. | `content/platform/` |
 | The prototype's "today" | Fixed at 1 October 2026 so upcoming/past and certificate states are stable. | `lib/data/clock.ts` |
 | Yearly record (About) | **Sample figures** for activities and projects per year from 2000 to 2026, labelled as samples on the page. Replace them with the society's records and set `sample: false`. | `content/platform/record.ts` |
@@ -168,8 +168,8 @@ Social URLs are validated: https, on the platform's own domain, pointing to a pr
   through `lib/core-api/`; the rest return the sample records, and connecting a future API means
   replacing those bodies the same way.
 - **Demo session:** `components/platform/DemoSession.tsx` holds what the visitor did in this tab
-  (registrations, cancellations, mentorship requests, a completed membership form) in
-  sessionStorage. No form data is ever stored. The sample signed-in member is Huda S. (`m-07`).
+  (registrations, cancellations, mentorship requests) in sessionStorage; the real membership
+  form no longer marks the session as a member. No form data is ever stored. The sample signed-in member is Huda S. (`m-07`).
 - **Shared pieces:** discovery controls (`components/discovery/`: search, chips, result bar with
   active filters, mobile filter sheet, skeletons, empty/filtered/error states) and platform
   primitives (`components/platform/`: hero, modal, status badge, monogram, gauge, title block,
