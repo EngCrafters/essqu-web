@@ -5,6 +5,8 @@ import type { CSSProperties } from 'react'
 import { StateMessage } from '@/components/discovery/Discovery'
 import { ScrollReveals } from '@/components/motion/ScrollReveals'
 import { RegistrationPanel } from '@/components/pages/events/RegistrationPanel'
+import { EventDescription } from '@/components/pages/events/EventDescription'
+import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import styles from '@/components/pages/events/Events.module.css'
 import { Breadcrumbs } from '@/components/platform/Breadcrumbs'
 import { SampleNotice } from '@/components/platform/Platform'
@@ -120,7 +122,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </h2>
               <div className={styles.prose} data-reveal="stagger">
                 {event.about.map((p, i) => (
-                  <p key={i}>{l(p)}</p>
+                  <p key={i}>
+                    <EventDescription text={l(p)} />
+                  </p>
                 ))}
               </div>
             </section>
@@ -195,7 +199,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
 
         <aside id="register" className={styles.aside} aria-label={c.registration}>
-          <RegistrationPanel event={event} held={held} now={now} registration={registration} />
+          <RegistrationPanel event={event} held={held} now={now} registration={registration} authSettings={getMemberAuthConfig()} />
         </aside>
       </div>
 

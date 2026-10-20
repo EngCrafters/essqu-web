@@ -68,11 +68,12 @@ export interface EventView {
   registered?: number
   waitlist?: number
   registration: EventRegistration
+  phoneRequired?: boolean
   /** Past events only: how many attended (illustrative). */
   attended?: number
   schedule: ScheduleItem[]
   drawing: DrawingId
-  image?: MediaImage
+  image?: Pick<MediaImage, 'src' | 'alt' | 'focus'>
   featured?: boolean
 }
 
@@ -327,10 +328,16 @@ export const EVENT_CATALOGUE: PlatformEvent[] = [
       { time: '17:00', title: { en: 'Awards', ar: 'الجوائز' } },
     ],
     drawing: 'truss',
-    image: photo('/images/activities/gathering.jpg', 1170, 762, {
-      en: 'An exhibition hall: visitors walk between lit display panels around a glowing geometric sculpture.',
-      ar: 'قاعة معرض: زوّار يتجولون بين لوحات عرض مضيئة حول مجسّم هندسي متوهّج.',
-    }, '50% 40%'),
+    image: photo(
+      '/images/activities/gathering.jpg',
+      1170,
+      762,
+      {
+        en: 'An exhibition hall: visitors walk between lit display panels around a glowing geometric sculpture.',
+        ar: 'قاعة معرض: زوّار يتجولون بين لوحات عرض مضيئة حول مجسّم هندسي متوهّج.',
+      },
+      '50% 40%',
+    ),
   },
   {
     slug: 'bridge-design-challenge',

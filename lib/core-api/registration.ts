@@ -21,6 +21,7 @@ export type FieldProblem = 'required' | 'too-long' | 'invalid'
 export type RegistrationOutcome =
   | { kind: 'confirmed' }
   | { kind: 'waitlisted' }
+  | { kind: 'phone-required' }
   /**
    * 409: already registered or waitlisted, full, closed, or a place is free after all. Current Core
    * names which in `reason`; without one (an older Core, or a reason this site doesn't know) the
@@ -81,6 +82,7 @@ export function outcomeFor(status: number, body: unknown, retryAfter: string | n
   }
   if (status === 422 || code === 'invalid-fields') {
     const named = problem?.errors?.map((e) => e.field) ?? []
+    if (named.includes('attendeePhone')) return { kind: 'phone-required' }
     return { kind: 'invalid', fields: FIELDS.filter((f) => named.includes(f)) }
   }
   // 400/413/415 would be a bug on this side, 403 an origin Core doesn't allow; to a visitor all

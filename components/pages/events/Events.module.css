@@ -611,7 +611,6 @@
   .stampDay {
     font-size: 1.5rem;
   }
-
 }
 
 @media (min-width: 48rem) {
@@ -1031,4 +1030,15 @@
   font-size: var(--text-label);
   font-weight: 700;
   text-transform: uppercase;
+}
+.descriptionLink {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  overflow-wrap: anywhere;
+}
+
+.descriptionLink:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
 }

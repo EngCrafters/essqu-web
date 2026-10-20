@@ -2,8 +2,10 @@ import path from 'node:path'
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  distDir: process.env.ESSQU_EVENT_FLOW === 'true' ? '.next-event-flow' : '.next',
   reactStrictMode: true,
   images: {
+    localPatterns: [{ pathname: '/**', search: '' }, { pathname: '/media/events/*' }],
     formats: ['image/avif', 'image/webp'],
     qualities: [75, 90],
   },
@@ -23,7 +25,7 @@ const nextConfig: NextConfig = {
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'Cache-Control', value: 'no-store' },
     ]
-    return ['/login', '/forgot-password', '/reset-password'].map((source) => ({ source, headers: authPage }))
+    return ['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance'].map((source) => ({ source, headers: authPage }))
   },
 }
 

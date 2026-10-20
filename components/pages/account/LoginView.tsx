@@ -11,6 +11,7 @@ import { memberAuthClient, setRememberMe, type MemberAuthSettings } from '@/lib/
 import { classifyAuthError, type AuthProblem } from '@/lib/member-auth/errors'
 import { readAuthLink, withoutAuthLink } from '@/lib/member-auth/links'
 import { fetchOwnMembership, type OwnMembership } from '@/lib/member-auth/membership'
+import { safeEventReturn } from '@/lib/member-auth/return-path'
 import { PasswordInput } from './PasswordInput'
 import a from './Account.module.css'
 
@@ -21,7 +22,15 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  * signed-in person is: a member, an applicant at some stage, or neither. Signing in alone grants
  * nothing. A confirmation link from the registration email also lands here.
  */
-export function LoginView({ authSettings, coreBaseUrl }: { authSettings: MemberAuthSettings | null; coreBaseUrl: string | null }) {
+export function LoginView({
+  authSettings,
+  coreBaseUrl,
+  returnTo,
+}: {
+  authSettings: MemberAuthSettings | null
+  coreBaseUrl: string | null
+  returnTo?: string | null
+}) {
   const { t, intl } = useI18n()
   const c = t.platform.accountPage.login
   const s = t.platform.accountPage.status
@@ -54,8 +63,10 @@ export function LoginView({ authSettings, coreBaseUrl }: { authSettings: MemberA
         return
       }
       setMembership(result)
+      const destination = safeEventReturn(returnTo)
+      if (result.kind === 'member' && destination) window.location.assign(destination)
     },
-    [client, coreBaseUrl],
+    [client, coreBaseUrl, returnTo],
   )
 
   useEffect(() => {
@@ -107,7 +118,9 @@ export function LoginView({ authSettings, coreBaseUrl }: { authSettings: MemberA
     if (errors.email || errors.password) return
     setBusy(true)
     setRememberMe(remember)
-    const { data, error } = await client.auth.signInWithPassword({ email: typed.toLowerCase(), password }).catch((e: unknown) => ({ data: { session: null }, error: e as { code?: string } }))
+    const { data, error } = await client.auth
+      .signInWithPassword({ email: typed.toLowerCase(), password })
+      .catch((e: unknown) => ({ data: { session: null }, error: e as { code?: string } }))
     setBusy(false)
     if (error || !data.session) {
       setProblem(classifyAuthError(error))
@@ -121,7 +134,9 @@ export function LoginView({ authSettings, coreBaseUrl }: { authSettings: MemberA
   const resendConfirmation = async () => {
     if (!client || errors.email) return
     setResend('sending')
-    await client.auth.resend({ type: 'signup', email: typed.toLowerCase(), options: { emailRedirectTo: `${window.location.origin}${routes.login}` } }).catch(() => null)
+    await client.auth
+      .resend({ type: 'signup', email: typed.toLowerCase(), options: { emailRedirectTo: `${window.location.origin}${routes.login}` } })
+      .catch(() => null)
     setResend('sent')
   }
 
@@ -305,7 +320,12 @@ export function LoginView({ authSettings, coreBaseUrl }: { authSettings: MemberA
               <p role="status">{c.resent}</p>
             ) : (
               <div className={a.buttons}>
-                <button type="button" className="btn btn--secondary btn--compact" onClick={resendConfirmation} disabled={resend === 'sending' || Boolean(errors.email)}>
+                <button
+                  type="button"
+                  className="btn btn--secondary btn--compact"
+                  onClick={resendConfirmation}
+                  disabled={resend === 'sending' || Boolean(errors.email)}
+                >
                   {resend === 'sending' ? c.resending : c.resend}
                 </button>
               </div>

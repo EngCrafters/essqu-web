@@ -22,6 +22,9 @@ import type { RegistrationTransport } from '@/lib/data'
 import { eventDateParts } from '@/lib/format'
 import { routes } from '@/lib/routes'
 import styles from './Events.module.css'
+import { memberAuthClient, type MemberAuthSettings } from '@/lib/member-auth/client'
+import { isMemberProfile, memberCall, fetchMemberEvent, normalizePhone, type MemberProfile } from '@/lib/core-api/member-events'
+import { eventManagement } from '@/lib/i18n/dictionaries/pages/event-management'
 
 type Dialog = null | 'confirm' | 'cancel'
 
@@ -33,9 +36,21 @@ const wallClock = () => Date.now()
  * events published through the Core platform register for real, straight from the browser to
  * Core (lib/core-api/registration.ts).
  */
-export function RegistrationPanel({ event, held, now, registration }: { event: EventView; held: string[]; now?: string; registration: RegistrationTransport }) {
+export function RegistrationPanel({
+  event,
+  held,
+  now,
+  registration,
+  authSettings,
+}: {
+  event: EventView
+  held: string[]
+  now?: string
+  registration: RegistrationTransport
+  authSettings?: MemberAuthSettings | null
+}) {
   if (registration.kind === 'sample' && isSampleEvent(event)) return <SampleRegistration event={event} held={held} />
-  return <CoreRegistration event={event} now={now} baseUrl={registration.kind === 'core' ? registration.baseUrl : null} />
+  return <CoreRegistration event={event} now={now} baseUrl={registration.kind === 'core' ? registration.baseUrl : null} authSettings={authSettings ?? null} />
 }
 
 /**
@@ -219,8 +234,26 @@ function SampleRegistration({ event, held }: { event: PlatformEvent; held: strin
  * When Core says why a registration conflicted, the panel follows it: full → the waitlist is
  * offered (joined only by a second, explicit submit), a place is free → register, closed → closed.
  */
-function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: string; baseUrl: string | null }) {
-  const { t, l } = useI18n()
+function CoreRegistration({
+  event,
+  now,
+  baseUrl,
+  authSettings,
+}: {
+  event: EventView
+  now?: string
+  baseUrl: string | null
+  authSettings: MemberAuthSettings | null
+}) {
+  const { t, l, locale } = useI18n()
+  const copy = eventManagement[locale]
+  const [profile, setProfile] = useState<MemberProfile | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [blocked, setBlocked] = useState(false)
+  const [guestChoice, setGuestChoice] = useState(false)
+  const [phone, setPhone] = useState('')
+  const [phoneError, setPhoneError] = useState('')
+  const [requiresPhone, setRequiresPhone] = useState(event.phoneRequired ?? false)
   const c = t.platform.eventsPage
   const formId = useId()
   const [open, setOpen] = useState(false)
@@ -238,6 +271,7 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
   /** After a 429 with Retry-After: until when a submission would only be refused again. */
   const retryAt = useRef(0)
   const doneRef = useRef<HTMLParagraphElement>(null)
+  const phoneRef = useRef<HTMLInputElement>(null)
   const fieldRefs = useRef<Partial<Record<RegistrationField, HTMLInputElement | null>>>({})
 
   // Core's answer takes the focus once it is on screen (after the dialog has closed and returned
@@ -267,7 +301,7 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (inFlight.current || !baseUrl) return
+    if (inFlight.current || !baseUrl || checking || blocked) return
     setSubmitted(true)
     setFailure(null)
     const firstInvalid = (['attendeeName', 'attendeeEmail'] as const).find((f) => problems[f])
@@ -275,15 +309,71 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
       fieldRefs.current[firstInvalid]?.focus()
       return
     }
+    const requiredPhone = requiresPhone && !profile?.phone
+    const normalizedPhone = requiredPhone ? normalizePhone(phone) : null
+    if (requiredPhone && !normalizedPhone) {
+      setPhoneError(copy.invalidPhone)
+      phoneRef.current?.focus()
+      return
+    }
     // Core would refuse it again; say so without sending.
     const wait = retryAt.current - wallClock()
     if (wait > 0) return fail(c.outcome.rateLimitedIn(Math.ceil(wait / 60000)))
     inFlight.current = true
     setPending(true)
-    const outcome = await submitRegistration(baseUrl, event.slug, registrationBody({ ...values, waitlist }))
+    let outcome
+    if (profile && authSettings) {
+      if (normalizedPhone) {
+        const saved = await memberCall<MemberProfile>(authSettings, baseUrl, '/me/profile', 'PATCH', { phone: normalizedPhone })
+        if (!saved.ok || !isMemberProfile(saved.data)) {
+          inFlight.current = false
+          setPending(false)
+          return fail(copy.phoneSaveFailed)
+        }
+        setProfile(saved.data)
+      }
+      const result = await memberCall<{ status: 'confirmed' | 'waitlisted' }>(authSettings, baseUrl, `/me/events/${event.slug}/registrations`, 'POST', {
+        intent: waitlist ? 'join_waitlist' : 'register',
+      })
+      if (!result.ok && result.code === 'PHONE_REQUIRED') {
+        setRequiresPhone(true)
+        inFlight.current = false
+        setPending(false)
+        return fail(copy.phoneRequired)
+      }
+      outcome =
+        result.ok && ['confirmed', 'waitlisted'].includes(result.data.status)
+          ? ({ kind: result.data.status } as const)
+          : result.ok
+            ? ({ kind: 'unavailable' } as const)
+            : result.status === 409
+              ? ({
+                  kind: 'conflict',
+                  reason: (
+                    {
+                      ALREADY_REGISTERED: 'already-registered',
+                      ALREADY_WAITLISTED: 'already-waitlisted',
+                      EVENT_FULL: 'event-full',
+                      REGISTRATION_CLOSED: 'registration-closed',
+                      REGISTRATION_AVAILABLE: 'registration-available',
+                    } as const
+                  )[result.code as 'EVENT_FULL'],
+                } as const)
+              : result.status === 429
+                ? ({ kind: 'rate-limited', retryAfterSeconds: result.retryAfterSeconds ?? 600 } as const)
+                : ({ kind: 'unavailable' } as const)
+    } else {
+      outcome = await submitRegistration(baseUrl, event.slug, {
+        ...registrationBody({ ...values, waitlist }),
+        ...(normalizedPhone ? { attendeePhone: normalizedPhone } : {}),
+      })
+    }
     inFlight.current = false
     setPending(false)
     switch (outcome.kind) {
+      case 'phone-required':
+        setRequiresPhone(true)
+        return fail(copy.guestPhone)
       case 'confirmed':
       case 'waitlisted':
         setResult(outcome.kind)
@@ -325,7 +415,10 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
     }
   }
 
-  const field = (key: RegistrationField, input: { label: string; type: 'text' | 'email'; autoComplete: string; max: number; value: string; set: (v: string) => void }) => {
+  const field = (
+    key: RegistrationField,
+    input: { label: string; type: 'text' | 'email'; autoComplete: string; max: number; value: string; set: (v: string) => void },
+  ) => {
     const id = `${formId}-${key}`
     const problem = problemFor(key)
     return (
@@ -344,6 +437,7 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
           maxLength={input.max}
           value={input.value}
           disabled={pending}
+          readOnly={Boolean(profile)}
           onChange={(e) => {
             input.set(e.target.value)
             setRejected((r) => r.filter((f) => f !== key))
@@ -380,7 +474,50 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
       <div className={styles.panelActions}>
         {(status === 'open' || status === 'waitlist') &&
           (baseUrl ? (
-            <button type="button" className="btn btn--primary" onClick={() => setOpen(true)}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={async () => {
+                if (checking) return
+                setOpen(true)
+                setFailure(null)
+                setPhoneError('')
+                setBlocked(false)
+                setGuestChoice(false)
+                setChecking(true)
+                setProfile(null)
+                setValues({ name: '', email: '' })
+                setPhone('')
+                setTouched({})
+                setSubmitted(false)
+                try {
+                  if (!authSettings || !baseUrl) return
+                  const session = (await memberAuthClient(authSettings).auth.getSession()).data.session
+                  if (!session) return
+                  const data = await fetchMemberEvent(authSettings, baseUrl, event.slug)
+                  if (!data.ok || !isMemberProfile(data.data.profile)) {
+                    setBlocked(true)
+                    const noMember = !data.ok && data.status === 403 && data.code === 'MEMBER_REQUIRED'
+                    setGuestChoice(noMember)
+                    setFailure(noMember ? copy.noMemberProfile : copy.profileUnavailable)
+                    return
+                  }
+                  if (data.data.registration) {
+                    setResult(data.data.registration.status)
+                    setOpen(false)
+                    return
+                  }
+                  setProfile(data.data.profile)
+                  setValues({ name: data.data.profile.name, email: data.data.profile.email })
+                  setPhone(data.data.profile.phone ?? '')
+                } catch {
+                  setBlocked(true)
+                  setFailure(copy.profileUnavailable)
+                } finally {
+                  setChecking(false)
+                }
+              }}
+            >
               {status === 'open' ? c.register : c.joinWaitlist}
               {status === 'open' && <IconArrowRight className="btn__arrow" />}
             </button>
@@ -409,30 +546,95 @@ function CoreRegistration({ event, now, baseUrl }: { event: EventView; now?: str
             <button type="button" className="btn btn--secondary" onClick={close}>
               {t.platform.common.cancel}
             </button>
-            <button type="submit" form={formId} className="btn btn--primary" disabled={pending || closed} aria-disabled={pending || closed}>
+            <button
+              type="submit"
+              form={formId}
+              className="btn btn--primary"
+              disabled={pending || closed || checking || blocked}
+              aria-disabled={pending || closed || checking || blocked}
+            >
               {pending ? c.sending : waitlist ? c.confirmWaitlist : c.confirm}
             </button>
           </>
         }
       >
         <p>{c.confirmBody(l(event.title))}</p>
+        {guestChoice && (
+          <button
+            type="button"
+            className="btn btn--secondary"
+            onClick={() => {
+              setGuestChoice(false)
+              setBlocked(false)
+              setFailure(null)
+            }}
+          >
+            {copy.continueGuest}
+          </button>
+        )}
+        {checking ? (
+          <p role="status">{copy.checking}</p>
+        ) : profile ? (
+          <p>{copy.memberConfirmation}</p>
+        ) : !blocked ? (
+          <p>
+            {copy.guestNote} {authSettings && <Link href={`/login?next=${encodeURIComponent(`/events/${event.slug}`)}`}>{copy.signIn}</Link>}
+          </p>
+        ) : null}
         <form id={formId} className={styles.form} onSubmit={submit} noValidate aria-busy={pending}>
-          {field('attendeeName', {
-            label: c.formName,
-            type: 'text',
-            autoComplete: 'name',
-            max: NAME_MAX,
-            value: values.name,
-            set: (name) => setValues((v) => ({ ...v, name })),
-          })}
-          {field('attendeeEmail', {
-            label: c.formEmail,
-            type: 'email',
-            autoComplete: 'email',
-            max: EMAIL_MAX,
-            value: values.email,
-            set: (email) => setValues((v) => ({ ...v, email })),
-          })}
+          <fieldset disabled={checking || blocked} style={{ border: 0, padding: 0, margin: 0, display: 'grid', gap: 'var(--space-5)' }}>
+            {field('attendeeName', {
+              label: c.formName,
+              type: 'text',
+              autoComplete: 'name',
+              max: NAME_MAX,
+              value: values.name,
+              set: (name) => setValues((v) => ({ ...v, name })),
+            })}
+            {field('attendeeEmail', {
+              label: c.formEmail,
+              type: 'email',
+              autoComplete: 'email',
+              max: EMAIL_MAX,
+              value: values.email,
+              set: (email) => setValues((v) => ({ ...v, email })),
+            })}
+            {requiresPhone && !profile?.phone && (
+              <div className={styles.field}>
+                <label htmlFor={`${formId}-phone`}>{copy.phone}</label>
+                <p id={`${formId}-phone-help`}>{profile ? copy.phoneRequired : copy.guestPhone}</p>
+                <input
+                  ref={phoneRef}
+                  id={`${formId}-phone`}
+                  type="tel"
+                  dir="ltr"
+                  autoComplete="tel"
+                  value={phone}
+                  maxLength={32}
+                  placeholder="+968 9123 4567"
+                  disabled={pending}
+                  required
+                  onChange={(e) => {
+                    setPhone(e.target.value)
+                    setPhoneError('')
+                  }}
+                  aria-invalid={Boolean(phoneError)}
+                  aria-describedby={`${formId}-phone-help${phoneError ? ` ${formId}-phone-error` : ''}`}
+                />
+                {phoneError && (
+                  <p id={`${formId}-phone-error`} role="alert" className={styles.fieldError}>
+                    {phoneError}
+                  </p>
+                )}
+              </div>
+            )}
+            {profile?.phone && (
+              <p>
+                <span>{copy.phone}: </span>
+                <bdi dir="ltr">{profile.phone}</bdi>
+              </p>
+            )}
+          </fieldset>
           <p className={styles.panelNote}>{c.formPrivacy}</p>
           {failure && (
             <p className={styles.formError} role="alert">

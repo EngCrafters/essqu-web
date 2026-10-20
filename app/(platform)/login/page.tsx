@@ -5,6 +5,7 @@ import { PlatformHero } from '@/components/platform/Platform'
 import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
 import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { getI18n } from '@/lib/i18n/server'
+import { safeEventReturn } from '@/lib/member-auth/return-path'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n()
@@ -12,7 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: c.metaTitle, description: c.metaDescription, robots: { index: false } }
 }
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
+  const returnTo = safeEventReturn((await searchParams).next)
   const { t } = await getI18n()
   const c = t.platform.accountPage.login
   return (
@@ -21,7 +23,7 @@ export default async function LoginPage() {
       <section className={styles.section} aria-label={c.formLabel}>
         <div className="container">
           {/* Supabase Auth checks the password; Core's public API says what the signed-in person is. */}
-          <LoginView authSettings={getMemberAuthConfig()} coreBaseUrl={getRegistrationBaseUrl()} />
+          <LoginView authSettings={getMemberAuthConfig()} coreBaseUrl={getRegistrationBaseUrl()} returnTo={returnTo} />
         </div>
       </section>
     </>
