@@ -60,8 +60,11 @@ export const FOOTER_GROUPS = [
 /**
  * Platform modules that are not open yet. Their pages show a Coming Soon state instead of the
  * full implementation, which stays in place: remove an id here to bring its page back.
+ *
+ * `register` is open: membership applications go to the Core platform for review (ADR 0017 in
+ * engsoc-platform). Its Coming Soon state stays available by adding the id back.
  */
-export const COMING_SOON: readonly UpcomingModule[] = ['projects', 'members', 'network', 'certificates', 'register']
+export const COMING_SOON: readonly UpcomingModule[] = ['projects', 'members', 'network', 'certificates']
 
 export type UpcomingModule = 'projects' | 'members' | 'network' | 'certificates' | 'register'
 

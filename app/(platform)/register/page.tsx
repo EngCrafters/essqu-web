@@ -5,6 +5,7 @@ import styles from '@/components/pages/register/Register.module.css'
 import { PlatformHero } from '@/components/platform/Platform'
 import { ComingSoon } from '@/components/platform/ComingSoon'
 import { isComingSoon } from '@/content/site'
+import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,19 +22,22 @@ export default async function RegisterPage() {
     return <ComingSoon module="register" eyebrow={s.eyebrow} title={s.title} lead={s.lead} visual={<MemberCardFlip />} />
   }
   const c = t.platform.registerPage
+  // Core's public address (not a secret): the applicant's browser sends the application there.
+  // Null when Core isn't configured; the form then says applications can't be sent right now.
+  const applyBaseUrl = getRegistrationBaseUrl()
   return (
     <>
       <PlatformHero eyebrow={c.eyebrow} title={c.title} lead={<p>{c.lead}</p>} layout="stack" tone="paper">
         <p className="preview-note">
           <span className="status-dot" aria-hidden="true" />
           <span>
-            <strong>{c.prototypeStrong}</strong> {c.prototypeBody}
+            <strong>{c.noteStrong}</strong> {c.noteBody}
           </span>
         </p>
       </PlatformHero>
       <section className={styles.section} aria-label={c.formLabel}>
         <div className="container">
-          <RegisterForm />
+          <RegisterForm applyBaseUrl={applyBaseUrl} />
         </div>
       </section>
     </>
