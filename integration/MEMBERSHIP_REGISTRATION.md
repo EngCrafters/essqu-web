@@ -60,13 +60,21 @@ Nothing is stored by the website. Core keeps:
 
 - the application: the form fields, consent version and time, review state, reviewer IDs, an
   internal note of at most 500 characters, and the activation link;
-- the ID document, in a private table reachable only through fixed routines. It is not in a
-  storage bucket and has no URL. Core **deletes it at approval or rejection**.
+- the ID document, in a **private Supabase Storage bucket** (Core's ADR 0018) under a random key,
+  with only a reference, its size and its SHA-256 in the database. It has no public or signed URL.
+  Reviewers see it only through Core's signed-in, audited dashboard route. Core **deletes it at
+  approval or rejection**. Until Core's Storage keys are installed, Core keeps the card in a
+  private database table instead. The website sends the same request either way.
 
 On activation Core writes the `members` row and sends the standard Supabase invitation, so the
 person sets their own password. It grants no administrative access. Audit rows identify the
-application by ID only. Migration `0025_membership_applications` creates all of this. It has been
-applied only to disposable local databases.
+application by ID only. Core migrations `0025_membership_applications` and
+`0026_membership_document_storage` create all of this. They have been applied only to disposable
+local databases.
+
+A Storage outage during upload reaches the applicant as the existing "couldn't be sent just now,
+nothing was saved" message. Core writes no application and cleans up any partial object. This was
+tested end to end against a local S3 stand-in.
 
 ## D. UI
 
