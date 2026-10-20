@@ -21,8 +21,14 @@ import {
 } from '@/lib/core-api/membership'
 import styles from './Register.module.css'
 import { routes } from '@/lib/routes'
+import { PasswordInput } from '@/components/pages/account/PasswordInput'
+import { memberAuthClient, signUpApplicant, type MemberAuthSettings } from '@/lib/member-auth/client'
+import type { AuthProblem } from '@/lib/member-auth/errors'
+import { MIN_PASSWORD_LENGTH, checkConfirmation, checkPassword } from '@/lib/member-auth/password'
 
-type Field = 'name' | 'email' | 'studentId' | 'year' | 'discipline' | 'interests' | 'idDocument' | 'consent'
+type Field = 'name' | 'email' | 'studentId' | 'year' | 'discipline' | 'password' | 'confirmPassword' | 'interests' | 'idDocument' | 'consent'
+/** The applicant's own sign-in, set up with Supabase Auth after Core accepted the application. */
+type Account = { state: 'idle' } | { state: 'working' } | { state: 'sent' } | { state: 'failed'; problem: AuthProblem }
 type Errors = Partial<Record<Field, string>>
 type Notice = 'duplicate' | 'member' | 'rateLimited' | 'unavailable' | null
 type Card = { name: string; size: number; preview: string | null; prepared: PreparedDocument | null }
@@ -49,8 +55,13 @@ const formatSize = (bytes: number) => (bytes >= 1024 * 1024 ? `${(bytes / 1024 /
  * what needs attention and moves focus there. On submit, the form and the SQU ID card go from this
  * browser to the Core platform (lib/core-api/membership.ts), which stores the application for
  * review. Nothing is called a membership until it is approved.
+ *
+ * With sign-in configured, the applicant also chooses a password. It is never part of the
+ * application: once Core has accepted the application, this browser sends the password to
+ * Supabase Auth's own sign-up (Core's ADR 0019), which emails a confirmation link. If that step
+ * fails, the application still stands and the applicant can retry it here.
  */
-export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) {
+export function RegisterForm({ applyBaseUrl, authSettings }: { applyBaseUrl: string | null; authSettings: MemberAuthSettings | null }) {
   const { t, l, locale, intl } = useI18n()
   const c = t.platform.registerPage
   const uid = useId()
@@ -72,6 +83,10 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
   const [status, setStatus] = useState<Status>(null)
   const [statusProblem, setStatusProblem] = useState(false)
   const [justSent, setJustSent] = useState(false)
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [account, setAccount] = useState<Account>({ state: 'idle' })
+  const [accountEmail, setAccountEmail] = useState('')
 
   // A returning applicant sees where their application stands (the token is in this browser only).
   useEffect(() => {
@@ -117,6 +132,12 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
     else if (!/^\d{6,10}$/.test(values.studentId.trim())) e.studentId = c.errors.idInvalid
     if (!values.year) e.year = c.errors.yearRequired
     if (!values.discipline) e.discipline = c.errors.disciplineRequired
+    if (authSettings) {
+      const problem = checkPassword(password)
+      if (problem) e.password = problem === 'required' ? c.errors.passwordRequired : problem === 'too-short' ? c.errors.passwordShort(MIN_PASSWORD_LENGTH) : c.errors.passwordLong
+      const mismatch = checkConfirmation(password, confirmation)
+      if (mismatch) e.confirmPassword = mismatch === 'required' ? c.errors.confirmRequired : c.errors.passwordMismatch
+    }
     if (interests.length > MAX_INTERESTS) e.interests = c.errors.interestsMax
     if (!preparing) {
       const problem = cardError(card?.prepared ?? null)
@@ -197,6 +218,7 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
         setJustSent(true)
         window.scrollTo({ top: 0, behavior: 'auto' })
         requestAnimationFrame(() => titleRef.current?.focus())
+        if (authSettings) void setUpAccount(values.email, password)
         return
       case 'invalid': {
         const named: Errors = {}
@@ -239,10 +261,35 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
     requestAnimationFrame(() => summaryRef.current?.focus())
   }
 
+  /** Supabase Auth's sign-up with the chosen password; the password is dropped once it succeeds. */
+  const setUpAccount = async (email: string, chosen: string) => {
+    if (!authSettings) return
+    setAccountEmail(email.trim().toLowerCase())
+    setAccount({ state: 'working' })
+    const outcome = await signUpApplicant(memberAuthClient(authSettings), email, chosen, `${window.location.origin}${routes.login}`)
+    if (outcome.ok) {
+      setPassword('')
+      setConfirmation('')
+      setAccount({ state: 'sent' })
+    } else setAccount({ state: 'failed', problem: outcome.problem })
+  }
+
+  const retryAccount = (ev: FormEvent) => {
+    ev.preventDefault()
+    if (checkPassword(password) || checkConfirmation(password, confirmation)) {
+      setTouched((x) => ({ ...x, password: true, confirmPassword: true }))
+      return
+    }
+    void setUpAccount(accountEmail, password)
+  }
+
   const startOver = () => {
     forgetApplication()
     setStatus(null)
     setJustSent(false)
+    setPassword('')
+    setConfirmation('')
+    setAccount({ state: 'idle' })
     setValues({ name: '', email: '', studentId: '', year: '', discipline: '', consent: false })
     setInterests([])
     setCard(null)
@@ -295,6 +342,54 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
     </div>
   )
 
+  // The password and its confirmation, side by side on wide screens like the other paired fields.
+  const passwordFields = (
+    <div className={styles.row}>
+      <div className={styles.field} data-invalid={Boolean(shown('password')) || undefined}>
+        <label htmlFor={id('password')}>{c.password}</label>
+        <p id={`${id('password')}-hint`} className={styles.hint}>
+          {c.passwordHint(MIN_PASSWORD_LENGTH)}
+        </p>
+        <PasswordInput
+          id={id('password')}
+          value={password}
+          onChange={(value) => setPassword(value)}
+          onBlur={() => setTouched((x) => ({ ...x, password: true }))}
+          autoComplete="new-password"
+          invalid={Boolean(shown('password'))}
+          describedBy={described('password')}
+          disabled={sending}
+        />
+        {shown('password') && (
+          <p id={`${id('password')}-error`} className={styles.error}>
+            {shown('password')}
+          </p>
+        )}
+      </div>
+      <div className={styles.field} data-invalid={Boolean(shown('confirmPassword')) || undefined}>
+        <label htmlFor={id('confirmPassword')}>{c.confirmPassword}</label>
+        <p id={`${id('confirmPassword')}-hint`} className={styles.hint}>
+          {c.confirmPasswordHint}
+        </p>
+        <PasswordInput
+          id={id('confirmPassword')}
+          value={confirmation}
+          onChange={(value) => setConfirmation(value)}
+          onBlur={() => setTouched((x) => ({ ...x, confirmPassword: true }))}
+          autoComplete="new-password"
+          invalid={Boolean(shown('confirmPassword'))}
+          describedBy={described('confirmPassword')}
+          disabled={sending}
+        />
+        {shown('confirmPassword') && (
+          <p id={`${id('confirmPassword')}-error`} className={styles.error}>
+            {shown('confirmPassword')}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+
   // Sent in this visit, or still open (pending or approved) from an earlier one.
   if (status && (justSent || status.status !== 'rejected')) {
     const submittedOn = new Intl.DateTimeFormat(intl, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Muscat' }).format(new Date(status.submittedAt))
@@ -321,11 +416,37 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
               </ol>
             </>
           ) : null}
+          {justSent && authSettings ? (
+            account.state === 'sent' ? (
+              <p className={styles.successNote}>
+                {c.accountConfirm(accountEmail)} {c.accountExisting}
+              </p>
+            ) : account.state === 'working' ? (
+              <p className={styles.successNote} aria-busy="true">
+                {c.accountRetrying}
+              </p>
+            ) : account.state === 'failed' ? (
+              <form className={styles.successNote} onSubmit={retryAccount} noValidate>
+                <p>
+                  {account.problem === 'weak-password' ? c.accountWeak : c.accountFailed} {c.accountNote}
+                </p>
+                {account.problem === 'weak-password' ? passwordFields : null}
+                <button type="submit" className="btn btn--secondary btn--compact">
+                  {c.accountRetry}
+                </button>
+              </form>
+            ) : null
+          ) : null}
           <div className={styles.successActions}>
             <Link href={routes.events} className="btn btn--primary">
               {c.explore}
               <IconArrowRight className="btn__arrow" />
             </Link>
+            {authSettings ? (
+              <Link href={routes.login} className="btn btn--secondary">
+                {c.signIn}
+              </Link>
+            ) : null}
             <button type="button" className="btn btn--quiet" onClick={startOver}>
               {c.another}
             </button>
@@ -529,6 +650,8 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
           </div>
         </div>
 
+        {authSettings ? passwordFields : null}
+
         <fieldset className={styles.field} id={id('interests')} data-invalid={Boolean(shown('interests')) || undefined} aria-describedby={described('interests')}>
           <legend>{c.interests}</legend>
           <p id={`${id('interests')}-hint`} className={styles.hint}>
@@ -654,6 +777,11 @@ export function RegisterForm({ applyBaseUrl }: { applyBaseUrl: string | null }) 
             <span className={styles.progress} aria-hidden="true">
               <span style={{ '--fill': `${Math.round(progress * 100)}%` } as CSSProperties} />
             </span>
+          ) : null}
+          {authSettings ? (
+            <p className={styles.tip}>
+              {c.haveAccount} <Link href={routes.login}>{c.signIn}</Link>
+            </p>
           ) : null}
         </div>
       </form>

@@ -208,6 +208,13 @@
   font-size: var(--text-label);
 }
 
+.tip a {
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .spinner {
   width: 16px;
   height: 16px;
@@ -621,4 +628,40 @@
   border-radius: inherit;
   background: var(--brand-primary);
   transition: width 200ms linear;
+}
+
+/* ---------------------------------------------------------------- password */
+
+/* The field's own input with a Show/Hide button inside its inline end; used here and on the
+   sign-in and reset pages, so every password field looks the same. */
+.passwordBox {
+  position: relative;
+}
+
+.field .passwordBox input {
+  padding-inline-end: 5.5rem;
+}
+
+.reveal {
+  position: absolute;
+  inset-block: 6px;
+  inset-inline-end: 6px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-button) - 4px);
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reveal:hover {
+  background: var(--brand-soft);
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }

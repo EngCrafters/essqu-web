@@ -1,6 +1,7 @@
 import { pluralAr } from '../plural'
 import { certificatesAr, networkAr } from './pages/vault'
 import { membersAr, registerAr } from './pages/people'
+import { accountAr } from './pages/account'
 import { projectsAr } from './pages/projects'
 import { activitiesAr, eventsAr } from './pages/events'
 import { aboutAr, leadershipAr } from './pages/about'
@@ -206,6 +207,7 @@ export const platformAr: PlatformDictionary = {
   eventsPage: eventsAr,
   projectsPage: projectsAr,
   registerPage: registerAr,
+  accountPage: accountAr,
   membersPage: membersAr,
   certificatesPage: certificatesAr,
   networkPage: networkAr,

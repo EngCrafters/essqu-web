@@ -6,6 +6,7 @@ import { PlatformHero } from '@/components/platform/Platform'
 import { ComingSoon } from '@/components/platform/ComingSoon'
 import { isComingSoon } from '@/content/site'
 import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
+import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { getI18n } from '@/lib/i18n/server'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,7 +38,7 @@ export default async function RegisterPage() {
       </PlatformHero>
       <section className={styles.section} aria-label={c.formLabel}>
         <div className="container">
-          <RegisterForm applyBaseUrl={applyBaseUrl} />
+          <RegisterForm applyBaseUrl={applyBaseUrl} authSettings={getMemberAuthConfig()} />
         </div>
       </section>
     </>

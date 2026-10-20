@@ -1,6 +1,7 @@
 import { pluralEn } from '../plural'
 import { certificatesEn, networkEn } from './pages/vault'
 import { membersEn, registerEn } from './pages/people'
+import { accountEn } from './pages/account'
 import { projectsEn } from './pages/projects'
 import { activitiesEn, eventsEn } from './pages/events'
 import { aboutEn, leadershipEn } from './pages/about'
@@ -179,6 +180,7 @@ export const platformEn = {
   eventsPage: eventsEn,
   projectsPage: projectsEn,
   registerPage: registerEn,
+  accountPage: accountEn,
   membersPage: membersEn,
   certificatesPage: certificatesEn,
   networkPage: networkEn,

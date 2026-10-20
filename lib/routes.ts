@@ -20,6 +20,9 @@ export const routes = {
   profile: '/profile',
   profileEvents: '/profile/events',
   register: '/register',
+  login: '/login',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
 
   event: (slug: string) => `/events/${slug}`,
   project: (slug: string) => `/projects/${slug}`,
