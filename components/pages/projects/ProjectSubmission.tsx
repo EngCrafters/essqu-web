@@ -1241,7 +1241,8 @@ export function ProjectSubmission({ authSettings, baseUrl }: { authSettings: Mem
                           <input
                             type="file"
                             accept="image/jpeg,image/png"
-                            disabled={record.media.length >= 12}
+                            // While a save or another upload runs, a chosen file would be ignored.
+                            disabled={pending || record.media.length >= 12}
                             onChange={(event) => void upload(event.currentTarget)}
                           />
                         </label>
