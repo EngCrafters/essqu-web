@@ -11,7 +11,7 @@ import { memberAuthClient, setRememberMe, type MemberAuthSettings } from '@/lib/
 import { classifyAuthError, type AuthProblem } from '@/lib/member-auth/errors'
 import { readAuthLink, withoutAuthLink } from '@/lib/member-auth/links'
 import { fetchOwnMembership, type OwnMembership } from '@/lib/member-auth/membership'
-import { safeEventReturn } from '@/lib/member-auth/return-path'
+import { safeMemberReturn } from '@/lib/member-auth/return-path'
 import { PasswordInput } from './PasswordInput'
 import a from './Account.module.css'
 
@@ -63,7 +63,7 @@ export function LoginView({
         return
       }
       setMembership(result)
-      const destination = safeEventReturn(returnTo)
+      const destination = safeMemberReturn(returnTo)
       if (result.kind === 'member' && destination) window.location.assign(destination)
     },
     [client, coreBaseUrl, returnTo],

@@ -6,6 +6,8 @@ import { MentorshipPanel } from '@/components/pages/network/Mentorship'
 import netStyles from '@/components/pages/network/Network.module.css'
 import styles from '@/components/pages/profile/Profile.module.css'
 import { Breadcrumbs } from '@/components/platform/Breadcrumbs'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { Monogram, SampleNotice } from '@/components/platform/Platform'
 import { DisciplineLink } from '@/components/ui/DisciplineLink'
 import { DISCIPLINE_BY_ID } from '@/content/disciplines'
@@ -15,6 +17,10 @@ import { getI18n } from '@/lib/i18n/server'
 import { routes } from '@/lib/routes'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  if (isComingSoon('network')) {
+    const { t } = await getI18n()
+    return { title: t.platform.comingSoon.metaTitle(t.platform.comingSoon.modules.network.name) }
+  }
   const { id } = await params
   const [{ t, l }, graduate] = await Promise.all([getI18n(), getGraduate(id)])
   const c = t.platform.networkPage
@@ -27,6 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
  * mentorship request, whose state is shared with the network page in this tab.
  */
 export default async function GraduatePage({ params }: { params: Promise<{ id: string }> }) {
+  if (isComingSoon('network')) return <ComingSoon module="network" />
   const { id } = await params
   const [{ t, l }, graduate] = await Promise.all([getI18n(), getGraduate(id)])
   if (!graduate) notFound()

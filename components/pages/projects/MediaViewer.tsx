@@ -37,7 +37,11 @@ export function MediaViewer({
   const { t, l, dir } = useI18n()
   const c = t.platform.projectsPage
   const desktop = useMediaQuery(DESKTOP_QUERY, true)
-  const canFullscreen = useSyncExternalStore(subscribeNever, () => Boolean(document.fullscreenEnabled), () => false)
+  const canFullscreen = useSyncExternalStore(
+    subscribeNever,
+    () => Boolean(document.fullscreenEnabled),
+    () => false,
+  )
   const root = useRef<HTMLElement>(null)
   const viewport = useRef<HTMLDivElement>(null)
   const video = useRef<HTMLVideoElement>(null)
@@ -64,9 +68,10 @@ export function MediaViewer({
     invalidateRef.current?.()
   }, [explode])
 
-  const item = items[Math.min(index, items.length - 1)]!
+  const item = items[Math.min(index, items.length - 1)]
   const go = useCallback(
     (to: number) => {
+      if (items.length === 0) return
       video.current?.pause()
       setStarted(false)
       setPlaying(false)
@@ -114,7 +119,19 @@ export function MediaViewer({
   }
 
   const accent = DISCIPLINE_COLOR[project.discipline]
+  const model = project.model
   const kindLabel = (m: ProjectMedia) => c.mediaKinds[m.kind]
+
+  if (!item) {
+    return (
+      <section className={[styles.viewer, className].filter(Boolean).join(' ')} data-tone={tone} aria-label={c.mediaLabel(l(project.title))}>
+        <div className={styles.viewport}>
+          <Plate id={`empty-${project.slug}`} drawing={project.drawing} tone="ivory" className={styles.sheet} />
+        </div>
+        <p className={styles.caption}>{l({ en: 'Project images have not been added yet.', ar: 'لم تُضَف صور المشروع بعد.' })}</p>
+      </section>
+    )
+  }
 
   return (
     <section
@@ -137,15 +154,13 @@ export function MediaViewer({
         onPointerUp={onUp}
         onPointerCancel={() => (swipe.current = null)}
       >
-        {item.kind === 'model' ? (
+        {item.kind === 'model' && model ? (
           <SceneMount
             className={styles.fill}
             quality={desktop ? 'high' : 'low'}
             label={c.benchLabel(l(project.title))}
             fallback={<Plate id={`mv-${project.slug}`} drawing={project.drawing} tone="ivory" className={styles.sheet} />}
-            render={(props) => (
-              <BenchScene {...props} model={project.model} accent={accent} explodeRef={explodeRef} invalidateRef={invalidateRef} surface={tone} />
-            )}
+            render={(props) => <BenchScene {...props} model={model} accent={accent} explodeRef={explodeRef} invalidateRef={invalidateRef} surface={tone} />}
           />
         ) : item.kind === 'diagram' && item.drawing ? (
           <div className={styles.fill}>
@@ -193,13 +208,14 @@ export function MediaViewer({
               src={item.src}
               alt={item.alt ? l(item.alt) : ''}
               fill
+              unoptimized={!project.sample}
               sizes="(min-width: 64rem) 50vw, 100vw"
               className={styles.photo}
             />
           </div>
         ) : null}
 
-        {item.kind === 'model' && item.exploded && (
+        {item.kind === 'model' && model && item.exploded && (
           <div className={styles.explode}>
             <label htmlFor={`explode-${project.slug}`} className="visually-hidden">
               {c.explodeLabel}
@@ -260,9 +276,9 @@ export function MediaViewer({
                 onClick={() => go(i)}
               >
                 {m.kind === 'photo' && m.src ? (
-                  <Image src={m.src} alt="" fill sizes="96px" className={styles.photo} />
+                  <Image src={m.src} alt="" fill unoptimized={!project.sample} sizes="96px" className={styles.photo} />
                 ) : m.kind === 'video' && m.poster ? (
-                  <Image src={m.poster} alt="" fill sizes="96px" className={styles.photo} />
+                  <Image src={m.poster} alt="" fill unoptimized={!project.sample} sizes="96px" className={styles.photo} />
                 ) : (
                   <Plate id={`th-${project.slug}-${i}`} drawing={m.drawing ?? project.drawing} tone="ivory" className={styles.sheet} />
                 )}

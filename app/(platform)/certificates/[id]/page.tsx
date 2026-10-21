@@ -6,6 +6,8 @@ import { CertificateDocument } from '@/components/pages/certificates/Certificate
 import { CERT_TONE } from '@/components/pages/certificates/tone'
 import styles from '@/components/pages/certificates/Certificates.module.css'
 import { Breadcrumbs } from '@/components/platform/Breadcrumbs'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { StatusBadge } from '@/components/platform/Platform'
 import { getCertificate } from '@/lib/data'
 import { formatMonthYear } from '@/lib/format'
@@ -13,6 +15,10 @@ import { getI18n } from '@/lib/i18n/server'
 import { routes } from '@/lib/routes'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  if (isComingSoon('certificates')) {
+    const { t } = await getI18n()
+    return { title: t.platform.comingSoon.metaTitle(t.platform.comingSoon.modules.certificates.name) }
+  }
   const { id } = await params
   const [{ t, l }, cert] = await Promise.all([getI18n(), getCertificate(id)])
   const c = t.platform.certificatesPage
@@ -20,6 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function CertificatePage({ params }: { params: Promise<{ id: string }> }) {
+  if (isComingSoon('certificates')) return <ComingSoon module="certificates" />
   const { id } = await params
   const [i18n, cert] = await Promise.all([getI18n(), getCertificate(id)])
   if (!cert) notFound()

@@ -7,12 +7,12 @@ import { matchesQuery, useQueryState } from '@/components/discovery/useQueryStat
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { SampleNotice, TitleBlock } from '@/components/platform/Platform'
 import { IconArrowRight } from '@/components/ui/icons'
-import { Plate } from '@/components/ui/Plate'
 import { DisciplineLink } from '@/components/ui/DisciplineLink'
 import { DISCIPLINES, DISCIPLINE_BY_ID, type DisciplineId } from '@/content/disciplines'
 import { PROJECT_STAGES, type Project, type ProjectStage } from '@/content/platform/projects'
 import { DISCIPLINE_COLOR, PROJECT_TYPES, TECHNOLOGIES, type TechnologyId } from '@/content/platform/taxonomy'
 import { MediaViewer } from './MediaViewer'
+import { ProjectCover } from './ProjectCover'
 import { AwardBadge, StagePath } from './ProjectStatus'
 import styles from './Projects.module.css'
 import { routes } from '@/lib/routes'
@@ -27,7 +27,7 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
   const { values, lists, set, toggle, clear, activeCount } = useQueryState(KEYS)
 
   const [benchSlug, setBenchSlug] = useState(projects[0]?.slug ?? '')
-  const bench = projects.find((p) => p.slug === benchSlug) ?? projects[0]!
+  const bench = projects.find((p) => p.slug === benchSlug) ?? projects[0]
   const benchRef = useRef<HTMLElement>(null)
 
   const data = view === 'empty' ? [] : projects
@@ -55,7 +55,11 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
   const techs = (Object.keys(TECHNOLOGIES) as TechnologyId[]).filter((x) => data.some((p) => p.technologies.includes(x)))
 
   const active = [
-    ...lists.discipline.map((v) => ({ key: `d${v}`, label: l(DISCIPLINE_BY_ID[v as DisciplineId]?.shortName ?? { en: v, ar: v }), onRemove: () => toggle('discipline', v) })),
+    ...lists.discipline.map((v) => ({
+      key: `d${v}`,
+      label: l(DISCIPLINE_BY_ID[v as DisciplineId]?.shortName ?? { en: v, ar: v }),
+      onRemove: () => toggle('discipline', v),
+    })),
     ...lists.stage.map((v) => ({ key: `s${v}`, label: c.stages[v as ProjectStage] ?? v, onRemove: () => toggle('stage', v) })),
     ...lists.year.map((v) => ({ key: `y${v}`, label: v, onRemove: () => toggle('year', v) })),
     ...lists.type.map((v) => ({ key: `t${v}`, label: c.types[v as keyof typeof c.types] ?? v, onRemove: () => toggle('type', v) })),
@@ -67,21 +71,39 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
     <>
       <ChipGroup
         label={f.discipline}
-        options={DISCIPLINES.map((d) => ({ value: d.id, label: l(d.shortName), color: DISCIPLINE_COLOR[d.id], count: count((p) => disciplinesOf(p).includes(d.id), 'discipline') }))}
+        options={DISCIPLINES.map((d) => ({
+          value: d.id,
+          label: l(d.shortName),
+          color: DISCIPLINE_COLOR[d.id],
+          count: count((p) => disciplinesOf(p).includes(d.id), 'discipline'),
+        }))}
         selected={lists.discipline}
         onToggle={(v) => toggle('discipline', v)}
         layout="stack"
       />
       <ChipGroup
         label={c.stage}
-        options={PROJECT_STAGES.filter((s) => data.some((p) => p.stage === s)).map((s) => ({ value: s, label: c.stages[s], count: count((p) => p.stage === s, 'stage') }))}
+        options={PROJECT_STAGES.filter((s) => data.some((p) => p.stage === s)).map((s) => ({
+          value: s,
+          label: c.stages[s],
+          count: count((p) => p.stage === s, 'stage'),
+        }))}
         selected={lists.stage}
         onToggle={(v) => toggle('stage', v)}
       />
-      <ChipGroup label={f.year} options={years.map((y) => ({ value: String(y), label: String(y), count: count((p) => p.year === y, 'year') }))} selected={lists.year} onToggle={(v) => toggle('year', v)} />
+      <ChipGroup
+        label={f.year}
+        options={years.map((y) => ({ value: String(y), label: String(y), count: count((p) => p.year === y, 'year') }))}
+        selected={lists.year}
+        onToggle={(v) => toggle('year', v)}
+      />
       <ChipGroup
         label={f.type}
-        options={(Object.keys(PROJECT_TYPES) as (keyof typeof c.types)[]).map((ty) => ({ value: ty, label: c.types[ty], count: count((p) => p.type === ty, 'type') }))}
+        options={(Object.keys(PROJECT_TYPES) as (keyof typeof c.types)[]).map((ty) => ({
+          value: ty,
+          label: c.types[ty],
+          count: count((p) => p.type === ty, 'type'),
+        }))}
         selected={lists.type}
         onToggle={(v) => toggle('type', v)}
       />
@@ -107,26 +129,36 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
             <p className={`${styles.lead} intro-item`} style={{ '--i': 2 } as CSSProperties}>
               {c.lead}
             </p>
-            <div className={`${styles.benchCard} intro-item`} style={{ '--i': 3, '--key': DISCIPLINE_COLOR[bench.discipline] } as CSSProperties} aria-live="polite">
-              <p className={styles.benchKicker}>
-                <span className={styles.key} aria-hidden="true" />
-                {c.bench}
-              </p>
-              <h2 className={styles.benchTitle}>{l(bench.title)}</h2>
-              <p className={styles.benchSummary}>{l(bench.summary)}</p>
-              <StagePath stage={bench.stage} tone="dark" />
-              <p className={styles.benchMeta}>
-                {l(DISCIPLINE_BY_ID[bench.discipline].shortName)} · {bench.year} · {c.teamSize(bench.contributors.length)}
-              </p>
-              {bench.achievements[0] && <AwardBadge award={bench.achievements[0]} tone="dark" />}
-              <Link href={routes.project(bench.slug)} className="btn btn--on-dark">
-                {c.openProject}
-                <IconArrowRight className="btn__arrow" />
-              </Link>
-            </div>
+            <Link href="/projects/submit" className="btn btn--on-dark">
+              {l({ en: 'Submit a project · My projects', ar: 'قدّم مشروعاً · مشاريعي' })}
+              <IconArrowRight className="btn__arrow" />
+            </Link>
+            {bench && (
+              <div
+                className={`${styles.benchCard} intro-item`}
+                style={{ '--i': 3, '--key': DISCIPLINE_COLOR[bench.discipline] } as CSSProperties}
+                aria-live="polite"
+              >
+                <p className={styles.benchKicker}>
+                  <span className={styles.key} aria-hidden="true" />
+                  {c.bench}
+                </p>
+                <h2 className={styles.benchTitle}>{l(bench.title)}</h2>
+                <p className={styles.benchSummary}>{l(bench.summary)}</p>
+                <StagePath stage={bench.stage} tone="dark" />
+                <p className={styles.benchMeta}>
+                  {l(DISCIPLINE_BY_ID[bench.discipline].shortName)} · {bench.year} · {c.teamSize(bench.teamCredits?.length ?? bench.contributors.length)}
+                </p>
+                {bench.achievements[0] && <AwardBadge award={bench.achievements[0]} tone="dark" />}
+                <Link href={routes.project(bench.slug)} className="btn btn--on-dark">
+                  {c.openProject}
+                  <IconArrowRight className="btn__arrow" />
+                </Link>
+              </div>
+            )}
           </div>
 
-          <MediaViewer project={bench} items={bench.media} tone="dark" className={styles.benchMedia} />
+          {bench && <MediaViewer project={bench} items={bench.media} tone="dark" className={styles.benchMedia} />}
         </div>
       </section>
 
@@ -195,11 +227,16 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
               <ul className={styles.sheets}>
                 {shown.map((p) => {
                   const n = projects.indexOf(p) + 1
-                  const onBench = p.slug === bench.slug
+                  const onBench = p.slug === bench?.slug
                   return (
-                    <li key={p.slug} className={styles.sheetCard} style={{ '--key': DISCIPLINE_COLOR[p.discipline] } as CSSProperties} data-bench={onBench || undefined}>
+                    <li
+                      key={p.slug}
+                      className={styles.sheetCard}
+                      style={{ '--key': DISCIPLINE_COLOR[p.discipline] } as CSSProperties}
+                      data-bench={onBench || undefined}
+                    >
                       <div className={styles.sheetMedia}>
-                        <Plate id={`sheet-${p.slug}`} drawing={p.drawing} tone="ivory" className={styles.sheetPlate} />
+                        <ProjectCover id={`sheet-${p.slug}`} project={p} className={styles.sheetPlate} />
                         <span className={styles.sheetNo}>
                           {c.sheet} P-{String(n).padStart(2, '0')}
                         </span>
@@ -222,7 +259,7 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
                             { label: c.discipline, value: <DisciplineLink id={p.discipline}>{l(DISCIPLINE_BY_ID[p.discipline].shortName)}</DisciplineLink> },
                             { label: c.year, value: p.year },
                             { label: c.type, value: c.types[p.type] },
-                            { label: c.team, value: c.teamSize(p.contributors.length) },
+                            { label: c.team, value: c.teamSize(p.teamCredits?.length ?? p.contributors.length) },
                           ]}
                         />
                         <button
@@ -243,7 +280,7 @@ export function ProjectsLab({ projects, state }: { projects: Project[]; state?: 
                 })}
               </ul>
             )}
-            <SampleNotice className={styles.sample} />
+            {projects.some((p) => p.sample) && <SampleNotice className={styles.sample} />}
           </div>
         </div>
       </section>

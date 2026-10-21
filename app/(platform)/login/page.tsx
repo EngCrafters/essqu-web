@@ -5,7 +5,7 @@ import { PlatformHero } from '@/components/platform/Platform'
 import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
 import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { getI18n } from '@/lib/i18n/server'
-import { safeEventReturn } from '@/lib/member-auth/return-path'
+import { safeMemberReturn } from '@/lib/member-auth/return-path'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n()
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
-  const returnTo = safeEventReturn((await searchParams).next)
+  const returnTo = safeMemberReturn((await searchParams).next)
   const { t } = await getI18n()
   const c = t.platform.accountPage.login
   return (

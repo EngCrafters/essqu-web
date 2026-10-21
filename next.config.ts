@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
       { key: 'Referrer-Policy', value: 'no-referrer' },
       { key: 'Cache-Control', value: 'no-store' },
     ]
-    return ['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance'].map((source) => ({ source, headers: authPage }))
+    return ['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance', '/projects/submit'].map((source) => ({ source, headers: authPage }))
   },
 }
 

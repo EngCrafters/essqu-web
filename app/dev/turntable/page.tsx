@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getProject } from '@/lib/data'
+import { PROJECT_CATALOGUE } from '@/content/platform/projects'
 import { TurntableCapture } from './TurntableCapture'
 
 export const metadata: Metadata = { robots: { index: false, follow: false } }
@@ -13,7 +13,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } }
 export default async function TurntablePage({ searchParams }: { searchParams: Promise<{ slug?: string }> }) {
   if (process.env.NODE_ENV === 'production') notFound()
   const { slug = '' } = await searchParams
-  const project = await getProject(slug)
-  if (!project) notFound()
+  const project = PROJECT_CATALOGUE.find((item) => item.slug === slug)
+  if (!project?.model) notFound()
   return <TurntableCapture model={project.model} discipline={project.discipline} />
 }

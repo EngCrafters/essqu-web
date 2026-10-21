@@ -444,6 +444,7 @@
 
 .member {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2);
@@ -458,6 +459,8 @@
 
 .memberText {
   display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 600;
 }
 

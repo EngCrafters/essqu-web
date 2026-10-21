@@ -2,27 +2,35 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { CSSProperties } from 'react'
+import { StateMessage } from '@/components/discovery/Discovery'
 import { ScrollReveals } from '@/components/motion/ScrollReveals'
 import { MediaViewer } from '@/components/pages/projects/MediaViewer'
+import { ProjectCover } from '@/components/pages/projects/ProjectCover'
 import { AwardBadge, StagePath } from '@/components/pages/projects/ProjectStatus'
 import styles from '@/components/pages/projects/ProjectDetail.module.css'
 import sheetStyles from '@/components/pages/projects/Projects.module.css'
 import { Breadcrumbs } from '@/components/platform/Breadcrumbs'
+import { ComingSoon } from '@/components/platform/ComingSoon'
 import { Monogram, SampleNotice, TitleBlock } from '@/components/platform/Platform'
 import { DisciplineLink } from '@/components/ui/DisciplineLink'
 import { IconArrowRight } from '@/components/ui/icons'
-import { Plate } from '@/components/ui/Plate'
+import { isComingSoon } from '@/content/site'
 import { DISCIPLINE_BY_ID } from '@/content/disciplines'
 import { PROJECT_STAGES } from '@/content/platform/projects'
 import { DISCIPLINE_COLOR, TECHNOLOGIES } from '@/content/platform/taxonomy'
-import { getMembers, getProject, getRelatedProjects } from '@/lib/data'
+import { getMembers, getRelatedProjects } from '@/lib/data'
+import { getPublishedProject } from '@/lib/core-api/projects.server'
+import { safeProjectLink } from '@/lib/core-api/projects'
 import { getI18n } from '@/lib/i18n/server'
 import { routes } from '@/lib/routes'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const [{ t, l }, project] = await Promise.all([getI18n(), getProject(slug)])
-  if (!project) return { title: t.platform.projectsPage.metaTitle }
+  const { t, l } = await getI18n()
+  if (isComingSoon('projects')) return { title: t.platform.comingSoon.metaTitle(t.platform.comingSoon.modules.projects.name) }
+  const result = await getPublishedProject(slug)
+  if (result.status !== 'ok') return { title: t.platform.projectsPage.metaTitle }
+  const { project } = result
   return { title: `${l(project.title)} · ${t.platform.projectsPage.eyebrow}`, description: l(project.summary) }
 }
 
@@ -32,12 +40,45 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
  * works, how far it has come, what has been measured or won, who built it, and how to help.
  */
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+  if (isComingSoon('projects')) return <ComingSoon module="projects" />
   const { slug } = await params
-  const [{ t, l }, project, members] = await Promise.all([getI18n(), getProject(slug), getMembers()])
-  if (!project) notFound()
+  const [{ t, l }, result] = await Promise.all([getI18n(), getPublishedProject(slug)])
   const c = t.platform.projectsPage
+  if (result.status === 'not-found') notFound()
+  if (result.status === 'unavailable') {
+    return (
+      <>
+        <header className={styles.hero}>
+          <div className="container">
+            <Breadcrumbs trail={[{ href: routes.projects, label: t.nav.links.projects }]} current={c.eyebrow} />
+          </div>
+        </header>
+        <div className={`container ${styles.body}`}>
+          <StateMessage
+            kind="error"
+            title={t.platform.states.errorTitle}
+            body={t.platform.states.errorBody}
+            action={
+              <a href={routes.project(slug)} className="btn btn--secondary">
+                {t.platform.states.retry}
+              </a>
+            }
+          />
+        </div>
+      </>
+    )
+  }
+  const { project } = result
   const related = await getRelatedProjects(project)
+  const members = project.sample ? await getMembers() : []
   const team = project.contributors.map((id) => members.find((m) => m.id === id)).filter((m) => m !== undefined)
+  const credits = project.teamCredits ?? []
+  const teamSize = project.teamCredits ? credits.length : team.length
+  const links = (project.links ?? []).filter((link) => safeProjectLink(link.href))
+  const overview = l(project.technicalApproach.overview).trim()
+  const nextSteps = l(project.nextSteps).trim()
+  const seeking = l(project.collaboration.seeking).trim()
+  const application = project.collaboration.application ? l(project.collaboration.application).trim() : ''
   const at = PROJECT_STAGES.indexOf(project.stage)
   const award = project.achievements[0]
 
@@ -79,11 +120,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                       value: (
                         <span className={styles.teamCell}>
                           <span className={styles.faces} aria-hidden="true">
+                            {credits.slice(0, 4).map((credit, i) => (
+                              <Monogram key={i} name={credit.name} discipline={project.discipline} size={24} />
+                            ))}
                             {team.slice(0, 4).map((m) => (
                               <Monogram key={m.id} name={m.name} discipline={m.discipline} size={24} />
                             ))}
                           </span>
-                          {c.teamSize(team.length)}
+                          {c.teamSize(teamSize)}
                         </span>
                       ),
                     },
@@ -132,14 +176,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             {c.technical}
           </h2>
           <div className={styles.technicalGrid}>
-            <p className={styles.text}>{l(project.technicalApproach.overview)}</p>
+            <p className={overview ? styles.text : styles.empty}>{overview || c.noTechnical}</p>
             <div>
               <h3 className={styles.label}>{c.decisions}</h3>
-              <ol className={styles.decisions}>
-                {project.technicalApproach.decisions.map((d, i) => (
-                  <li key={i}>{l(d)}</li>
-                ))}
-              </ol>
+              {project.technicalApproach.decisions.length === 0 ? (
+                <p className={styles.empty}>{c.noDecisions}</p>
+              ) : (
+                <ol className={styles.decisions}>
+                  {project.technicalApproach.decisions.map((d, i) => (
+                    <li key={i}>{l(d)}</li>
+                  ))}
+                </ol>
+              )}
             </div>
           </div>
           <details className={styles.more}>
@@ -188,15 +236,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <div className={styles.journeyGrid}>
             <div>
               <h3 className={styles.label}>{c.done}</h3>
-              <ul className={styles.milestones}>
-                {project.development.map((d, i) => (
-                  <li key={i}>{l(d)}</li>
-                ))}
-              </ul>
+              {project.development.length === 0 ? (
+                <p className={styles.empty}>{c.noMilestones}</p>
+              ) : (
+                <ul className={styles.milestones}>
+                  {project.development.map((d, i) => (
+                    <li key={i}>{l(d)}</li>
+                  ))}
+                </ul>
+              )}
             </div>
             <div>
               <h3 className={styles.label}>{c.next}</h3>
-              <p className={styles.text}>{l(project.nextSteps)}</p>
+              <p className={nextSteps ? styles.text : styles.empty}>{nextSteps || c.noNextSteps}</p>
             </div>
           </div>
         </section>
@@ -244,7 +296,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             <h2 id="team" className={styles.label}>
               {c.contributors}
             </h2>
+            {teamSize === 0 && <p className={styles.empty}>{c.noTeam}</p>}
             <ul className={styles.team}>
+              {credits.map((credit, i) => (
+                <li key={i}>
+                  <div className={styles.member}>
+                    <Monogram name={credit.name} discipline={project.discipline} size={36} />
+                    <span className={styles.memberText}>
+                      {l(credit.name)}
+                      <span className={styles.memberMeta}>{l(credit.role)}</span>
+                    </span>
+                  </div>
+                </li>
+              ))}
               {team.map((m) => (
                 <li key={m.id}>
                   <Link href={routes.member(m.id)} className={styles.member} aria-label={c.viewProfile(l(m.name))}>
@@ -259,21 +323,24 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
                 </li>
               ))}
             </ul>
-            <p className={styles.note}>{c.contributorsNote}</p>
+            {project.sample && <p className={styles.note}>{c.contributorsNote}</p>}
           </section>
           <section aria-labelledby="collaborate" className={`${styles.panel} ${styles.collaborate}`}>
             <h2 id="collaborate" className={styles.label}>
               {c.collaboration}
             </h2>
+            {!seeking && !application && <p className={styles.empty}>{c.noCollaboration}</p>}
             <dl className={styles.collab}>
-              <div>
-                <dt>{c.seeking}</dt>
-                <dd>{l(project.collaboration.seeking)}</dd>
-              </div>
-              {project.collaboration.application && (
+              {seeking && (
+                <div>
+                  <dt>{c.seeking}</dt>
+                  <dd>{seeking}</dd>
+                </div>
+              )}
+              {application && (
                 <div>
                   <dt>{c.application}</dt>
-                  <dd>{l(project.collaboration.application)}</dd>
+                  <dd>{application}</dd>
                 </div>
               )}
             </dl>
@@ -282,10 +349,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               <IconArrowRight className="btn__arrow" />
             </Link>
             <p className={styles.note}>{c.contactNote}</p>
+            {links.length > 0 && (
+              <ul>
+                {links.map((link, i) => (
+                  <li key={i}>
+                    <a href={link.href} className="btn btn--quiet btn--compact" target="_blank" rel="noopener noreferrer nofollow">
+                      {l(link.label)}
+                      <IconArrowRight className="btn__arrow" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
 
-        <SampleNotice />
+        {project.sample && <SampleNotice />}
       </div>
 
       {related.length > 0 && (
@@ -298,7 +377,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
               {related.map((p) => (
                 <li key={p.slug} className={sheetStyles.sheetCard} style={{ '--key': DISCIPLINE_COLOR[p.discipline] } as CSSProperties}>
                   <div className={sheetStyles.sheetMedia}>
-                    <Plate id={`rel-${p.slug}`} drawing={p.drawing} tone="ivory" className={sheetStyles.sheetPlate} />
+                    <ProjectCover id={`rel-${p.slug}`} project={p} className={sheetStyles.sheetPlate} />
                   </div>
                   <div className={sheetStyles.sheetBody}>
                     <h3 className={sheetStyles.sheetTitle}>
