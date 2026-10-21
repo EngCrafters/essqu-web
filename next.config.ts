@@ -1,5 +1,6 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
+import { siteHeaders } from './lib/security-headers'
 
 const nextConfig: NextConfig = {
   distDir: process.env.ESSQU_EVENT_FLOW === 'true' ? '.next-event-flow' : '.next',
@@ -18,14 +19,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
-  // Sign-in pages receive Supabase Auth email links: the token never travels in a referrer, and
-  // the pages are never cached.
+  // Security headers on every page; sign-in pages also send no referrer and are never cached.
   async headers() {
-    const authPage = [
-      { key: 'Referrer-Policy', value: 'no-referrer' },
-      { key: 'Cache-Control', value: 'no-store' },
-    ]
-    return ['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance', '/projects/submit'].map((source) => ({ source, headers: authPage }))
+    return siteHeaders(process.env)
   },
 }
 
