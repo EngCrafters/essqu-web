@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { CSSProperties } from 'react'
@@ -30,6 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Developer switch (config/site-features.json): the preserved Coming Soon page stands in.
+  if (isComingSoon('events')) return <ComingSoon module="events" />
   const { slug } = await params
   const [{ t, l, intl, locale }, page] = await Promise.all([getI18n(), getEventPage(slug)])
   if (page.status === 'not-found') notFound()

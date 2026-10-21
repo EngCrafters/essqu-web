@@ -5,5 +5,5 @@ export function safeEventReturn(value: unknown): string | null {
 
 /** Exact member workflow destinations; never an arbitrary URL or query string. */
 export function safeMemberReturn(value: unknown): string | null {
-  return value === '/projects/submit' ? value : safeEventReturn(value)
+  return value === '/projects/submit' || value === '/profile' ? value : safeEventReturn(value)
 }

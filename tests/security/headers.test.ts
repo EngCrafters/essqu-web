@@ -36,7 +36,7 @@ describe('site-wide security headers', () => {
   })
 
   it('keeps sign-in and attendance pages free of referrers and caches', () => {
-    for (const page of ['/login', '/reset-password', '/events/:slug/attendance']) {
+    for (const page of ['/login', '/reset-password', '/events/:slug/attendance', '/profile']) {
       const headers = headersFor(page)
       assert.equal(get(headers, 'Referrer-Policy'), 'no-referrer')
       assert.equal(get(headers, 'Cache-Control'), 'no-store')

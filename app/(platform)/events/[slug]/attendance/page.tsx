@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { notFound } from 'next/navigation'
 import { PlatformHero } from '@/components/platform/Platform'
 import { AttendanceConfirmation } from '@/components/pages/events/AttendanceConfirmation'
@@ -10,6 +12,8 @@ import { eventManagement } from '@/lib/i18n/dictionaries/pages/event-management'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { robots: { index: false, follow: false }, referrer: 'no-referrer' }
 export default async function AttendancePage({ params }: { params: Promise<{ slug: string }> }) {
+  // Developer switch (config/site-features.json): the preserved Coming Soon page stands in.
+  if (isComingSoon('events')) return <ComingSoon module="events" />
   const { slug } = await params
   const [{ locale }, result] = await Promise.all([getI18n(), getCoreEvent(slug)])
   const c = eventManagement[locale]

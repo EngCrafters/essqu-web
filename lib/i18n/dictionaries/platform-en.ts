@@ -148,6 +148,8 @@ export const platformEn = {
       network: { name: 'Graduate network', note: 'The society’s graduates, and mentorship for current members.' },
       certificates: { name: 'Certificates', note: 'Participation certificates, and a desk to verify them.' },
       register: { name: 'Membership', note: 'Registration for the Engineering Society opens on the platform later.' },
+      events: { name: 'Events', note: 'Workshops, visits and competitions, with registration and attendance.' },
+      profile: { name: 'My profile', note: 'Your membership, your details and the events and projects you take part in.' },
     },
     register: {
       eyebrow: 'Membership',

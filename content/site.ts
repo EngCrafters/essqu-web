@@ -1,5 +1,6 @@
 import type { Localized } from '@/lib/i18n'
 import { routes } from '@/lib/routes'
+import { PAGE_IDS, SITE_FEATURES, type PageId } from '@/lib/site-features'
 
 /**
  * Site-wide wiring. Anything marked `null` has no verified destination yet; components hide or
@@ -24,9 +25,10 @@ export const COMMUNITY_PAGES = [
   { href: routes.members, id: 'members' },
   { href: routes.leadership, id: 'leadership' },
   { href: routes.network, id: 'network' },
-  { href: routes.profile, id: 'profile' },
   { href: routes.certificates, id: 'certificates' },
 ] as const
+// "My profile" is not a Community page: the navbar offers it from the signed-in account menu,
+// and a Join invitation in its place while signed out (components/layout/AccountMenu.tsx).
 
 /** The footer's map of the site, in three groups (labels: `t.footer.groups[id]`). */
 export const FOOTER_GROUPS = [
@@ -58,15 +60,13 @@ export const FOOTER_GROUPS = [
 ] as const
 
 /**
- * Developer-controlled visibility for the selected platform modules. Change this one list in
- * code to restore a module's preserved Coming Soon design. Projects and membership applications
- * are active; the member directory, alumni network and certificates remain unfinished.
- * Other pages, including events, keep their existing routing and visibility.
- * These flags have no database, dashboard or runtime API dependency.
+ * Developer-controlled visibility for the selected platform modules, read from
+ * config/site-features.json (`pages`). A module set to "coming-soon" shows its preserved Coming
+ * Soon design and keeps the full page in place. No database, dashboard or runtime API decides it.
  */
-export const COMING_SOON: readonly UpcomingModule[] = ['members', 'network', 'certificates']
+export type UpcomingModule = PageId
 
-export type UpcomingModule = 'projects' | 'members' | 'network' | 'certificates' | 'register'
+export const COMING_SOON: readonly UpcomingModule[] = PAGE_IDS.filter((id) => SITE_FEATURES.pages[id] === 'coming-soon')
 
 export const isComingSoon = (module: UpcomingModule) => COMING_SOON.includes(module)
 

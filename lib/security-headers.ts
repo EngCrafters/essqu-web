@@ -16,8 +16,9 @@ const originOf = (value: string | undefined) => {
  * framing, no plugins, no foreign base or form targets). The full content policy is sent
  * report-only, so any violation shows in the browser console before it is ever enforced.
  *
- * Sign-in and attendance pages receive Supabase Auth links and check-in codes: they send no
- * referrer and are never cached. Their rules come after the site-wide rule, so their values win.
+ * Sign-in and attendance pages receive Supabase Auth links and check-in codes, and the member's
+ * own profile shows their private details: they send no referrer and are never cached. Their
+ * rules come after the site-wide rule, so their values win.
  */
 export function siteHeaders(env: Env): HeaderRule[] {
   const contentPolicy = [
@@ -47,6 +48,6 @@ export function siteHeaders(env: Env): HeaderRule[] {
   ]
   return [
     { source: '/:path*', headers: site },
-    ...['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance', '/projects/submit'].map((source) => ({ source, headers: private_ })),
+    ...['/login', '/forgot-password', '/reset-password', '/events/:slug/attendance', '/projects/submit', '/profile'].map((source) => ({ source, headers: private_ })),
   ]
 }
