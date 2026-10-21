@@ -26,3 +26,17 @@ and mobile. Hosted signup/email/storage/deployment verification is still separat
 
 Security packaging keeps Next on its existing minor line at 16.3.8, with Sharp
 0.35.5 and source-map-js 1.2.2 pins. The production dependency audit is clean.
+
+## Audit repairs (Core ADR 0022, October 21)
+
+- The scanned check-in code is kept in the tab for at most three minutes, matching Core's code
+  life. Every organizer screen shows the same per-minute code. A guest registration made with the
+  member's confirmed email becomes theirs when they open the event signed in.
+- Every page sends `frame-ancestors 'none'` with `X-Frame-Options: DENY`, `nosniff`, a
+  Referrer-Policy and a Permissions-Policy. The full content policy (`lib/security-headers.ts`)
+  is report-only until it has been verified on staging. Next.js computes these headers at build time,
+  so `CORE_API_BASE_URL` and `SUPABASE_URL` must be set for the build (Vercel does this). Sign-in and attendance pages keep
+  `no-referrer` and `no-store`.
+- Versioned event covers may be shared by the CDN for five minutes. Project reads and images stay
+  no-store, because ADR 0021 requires unpublishing to take effect immediately.
+- `.github/workflows/ci.yml` runs lint, type-check, unit tests and the production build.
