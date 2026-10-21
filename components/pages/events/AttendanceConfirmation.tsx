@@ -78,7 +78,8 @@ export function AttendanceConfirmation({
     if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search)
     let token = /^[0-9a-f]{64}$/.test(scanned ?? '') ? scanned! : ''
     try {
-      if (token) sessionStorage.setItem(storageKey, JSON.stringify({ token, until: Date.now() + 120_000 }))
+      // Core accepts a code for three minutes from first display; never keep it longer.
+      if (token) sessionStorage.setItem(storageKey, JSON.stringify({ token, until: Date.now() + 180_000 }))
       else {
         const cached = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
         if (cached && cached.until > Date.now() && /^[0-9a-f]{64}$/.test(cached.token)) token = cached.token

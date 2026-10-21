@@ -22,8 +22,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ even
     }
     const bytes = await response.arrayBuffer()
     if (bytes.byteLength > 3 * 1024 * 1024) return new Response(null, { status: 502 })
+    // A versioned URL names one immutable object (a new cover gets a new name), so the CDN may
+    // share it for five minutes instead of asking Core and Storage on every view. Short enough
+    // that Core's visibility check still decides soon after an event is archived.
+    const caching = version ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60, must-revalidate'
     return new Response(bytes, {
-      headers: { 'content-type': type!, 'cache-control': 'public, max-age=60, must-revalidate', 'x-content-type-options': 'nosniff' },
+      headers: { 'content-type': type!, 'cache-control': caching, 'x-content-type-options': 'nosniff' },
     })
   } catch {
     return new Response(null, { status: 503, headers: { 'cache-control': 'no-store' } })
