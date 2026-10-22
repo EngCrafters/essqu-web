@@ -1,0 +1,15 @@
+{
+  "pages": {
+    "projects": "active",
+    "events": "active",
+    "register": "active",
+    "profile": "active",
+    "members": "coming-soon",
+    "network": "coming-soon",
+    "certificates": "coming-soon"
+  },
+  "profile": {
+    "allowPhotoUpload": true,
+    "allowProfileEditing": true
+  }
+}

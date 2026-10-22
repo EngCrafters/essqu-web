@@ -8,6 +8,7 @@ import { COMMUNITY_PAGES, PRIMARY_PAGES, upcomingAt } from '@/content/site'
 import { useI18n } from '@/components/i18n/I18nProvider'
 import { LanguageSwitch } from '@/components/i18n/LanguageSwitch'
 import { IconArrowRight } from '@/components/ui/icons'
+import { AccountSlot, JoinCard, PanelAccount } from './AccountMenu'
 import { DESKTOP_QUERY } from '@/lib/motion'
 import { isWithin, routes } from '@/lib/routes'
 import styles from './SiteHeader.module.css'
@@ -144,13 +145,8 @@ export function SiteHeader() {
           <div className={styles.actions}>
             <LanguageSwitch className={styles.language} />
             <LanguageSwitch compact className={styles.languageCompact} />
-            <Link
-              href={routes.register}
-              className={`btn btn--primary btn--compact ${styles.join}`}
-              aria-current={isWithin(pathname, routes.register) ? 'page' : undefined}
-            >
-              {t.nav.join}
-            </Link>
+            {/* Join while signed out; the member's avatar and account menu while signed in. */}
+            <AccountSlot joinClassName={styles.join} />
             <button
               ref={menuButtonRef}
               type="button"
@@ -177,9 +173,7 @@ export function SiteHeader() {
             </span>
             <LanguageSwitch />
           </div>
-          <Link href={routes.register} className={`btn btn--primary ${styles.panelJoin}`} onClick={() => close(false)}>
-            {t.nav.join}
-          </Link>
+          <PanelAccount joinClassName={styles.panelJoin} onNavigate={() => close(false)} />
         </div>
       </header>
       <div className={styles.scrim} data-open={open || undefined} onClick={() => close(false)} aria-hidden="true" />
@@ -308,6 +302,7 @@ function PrimaryLinks({ pathname }: { pathname: string }) {
                 </Link>
               </li>
             ))}
+            <JoinCard item onNavigate={() => setOpen(false)} />
           </ul>
         </div>
       </li>
@@ -377,6 +372,7 @@ function PanelLinks({
           </li>
         ))}
       </ul>
+      <JoinCard compact onNavigate={onNavigate} />
     </nav>
   )
 }

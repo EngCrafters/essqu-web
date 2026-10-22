@@ -1,6 +1,7 @@
 import { pluralEn } from '../plural'
 import { certificatesEn, networkEn } from './pages/vault'
 import { membersEn, registerEn } from './pages/people'
+import { accountEn } from './pages/account'
 import { projectsEn } from './pages/projects'
 import { activitiesEn, eventsEn } from './pages/events'
 import { aboutEn, leadershipEn } from './pages/about'
@@ -147,6 +148,8 @@ export const platformEn = {
       network: { name: 'Graduate network', note: 'The society’s graduates, and mentorship for current members.' },
       certificates: { name: 'Certificates', note: 'Participation certificates, and a desk to verify them.' },
       register: { name: 'Membership', note: 'Registration for the Engineering Society opens on the platform later.' },
+      events: { name: 'Events', note: 'Workshops, visits and competitions, with registration and attendance.' },
+      profile: { name: 'My profile', note: 'Your membership, your details and the events and projects you take part in.' },
     },
     register: {
       eyebrow: 'Membership',
@@ -179,6 +182,7 @@ export const platformEn = {
   eventsPage: eventsEn,
   projectsPage: projectsEn,
   registerPage: registerEn,
+  accountPage: accountEn,
   membersPage: membersEn,
   certificatesPage: certificatesEn,
   networkPage: networkEn,

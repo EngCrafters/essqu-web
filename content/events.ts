@@ -40,7 +40,9 @@ export interface SocietyEvent {
  * the Core platform (lib/core-api/adapter.ts), which has no type or end time and may have no
  * location yet. The section leaves out whatever an event doesn't have.
  */
-export type HomeEvent = Omit<SocietyEvent, 'type' | 'end' | 'location'> & {
+export type HomeEvent = Omit<SocietyEvent, 'type' | 'end' | 'location' | 'image'> & {
+  /** Core provides a cover reference; the existing media frame determines its layout. */
+  image?: Pick<MediaImage, 'src' | 'alt' | 'focus'>
   type?: EventType
   end?: string
   location: Localized | null

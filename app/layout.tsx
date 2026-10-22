@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Sans_Arabic, Manrope, Space_Grotesk } from 'next/font/google'
 import { I18nProvider } from '@/components/i18n/I18nProvider'
+import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
+import { MemberAccountProvider } from '@/lib/member-auth/account'
+import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { getI18n } from '@/lib/i18n/server'
 import '@/styles/globals.css'
 
@@ -65,7 +68,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <a href="#main" className="skip-link">
             {t.common.skipToContent}
           </a>
-          {children}
+          {/* The signed-in account for the navbar and profile (Supabase session in this browser). */}
+          <MemberAccountProvider settings={getMemberAuthConfig()} coreBase={getRegistrationBaseUrl()}>
+            {children}
+          </MemberAccountProvider>
         </I18nProvider>
       </body>
     </html>

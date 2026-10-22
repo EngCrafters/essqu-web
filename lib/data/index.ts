@@ -14,6 +14,7 @@ import { getCoreEvent, getRegistrationBaseUrl, listCoreEvents } from '@/lib/core
 import type { Localized } from '@/lib/i18n'
 import { routes } from '@/lib/routes'
 import { DEMO_NOW } from './clock'
+import { getPublishedProject, getPublishedProjects } from '@/lib/core-api/projects.server'
 
 /**
  * The platform's data access. Every page reads through these functions, never from content/
@@ -150,16 +151,18 @@ export async function getEventPage(slug: string): Promise<EventPageResult> {
 // ---------------------------------------------------------------- projects
 
 export async function getProjects(): Promise<Project[]> {
-  return [...PROJECT_CATALOGUE].sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || b.year - a.year)
+  return (await getPublishedProjects()) ?? []
 }
 
 export async function getProject(slug: string): Promise<Project | null> {
-  return PROJECT_CATALOGUE.find((p) => p.slug === slug) ?? null
+  const result = await getPublishedProject(slug)
+  return result.status === 'ok' ? result.project : null
 }
 
 export async function getRelatedProjects(project: Project, limit = 3): Promise<Project[]> {
   const ds = [project.discipline, ...(project.alsoDisciplines ?? [])]
-  return PROJECT_CATALOGUE.filter((p) => p.slug !== project.slug)
+  return (await getProjects())
+    .filter((p) => p.slug !== project.slug)
     .map((p) => ({
       p,
       score:

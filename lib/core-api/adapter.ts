@@ -4,6 +4,7 @@ import type { EventView } from '@/content/platform/events'
 import { COMMITTEES } from '@/content/structure'
 import type { Localized } from '@/lib/i18n'
 import type { CoreEvent } from './types'
+import { descriptionTokens, plainDescription } from '@/lib/event-description'
 
 /*
  * Core API DTO → the site's own view models. Presentation only: it splits text into paragraphs,
@@ -41,15 +42,26 @@ function shorten(text: string, max: number) {
  */
 export function splitDescription(description: string): { summary: string; about: string[] } {
   const all = paragraphs(description)
-  const first = all[0] ?? ''
+  const original = all[0] ?? ''
+  const first = plainDescription(original)
+  if (descriptionTokens(original).some((token) => token.href)) return { summary: shorten(first, SUMMARY_MAX), about: all }
   if (first.length <= SUMMARY_MAX) return { summary: first, about: all.slice(1) }
   return { summary: shorten(first, SUMMARY_MAX), about: all }
 }
 
 /** The event-sheet drawings, in a fixed order. An event keeps the same one on every page. */
-export const EVENT_DRAWINGS: readonly DrawingId[] = ['robotics-workshop', 'careers-panel', 'site-visit', 'truss', 'sensor-node', 'shelter', 'water-bench', 'rover']
+export const EVENT_DRAWINGS: readonly DrawingId[] = [
+  'robotics-workshop',
+  'careers-panel',
+  'site-visit',
+  'truss',
+  'sensor-node',
+  'shelter',
+  'water-bench',
+  'rover',
+]
 
-/** A decorative drawing chosen from the id (stable, no meaning implied: Core events carry no imagery). */
+/** A stable decorative fallback for events without a cover image. */
 export function drawingFor(id: string): DrawingId {
   // FNV-1a with a final avalanche, so ids that differ in a few characters still spread out.
   let hash = 2166136261
@@ -93,6 +105,15 @@ export function toEventView(event: CoreEvent): EventView {
     registration: event.availability,
     schedule: [],
     drawing: drawingFor(event.id),
+    phoneRequired: event.phoneRequired ?? false,
+    ...(event.coverImageUrl
+      ? {
+          image: {
+            src: `/media/events/${event.id}${event.coverImageUrl.includes('?') ? event.coverImageUrl.slice(event.coverImageUrl.indexOf('?')) : ''}`,
+            alt: both(event.title),
+          },
+        }
+      : {}),
   }
 }
 
@@ -114,6 +135,14 @@ export function toHomeEvent(event: CoreEvent): HomeEvent {
     description: both(splitDescription(event.description).summary),
     registration: event.availability,
     drawing: drawingFor(event.id),
+    ...(event.coverImageUrl
+      ? {
+          image: {
+            src: `/media/events/${event.id}${event.coverImageUrl.includes('?') ? event.coverImageUrl.slice(event.coverImageUrl.indexOf('?')) : ''}`,
+            alt: both(event.title),
+          },
+        }
+      : {}),
     ...(organiser ? { organiser } : {}),
   }
 }

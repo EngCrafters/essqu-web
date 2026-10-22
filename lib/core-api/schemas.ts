@@ -22,7 +22,13 @@ const PROBLEM_CODES: readonly CoreProblemCode[] = [
   'rate-limited',
   'service-unavailable',
 ]
-const CONFLICT_REASONS: readonly CoreConflictReason[] = ['already-registered', 'already-waitlisted', 'event-full', 'registration-closed', 'registration-available']
+const CONFLICT_REASONS: readonly CoreConflictReason[] = [
+  'already-registered',
+  'already-waitlisted',
+  'event-full',
+  'registration-closed',
+  'registration-available',
+]
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
 
@@ -43,6 +49,13 @@ export function parseEvent(input: unknown): Parsed<CoreEvent> {
   if (location !== null && typeof location !== 'string') return { ok: false }
   if (typeof committeeName !== 'string') return { ok: false }
   if (typeof availability !== 'string' || !AVAILABILITY.includes(availability as CoreAvailability)) return { ok: false }
+  if (input.phoneRequired !== undefined && typeof input.phoneRequired !== 'boolean') return { ok: false }
+  if (
+    input.coverImageUrl !== undefined &&
+    input.coverImageUrl !== null &&
+    (typeof input.coverImageUrl !== 'string' || !new RegExp(`^/v1/events/${id}/image(?:\\?v=[a-f0-9-]{36}\\.(?:jpg|png))?$`, 'i').test(input.coverImageUrl))
+  )
+    return { ok: false }
   return {
     ok: true,
     value: {
@@ -53,6 +66,8 @@ export function parseEvent(input: unknown): Parsed<CoreEvent> {
       location: location?.trim() ? location.trim() : null,
       committeeName: committeeName.trim(),
       availability: availability as CoreAvailability,
+      ...(input.phoneRequired !== undefined ? { phoneRequired: input.phoneRequired as boolean } : {}),
+      ...(input.coverImageUrl !== undefined ? { coverImageUrl: input.coverImageUrl as string | null } : {}),
     },
   }
 }

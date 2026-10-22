@@ -11,10 +11,12 @@ const r2 = (n: number) => Math.round(n * 100) / 100
 
 const SHEET_CODE: Record<UpcomingModule, string> = {
   projects: 'ES-PRJ-01',
+  events: 'ES-EVT-01',
   members: 'ES-MBR-01',
   network: 'ES-GRD-01',
   certificates: 'ES-CRT-01',
   register: 'ES-MEM-01',
+  profile: 'ES-PRF-01',
 }
 
 /**
@@ -199,6 +201,43 @@ function Glyph({ module }: { module: UpcomingModule }) {
           <path key={i} d={leaf(n.x, n.y, n.s)} className={`${i === 5 ? styles.inkFill : styles.ink} ${styles.node}`} style={{ '--n': i } as CSSProperties} />
         ))}
         <circle cx="204" cy="140" r="34" className={`${styles.construction} ${styles.spin} ${styles.slow}`} style={{ transformOrigin: '204px 140px' }} />
+      </g>
+    )
+  }
+  if (module === 'events') {
+    // A calendar sheet: the month grid, one day ringed, a dimension line ticking along the top.
+    return (
+      <g>
+        <rect x="110" y="62" width="180" height="160" className={styles.ink} />
+        <path d="M110 96H290" className={styles.ink} />
+        <path d="M150 52v20M250 52v20" className={styles.ink} />
+        {[0, 1, 2, 3].map((r) =>
+          [0, 1, 2, 3, 4].map((c) => (
+            <rect key={`${r}-${c}`} x={124 + c * 32} y={108 + r * 27} width="20" height="14" className={styles.thin} />
+          )),
+        )}
+        <rect x="188" y="162" width="20" height="14" className={styles.accentFill} />
+        <circle cx="198" cy="169" r="17" className={`${styles.ring} ${styles.pulse}`} />
+        <path d="M110 40H290M110 34v12M290 34v12" className={styles.dimension} />
+      </g>
+    )
+  }
+  if (module === 'profile') {
+    // A member card: the portrait, the name lines, the turning key mark.
+    return (
+      <g>
+        <rect x="96" y="70" width="208" height="140" rx="10" className={styles.ink} />
+        <circle cx="150" cy="128" r="28" className={styles.ink} />
+        <path d="M128 168c6-14 38-14 44 0" className={styles.thin} />
+        <rect x="198" y="110" width="80" height="8" className={styles.inkFill} />
+        <rect x="198" y="128" width="62" height="4" className={styles.soft} />
+        <rect x="198" y="140" width="70" height="4" className={styles.soft} />
+        <g transform="translate(68 4)">
+          <g className={`${styles.spin} ${styles.slow}`} style={{ transformOrigin: '200px 178px' }}>
+            <path d={`M${STAR}Z`} className={styles.accent} />
+          </g>
+        </g>
+        <path d="M96 236H304M96 230v12M304 230v12" className={styles.dimension} />
       </g>
     )
   }

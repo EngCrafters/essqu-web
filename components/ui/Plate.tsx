@@ -54,7 +54,8 @@ export function ItemMedia({
   tone,
   sizes,
   className,
-}: PlateProps & { image?: ResolvedImage; sizes: string }) {
+  unoptimized,
+}: PlateProps & { image?: ResolvedImage; sizes: string; unoptimized?: boolean }) {
   if (image) {
     return (
       <div className={[styles.plate, styles.photo, className].filter(Boolean).join(' ')}>
@@ -62,6 +63,7 @@ export function ItemMedia({
           src={image.src}
           alt={image.alt}
           fill
+          unoptimized={unoptimized}
           sizes={sizes}
           className={styles.photoImg}
           style={image.focus ? { objectPosition: image.focus } : undefined}

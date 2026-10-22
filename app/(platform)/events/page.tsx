@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import { Suspense } from 'react'
 import { ScrollReveals } from '@/components/motion/ScrollReveals'
 import { EventsTimeline } from '@/components/pages/events/EventsTimeline'
@@ -16,6 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function EventsPage({ searchParams }: { searchParams: Promise<{ state?: string }> }) {
+  // Developer switch (config/site-features.json): the preserved Coming Soon page stands in.
+  if (isComingSoon('events')) return <ComingSoon module="events" />
   const { t } = await getI18n()
   const c = t.platform.eventsPage
   const [{ state }, listing] = await Promise.all([searchParams, getEventsTimeline()])

@@ -1,0 +1,57 @@
+/* /login, /forgot-password, /reset-password: one column in the registration form's style.
+   Fields, inputs, errors and the summary come from Register.module.css. */
+
+.narrow {
+  max-width: 34rem;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-small);
+}
+
+.links a,
+.inline {
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-small);
+}
+
+.remember input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-primary);
+}
+
+.status {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.statusTitle {
+  color: var(--text-primary);
+  font-size: var(--text-lead, 1.25rem);
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

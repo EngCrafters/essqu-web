@@ -23,6 +23,8 @@ export interface CoreEvent {
   location: string | null
   committeeName: string
   availability: CoreAvailability
+  coverImageUrl?: string | null
+  phoneRequired?: boolean
 }
 
 /** `components/schemas/EventList`. Pages hold at most 20 events; pass `nextCursor` back verbatim. */
@@ -65,6 +67,7 @@ export interface CoreRegistrationRequest {
   attendeeName: string
   attendeeEmail: string
   intent: 'register' | 'join_waitlist'
+  attendeePhone?: string
 }
 
 /** 201 response `data.status`. */

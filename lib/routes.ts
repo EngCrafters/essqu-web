@@ -18,8 +18,12 @@ export const routes = {
   network: '/network',
   certificates: '/certificates',
   profile: '/profile',
-  profileEvents: '/profile/events',
+  profileEvents: '/profile#events',
+  projectSubmit: '/projects/submit',
   register: '/register',
+  login: '/login',
+  forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
 
   event: (slug: string) => `/events/${slug}`,
   project: (slug: string) => `/projects/${slug}`,

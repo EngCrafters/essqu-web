@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
+import { ComingSoon } from '@/components/platform/ComingSoon'
+import { isComingSoon } from '@/content/site'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { CSSProperties } from 'react'
 import { StateMessage } from '@/components/discovery/Discovery'
 import { ScrollReveals } from '@/components/motion/ScrollReveals'
 import { RegistrationPanel } from '@/components/pages/events/RegistrationPanel'
+import { EventDescription } from '@/components/pages/events/EventDescription'
+import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import styles from '@/components/pages/events/Events.module.css'
 import { Breadcrumbs } from '@/components/platform/Breadcrumbs'
 import { SampleNotice } from '@/components/platform/Platform'
@@ -28,6 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
+  // Developer switch (config/site-features.json): the preserved Coming Soon page stands in.
+  if (isComingSoon('events')) return <ComingSoon module="events" />
   const { slug } = await params
   const [{ t, l, intl, locale }, page] = await Promise.all([getI18n(), getEventPage(slug)])
   if (page.status === 'not-found') notFound()
@@ -120,7 +126,9 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               </h2>
               <div className={styles.prose} data-reveal="stagger">
                 {event.about.map((p, i) => (
-                  <p key={i}>{l(p)}</p>
+                  <p key={i}>
+                    <EventDescription text={l(p)} />
+                  </p>
                 ))}
               </div>
             </section>
@@ -195,7 +203,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
         </div>
 
         <aside id="register" className={styles.aside} aria-label={c.registration}>
-          <RegistrationPanel event={event} held={held} now={now} registration={registration} />
+          <RegistrationPanel event={event} held={held} now={now} registration={registration} authSettings={getMemberAuthConfig()} />
         </aside>
       </div>
 

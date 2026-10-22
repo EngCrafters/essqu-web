@@ -4,12 +4,13 @@ import type { Localized } from '@/lib/i18n'
 import type { ProjectTypeId, TechnologyId } from './taxonomy'
 
 /**
- * SAMPLE CONTENT: the project archive behind /projects and /projects/[slug].
+ * The preserved sample project catalogue for unfinished profile and 3D prototypes.
  *
  * The project and magazine archive is PRD Phase 3 (UC-05/UC-06). These records show how
- * archived work will be told: challenge, approach, solution, the team and the parts list. They
+ * archived work can be told: challenge, approach, solution, the team and the parts list. They
  * are illustrative: no achievement, award or result here is a society record. The first five
- * reuse the homepage's sample projects (content/projects.ts), which stay unchanged there.
+ * reuse the original project drawings. Public /projects routes read published Core snapshots
+ * through lib/core-api/projects.server.ts and never fall back to this sample catalogue.
  *
  * `model` picks the procedural 3D model shown in the laboratory scene
  * (components/three/models); `parts` is the exploded-view / bill-of-materials list.
@@ -69,7 +70,7 @@ export interface ProjectPart {
 
 export interface Project {
   slug: string
-  sample: true
+  sample: boolean
   title: Localized
   discipline: DisciplineId
   /** Other disciplines involved. */
@@ -79,6 +80,8 @@ export interface Project {
   technologies: TechnologyId[]
   /** Member ids from content/platform/members.ts (first names only on public pages). */
   contributors: string[]
+  teamCredits?: { name: Localized; role: Localized; memberId?: string }[]
+  links?: { label: Localized; href: string }[]
   /** One line: what the project is for. */
   summary: Localized
   stage: ProjectStage
@@ -104,7 +107,7 @@ export interface Project {
   }
   parts: ProjectPart[]
   drawing: DrawingId
-  model: ProjectModel
+  model?: ProjectModel
   media: ProjectMedia[]
   featured?: boolean
 }
