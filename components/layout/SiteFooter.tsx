@@ -1,15 +1,17 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { PAGE_LINKS, SECTION_LINKS, SITE, sectionHref } from '@/content/site'
+import { FOOTER_GROUPS, SITE } from '@/content/site'
 import { FOOTER_SOCIAL_ACCOUNTS } from '@/content/social'
 import { getI18n } from '@/lib/i18n/server'
 import { SocialIcon } from '@/components/ui/SocialIcon'
 import styles from './SiteFooter.module.css'
 
-/** `onHome` keeps section links as same-page fragments on the homepage. */
-export async function SiteFooter({ onHome = true }: { onHome?: boolean }) {
+/** The site's one footer, on every page: identity, the official accounts, and a map of the site. */
+export async function SiteFooter() {
   const { t, l } = await getI18n()
   const year = new Date().getFullYear()
+  const label = (id: (typeof FOOTER_GROUPS)[number]['links'][number]['label']) =>
+    id in t.nav.links ? t.nav.links[id as keyof typeof t.nav.links] : t.platform.nav[id as Exclude<typeof id, keyof typeof t.nav.links>]
 
   return (
     <footer className={styles.footer}>
@@ -70,22 +72,22 @@ export async function SiteFooter({ onHome = true }: { onHome?: boolean }) {
         </section>
 
         <nav aria-label={t.footer.navLabel} className={styles.nav}>
-          <ul className={styles.links}>
-            {SECTION_LINKS.map((link) => (
-              <li key={link.id}>
-                <a href={sectionHref(link.id, onHome)} className={styles.link}>
-                  {t.nav.links[link.id]}
-                </a>
-              </li>
-            ))}
-            {PAGE_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link href={link.href} className={styles.link}>
-                  {t.nav.links[link.id]}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {FOOTER_GROUPS.map((group) => (
+            <div key={group.id} className={styles.group}>
+              <h2 id={`footer-${group.id}`} className={styles.groupTitle}>
+                {t.footer.groups[group.id]}
+              </h2>
+              <ul className={styles.links} aria-labelledby={`footer-${group.id}`}>
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className={styles.link}>
+                      {label(link.label)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           {SITE.contact.length > 0 && (
             <ul className={styles.links}>
               {SITE.contact.map((c) => (

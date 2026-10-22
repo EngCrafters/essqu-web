@@ -223,20 +223,46 @@ a.social:active {
 
 /* ---------- Links + base ---------- */
 
+/* The map of the site: three groups between two rules. */
 .nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--space-4);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4) var(--space-6);
   margin-top: var(--space-8);
-  padding-block: var(--space-3);
+  padding-block: var(--space-5) var(--space-3);
   border-block: 1px solid var(--border-on-dark);
+}
+
+.group {
+  min-width: 0;
+}
+
+.groupTitle {
+  margin-bottom: var(--space-1);
+  color: var(--on-dark-secondary);
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 .links {
   display: flex;
   flex-wrap: wrap;
   gap: 0 var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .links {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .link {

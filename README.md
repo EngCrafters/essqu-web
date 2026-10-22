@@ -1,81 +1,21 @@
-# ESSQU Landing — Engineering Society, Sultan Qaboos University
+# ESWebsite — Engineering Society, Sultan Qaboos University
 
-Independent public Landing, imported with source history from `s3q/ESWebsite` at `17bdcc4`.
-The original teammate checkout is unchanged. This repository is maintained separately from Core.
-
-Published events and registration use Core API v1. Set the variables in `.env.example` through
-Vercel or a private `.env.local`; see [`lib/core-api/README.md`](lib/core-api/README.md).
-`CORE_EVENTS_API_KEY` is server-only. The public URL variable contains no secret.
-No database credentials, service-role key or Core admin credentials belong here.
-
-Production Landing: [essqu-web.vercel.app](https://essqu-web.vercel.app).
-Its active Core API is `https://engsoc-platform.vercel.app/v1`. Custom domains are deferred;
-later switching both API URL variables to `https://api.essqu.com/v1` requires a rebuild.
-
-Run `npm test` for hermetic contract tests and `npm run test:e2e` for desktop/mobile browser
-tests against a synthetic local HTTP Core fixture. No production registration test data is written.
-`/events` has upcoming/past cursor pages and `/events/[eventId]` has the registration form.
-Empty/unavailable API responses never fall back to sample events. Clearly labelled project and
-activity design galleries remain editorial demonstrations, separate from live event records.
-
-## Pre-domain release evidence
-
-Production integration and final browser verification completed on October 19, 2026 (Asia/Dubai).
-Core migration 0024 is applied, the scoped production API client is installed server-side in Landing,
-and both applications are independently deployed and integrated through their Vercel URLs.
-
-| Surface                    | Current URL / state                                                         |
-| -------------------------- | --------------------------------------------------------------------------- |
-| Landing staging            | `https://essqu-web-git-staging-eng-crafters.vercel.app`                     |
-| Core staging API           | `https://engsoc-platform-git-staging-eng-crafters.vercel.app/v1`            |
-| Core production API        | `https://engsoc-platform.vercel.app/v1` — active                            |
-| Core production Admin/Auth | `https://engsoc-platform.vercel.app`                                        |
-| Landing production         | `https://essqu-web.vercel.app` — separate Vercel project `essqu-web`        |
-| Planned public domains     | `essqu.com`, `www.essqu.com`, `api.essqu.com`, `admin.essqu.com` — deferred |
-
-Landing implementation `6e0f683` and production-build verification fix `898870f` preserve the imported
-teammate history. [Landing PR 1](https://github.com/EngCrafters/essqu-web/pull/1) merged as `8f5c0bf`.
-[Production CI](https://github.com/EngCrafters/essqu-web/actions/runs/39161420446) passed and
-Vercel deployment `dpl_4Kj8rku9wS9iUUKdTwCHsaRcPU8M` reached Ready on that release.
-The checks include lint, types, formatting, 17 contract tests, a production Webpack build, and ten
-desktop/mobile browser tests against a synthetic local Core HTTP fixture. The production dependency
-audit reports zero vulnerabilities; five high development-only advisories remain.
-
-The full live staging HTTP and browser harness passed, including an actual confirmed registration
-submitted through Landing, registration state/error checks, the persisted rate limiter and concurrent
-requests competing for one remaining seat. Run-owned fixtures were removed; the original five staging
-registrations were retained. Staging provides live write/concurrency evidence without creating fake
-production attendee records.
-
-Production browser QA passed all four desktop/mobile English/Arabic cases: homepage, events,
-upcoming/past lists and real event detail. Production showed one upcoming and two past events;
-Arabic used RTL and inspected pages had no horizontal overflow or read-only console/page/HTTP errors.
-An in-memory comparison against the actual production read key, alongside credential-pattern checks,
-found zero exposure across 358 loaded HTML/RSC/JavaScript responses and inspected browser requests,
-local/session storage and cookies. Canceled prefetches were recorded separately from completed scans.
-
-Each production form transport check intercepted and aborted its Core POST **before network access**.
-All four requests had the exact public fields, a request ID, and no API key, cookies, platform token or
-client IP field. The UI showed its expected unavailable message after the deliberate abort and sent no
-automatic retry. These checks prove browser transport and failure handling, not a successful production
-registration: production writes were zero and the existing seven registrations were unchanged.
-
-Core remains the sole authority for release gates. See the
-[Core pre-domain release report](https://github.com/EngCrafters/engsoc-platform/blob/main/docs/api/PRE_DOMAIN_RELEASE_REPORT.md)
-for staging evidence, migration 0024, production API/security checks and the owner's narrow backup
-waiver. That waiver covers only the unchanged additive migration 0024; no managed backup or restore
-readiness is claimed. DNS/custom domains, final Auth origins and custom-host enforcement remain
-deferred to the documented cutover. The current Core Vercel Admin/Auth origin remains in place.
-
-Landing site for the Engineering Society, built with Next.js (App Router, TypeScript), GSAP and
-React Three Fiber, in English and Arabic. Earlier drafts are kept:
+The Engineering Society's website, built with Next.js (App Router, TypeScript), GSAP and React
+Three Fiber, in English and Arabic: the approved landing page at `/`, and a **frontend prototype
+of the platform** (events, projects, members, certificates, graduates) on every other route.
+Earlier drafts are kept:
 
 - **Draft 1** (Vite): the sibling folder `../ES`, untouched.
 - **Draft 2 / Draft 3** (Next.js): `drafts/draft-2-source.zip`, `drafts/draft-3-source.zip`.
 - **Draft 4 onward:** this repository's git history.
 
-Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). This is the public
-site only: event and registration authority is the separately deployed Core API; no local authentication or admin tools.
+Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). **Events and event
+registration come from the Core platform** (`engsoc-platform`, `api.essqu.com/v1`) when it is
+configured: see [`integration/`](integration/INTEGRATION_ARCHITECTURE.md) and `lib/core-api/`.
+This site has no database, authentication, API route or admin tool of its own; committees manage
+events in Core's admin. Every other platform page still runs on local sample data, and its
+actions (requesting mentorship, applying to join) happen in the browser tab only. See
+**Platform prototype** below.
 
 ## Run
 
@@ -86,7 +26,12 @@ npm run build      # production build (includes type checking)
 npm start          # serve the production build
 npm run lint
 npm run typecheck
+npm test           # unit tests for the Core API integration (Node's built-in runner)
 ```
+
+With no `CORE_API_BASE_URL`, `npm run dev` shows the sample events. To read a Core API instead,
+copy `.env.example` to `.env.local` and set `CORE_API_BASE_URL` and `CORE_EVENTS_API_KEY`
+(server-only; see `integration/DEPLOYMENT_GUIDE.md`).
 
 **Testing on a phone:** run `npm run dev` and open the **Network** URL it prints (for example
 `http://192.168.8.158:3000`) on a phone on the same Wi-Fi. Next.js blocks dev-only assets for
@@ -96,10 +41,70 @@ now allowed in development; production builds were never affected.
 
 ## Routes
 
-- `/` — hero, society figures, overview, `#events`, `#activities`, `#projects`, `#disciplines`,
-  `#leadership`, `#join` and the footer.
-- `/about` — overview, the society's facts, and the full structure (`#structure`).
-- `/activities` — the archive of previous activities, filterable by programme and year.
+- `/` — the approved landing page and the site's gateway: hero, society figures, overview,
+  `#events`, `#activities`, `#projects`, `#disciplines`, `#leadership`, `#join`. **Locked**: its
+  sections stay pixel-identical; their existing actions and cards lead to the full pages (see
+  [Navigation](#navigation)).
+
+Platform pages (`app/(platform)/`, sharing the site's navbar, footer and the demo session):
+
+| Route | The room | Signature |
+| --- | --- | --- |
+| `/about` | Seven systems, one umbrella | Seven discipline symbols converge on the emblem (sticky scroll sequence): the emblem's four disciplines in front, the other three behind; the six activities as a programme board; activities and projects as a pair of columns for every year from the founding (2000) to today, with a readout you can move by pointer, drag or keyboard (sample figures), then the verified facts; the current President and Vice Presidents on the structure drawing (`#structure`) |
+| `/leadership` | The structure hall | President ↓ Vice Presidents ↓ committees drawn as a truss that erects itself on scroll; every seat vacant until confirmed |
+| `/disciplines` | The exhibition floor | A floor plan, then a 3D turntable of seven working machines beside scrolling chapters (each with its areas of practice); on phones and tablets the caption bar sits under the canvas; a network of the disciplines' shared projects |
+| `/activities` | Archive (الأرشيف) | The society's historical archive: six drawers (one per activity) above a year-by-year gallery of prints with a lightbox; search, activity, year and discipline filters. Named Archive in the navbar and footer; the homepage's own Activities section is unchanged |
+| `/events`, `/events/[slug]` | The vertical timeline | One line through the year: past events above (the oldest folded away), a gold "today" marker, then upcoming events with the nearest one marked. The line fills as you read, a small light riding its front; nodes light as it reaches them. Filters by when, type and discipline. Detail: capacity dial and every registration state, with a check-in pass |
+| `/projects`, `/projects/[slug]` | The laboratory | "On the bench": the project's stage, recognition and one-line purpose beside its media viewer (3D model, videos, drawings, photos), above a catalogue of drawing sheets filterable by discipline, stage, year, type and technology. Detail: everything essential on the first screen (stage, award, at a glance, media), then problem, solution, technical approach, development journey (done → now → next), validation, awards, team and collaboration |
+| `/register` | Membership | The membership application, sent to the Core platform with a photo or scan of the SQU ID card; the member card fills as you type; error summary, upload progress, a password for the applicant’s own sign-in, review status for returning applicants ([integration/MEMBERSHIP_REGISTRATION.md](integration/MEMBERSHIP_REGISTRATION.md)) |
+| `/login`, `/forgot-password`, `/reset-password` | Member sign-in | Supabase Auth sign-in, recovery and reset on the site’s own forms; after sign-in, the person’s own membership status from Core. Signing in grants nothing by itself ([integration/MEMBER_ACCOUNTS.md](integration/MEMBER_ACCOUNTS.md)) |
+| `/members`, `/members/[id]` | The community network | Members clustered by discipline and linked by shared projects, above a filterable roll. Profile: the journey Joined → Participated → Attended → Built → Earned → Graduated |
+| `/profile`, `/profile/events` | Your profile | The same journey with private parts; attendance log (registered, attended, absent, pending), certificate eligibility, check-in passes |
+| `/certificates`, `/certificates/[id]` | The document vault | Filed prototype certificates, a verification desk (try `ES-25-0077-F1QS`), shareable verification links; large preview with mock download |
+| `/network`, `/network/[id]` | Graduates who answer back | A career map (graduation year × industry) above graduate cards; mentorship request → sent → accepted. Profile: role, what they can help with, the same mentorship request (its state shared with the network page), graduates in the same field |
+
+**Coming soon.** `/projects`, `/members`, `/network` and `/certificates` are not open yet: each
+shows a Coming Soon page (the module's drawing sheet still on the board, with a little slow
+motion). `/register` is open; its Coming Soon state (the member card turning over) returns if
+`register` is added back to the list. The switch is `COMING_SOON` in `content/site.ts`; each page's full implementation
+is still in place below the switch, so removing a module from the list brings its page back. The
+Community menu and the phone menu tag these modules "Soon". Their detail pages (`/projects/[slug]`,
+`/members/[id]`, `/network/[id]`, `/certificates/[id]`) still render.
+
+Every filterable page keeps its filters in the URL (shareable, survives reload). Add
+`?state=loading`, `?state=empty` or `?state=error` to any listing to review that state.
+
+## Navigation
+
+- **One navbar and one footer on every page**, the homepage included
+  (`components/layout/`). The bar: the brand (Home), Events, Archive, Projects, Disciplines,
+  About (inside the Community menu below 1280px) and a **Community** menu (Members, Leadership,
+  Graduate network, My profile, Certificates). The current section is underlined: `/events/x`
+  marks Events, any community page marks Community. The menu opens with a click or ↓, moves
+  with ↑/↓/Home/End and closes with Escape, a click outside or focus leaving it. Phones and
+  tablets get Home, the primary pages and the Community group in the menu panel. The footer maps
+  the site in three groups: Society, Explore, Community.
+- **Addresses** come from one helper, `lib/routes.ts` (`routes.event(slug)`,
+  `routes.member(id)`, `routes.discipline(id)`…), so a record has the same URL everywhere.
+  Events and projects use the same slugs on the homepage and the platform.
+- **The homepage as gateway:** Explore Events → `/events`, Discover Projects → `/projects`,
+  More about the society → `/about`; each event title → `/events/[slug]` and its registration
+  action → the event's registration panel (`#register`); each project card → `/projects/[slug]`;
+  each discipline name → its section of `/disciplines`; Explore Previous Activities → `/activities`;
+  View the Full Society Structure → `/leadership`; Join the Society → `/register`; Explore Events
+  → `/events`.
+- **Disciplines:** wherever a discipline's name appears (project sheets and pages, member and
+  graduate profiles, event pages) it links to `/disciplines#<id>` (`mechanical`, `electrical`,
+  `civil`, `petroleum`, `chemical`, `mechatronics`, `industrial`, the same ids the
+  `?discipline=` filters use). Arriving there turns that exhibit and brings its chapter into view.
+- **Deep pages** (`/events/[slug]`, `/projects/[slug]`, `/members/[id]`, `/network/[id]`,
+  `/certificates/[id]`, `/profile/events`) open with a breadcrumb (`Projects / Autonomous
+  line-following rover`) whose first step leads back. An address with no record behind it gets
+  a not-found page for that section, leading back to it.
+- **Demo flows:** membership form → the sample profile or events; event registration → a
+  check-in pass and "See it in your events" (`/profile/events`); the profile → attendance,
+  certificates, its public view and its projects; a certificate → its event and holder;
+  a graduate card → their profile, where the mentorship request continues.
 
 ## English | العربية
 
@@ -134,21 +139,52 @@ Arabic; change those too if they are also جماعات.
 
 ## What is real and what is a preview
 
-| Area                   | State                                                                                                                                                                                                                                                                                                                                                                                                                                               | Where to change it                            |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| Society figures (home) | **Members, Visitors, Projects, Events: demonstration values** (1,250 · 18,400 · 86 · 140), each tagged "Demo figure" with a note that they are not verified. They count up on arrival. Replace `value`, add `reportingPeriod` and `source`, and remove `demo: true`. Visitors need real analytics, not a hand-made counter.                                                                                                                         | `content/stats.ts` → `SOCIETY_STATS`          |
-| Society facts (About)  | From the society's own overview: established 2000–01, 7 societies, 6 exhibitions and 6 gatherings (the last two qualified: reporting date unknown).                                                                                                                                                                                                                                                                                                 | `content/stats.ts` → `SOCIETY_FACTS`          |
-| Overview               | The society's own photograph (`public/images/overview.jpg`) under a blue atmosphere with layered parallax.                                                                                                                                                                                                                                                                                                                                          | `content/overview.ts`                         |
-| Activities             | The six official activities (التجمع الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **demonstration events**: titles, dates and attendance are samples tagged "Demo". Each gallery opens on its own society photograph; the society's other photographs repeat after it. أستوديو الخريجين's description is still to come. Add real events to an activity's `events` without `demo`. | `content/activities.ts`                       |
-| Archive                | Empty until editions are documented.                                                                                                                                                                                                                                                                                                                                                                                                                | `content/activities.ts` → `ACTIVITY_EDITIONS` |
-| Leadership & structure | One President and three Vice Presidents, **all vacant**; no term, chairs or deputies. فريق التصوير is listed once (the brief listed it twice).                                                                                                                                                                                                                                                                                                      | `content/structure.ts`                        |
-| Events                 | Live Core API listings, detail and registration; unavailable/empty states never substitute sample data.                                                                                                                                                                                                                                                                                                                                             | `lib/core-api/`                               |
-| Projects               | **Sample archive entries**. The discipline filter really filters them.                                                                                                                                                                                                                                                                                                                                                                              | `content/projects.ts`                         |
-| Disciplines            | The seven disciplines from Draft 1's content, not an official SQU list.                                                                                                                                                                                                                                                                                                                                                                             | `content/disciplines.ts`                      |
-| Membership             | No registration flow yet. "Join the Society" opens a preview dialog.                                                                                                                                                                                                                                                                                                                                                                                | `content/site.ts` → `membershipUrl`           |
-| Social accounts        | **No verified URLs.** Instagram and LinkedIn show in the footer, unlinked and marked "Link to come". Other platforms appear only once given a URL.                                                                                                                                                                                                                                                                                                  | `content/social.ts`                           |
+| Area | State | Where to change it |
+| --- | --- | --- |
+| Society figures (home) | **Members, Visitors, Projects, Events: demonstration values** (1,250 · 18,400 · 86 · 140), each tagged "Demo figure" with a note that they are not verified. They count up on arrival. Replace `value`, add `reportingPeriod` and `source`, and remove `demo: true`. Visitors need real analytics, not a hand-made counter. | `content/stats.ts` → `SOCIETY_STATS` |
+| Society facts (About) | From the society's own overview: established 2000–01, 7 societies, 6 exhibitions and 6 gatherings (the last two qualified: reporting date unknown). | `content/stats.ts` → `SOCIETY_FACTS` |
+| Overview | The society's own photograph (`public/images/overview.jpg`) under a blue atmosphere with layered parallax. | `content/overview.ts` |
+| Activities | The six official activities (الملتقى الهندسي، البرنامج الهندسي، ورش الخريجين، أستوديو الخريجين، الأمسيات، المسابقات), each an automatic slideshow of **the society's own photographs**, grouped into editions as their file names give them (Engineering Gathering 16, 2026; Engineering Programme, February 2025; Graduate Studio, 2025; Closing Evening, 2026). Photographs supplied without an edition or date are filed under their activity, undated. No attendance figures were supplied, so none are shown. أستوديو الخريجين's description is still to come. | `content/activities.ts` |
+| Archive (`/activities`) | One record per edition in `content/activities.ts`, with all its photographs in the lightbox; undated records are filed last under "Undated". The discipline filter appears once records carry disciplines. | `content/activities.ts` |
+| Leadership & structure | The President (سيف المرجبي) and the three Vice Presidents (عبدالرحمن القري، كوثر عبدواني، هيا الزدجالي), named and portrayed from the society's own portrait files; the English spellings are transliterations to confirm. No term, committee chairs or deputies yet: committee seats stay vacant. فريق التصوير is listed once (the brief listed it twice). | `content/structure.ts`, `public/images/leadership/` |
+| About: community photograph | Engineering Sablah, 2025 (السبلة الهندسية), beside the society's overview. | `content/media.ts` → `SOCIETY_PHOTOS` |
+| Events | **From the Core platform only** (`https://api.essqu.com/v1`): the homepage section, `/events` and each event page show published events, and registration is sent to Core. Without Core (not configured, or unreachable) they say events can't be shown right now; **sample events are never shown**, in any environment. Fields Core doesn't publish (type, end time, capacity, programme, disciplines, photographs) are left out rather than invented; the designs for them stay in the components. The sample records remain only for the prototype profile pages. | Core admin (`admin.essqu.com`); prototype records: `content/events.ts`, `content/platform/events.ts` |
+| Projects (homepage) | **The society's real projects**, from the teams' posters in /photos/proj: PLA/HA bone scaffolds (Grand Prize, Engineering Gathering), HydroGenix (Winner, INJAZ Oman 2026), T.A.M.R.A. (Best project, Electrical & Mechatronics) and compressor packing leakage (Best project, Mechanical & Industrial). Only what the files state is shown: discipline, year and team where given, no stage. Each poster (or HydroGenix's model photograph) is laid on the drawing board as a print. No project pages yet, so the cards don't link; the platform's sample project pages keep their own records. | `content/projects.ts`, `public/images/projects/` |
+| Disciplines | The seven disciplines from Draft 1's content, not an official SQU list. | `content/disciplines.ts` |
+| Membership | **Real applications to the Core platform.** "Join the Society" leads to `/register`, which sends the form and the applicant's SQU ID card to Core. The society reviews it there; an account exists only after approval and activation. The website stores nothing but the applicant's status token in their own browser. | Core admin (`/admin/membership`); `lib/core-api/membership.ts` |
+| Platform records | **All sample data**: the event catalogue, projects, 24 members (first name + initial only), 18 graduates (employers described by kind, never named), certificates and the archive details. One notice per page says so; certificates carry a PROTOTYPE banner and watermark and no university marks. | `content/platform/` |
+| The prototype's "today" | Fixed at 1 October 2026 so upcoming/past and certificate states are stable. | `lib/data/clock.ts` |
+| Yearly record (About) | **Sample figures** for activities and projects per year from 2000 to 2026, labelled as samples on the page. Replace them with the society's records and set `sample: false`. | `content/platform/record.ts` |
+| Project stage and recognition | Each project has a `stage` (idea → completed) and `achievements` (competition, result, year, optional link) that are independent of each other. The two achievements present are **sample results**, marked as such; the competitions named are the society's own sample activities. `validation` is empty for every project: no test result is invented. | `content/platform/projects.ts` |
+| Project media | Each project lists its media: the interactive 3D model (with an exploded view only where it genuinely has one), drawings, the society's photographs marked "Illustrative image", and two turntable videos rendered from the projects' own 3D models. | `content/platform/projects.ts`, `public/media/projects/` |
+| Social accounts | **No verified URLs.** Instagram and LinkedIn show in the footer, unlinked and marked "Link to come". Other platforms appear only once given a URL. | `content/social.ts` |
 
 Social URLs are validated: https, on the platform's own domain, pointing to a profile path.
+
+## Platform prototype
+
+- **Data layer:** pages read only through the async functions in `lib/data/index.ts`
+  (`getEventsTimeline()`, `getProject(slug)`, `getMemberProfile(id)`, `verifyCertificate(code)`…).
+  The event functions (`getHomeEvents`, `getEventsTimeline`, `getEventPage`) read the Core API
+  through `lib/core-api/`; the rest return the sample records, and connecting a future API means
+  replacing those bodies the same way.
+- **Demo session:** `components/platform/DemoSession.tsx` holds what the visitor did in this tab
+  (registrations, cancellations, mentorship requests) in sessionStorage; the real membership
+  form no longer marks the session as a member. No form data is ever stored. The sample signed-in member is Huda S. (`m-07`).
+- **Shared pieces:** discovery controls (`components/discovery/`: search, chips, result bar with
+  active filters, mobile filter sheet, skeletons, empty/filtered/error states) and platform
+  primitives (`components/platform/`: hero, modal, status badge, monogram, gauge, title block,
+  check-in pass).
+- **3D:** only two pages carry a WebGL scene (Disciplines and Projects), built from procedural
+  models in `components/three/` (one palette, an explode channel, motion only while in view).
+  `SceneMount` loads a scene when it nears the viewport and the main thread is idle, renders on
+  demand, pauses offscreen, and keeps the designed drawing underneath for no WebGL, Save-Data
+  or a lost context. Reduced motion keeps the poses and drops the travel.
+- **Turntable videos:** `/dev/turntable?slug=…` (development only, like `/dev/emblem`) shows a
+  project's model at an angle a capture script steps through; the frames are encoded to WebM in
+  the browser with MediaRecorder, with the first frame saved as the poster.
+- **Copy:** platform strings live in `lib/i18n/dictionaries/platform-en.ts` / `platform-ar.ts`
+  and `pages/*.ts` (each file holds both languages, the Arabic typed against the English).
 
 ## Hero sculpture
 
@@ -198,20 +234,29 @@ Social URLs are validated: https, on the platform's own domain, pointing to a pr
 ## Structure
 
 ```
-app/                 layout (language, fonts), /, /about, /activities, dev-only /dev/emblem
+app/                 layout (language, fonts), / (landing), not-found, dev-only /dev/emblem
+app/(platform)/      layout (navbar, demo session, footer), loading, not-found, and every
+                     platform route (deep routes carry their own not-found)
 components/
   hero/              Hero, HeroArt (loader, stills, fallbacks), emblem/ (R3F scene)
   i18n/              I18nProvider (client language context), LanguageSwitch
-  layout/            SiteHeader (glass navbar), SiteFooter (incl. Follow the Society)
-  sections/          StatsStrip, Overview (+ OverviewBackdrop, OverviewLights), Events, Projects,
-                     Disciplines, Activities (+ ActivityGalleries, Slideshow), Leadership
-                     (+ LeadershipTree), Structure, Archive*, JoinInvitation, PageIntro
+  layout/            SiteHeader (glass navbar, Community menu, phone panel), SiteFooter
+  sections/          the landing page's sections
   motion/            ScrollReveals, InViewMarker
   ui/                drawings, Plate, Portrait, PhotoPlaceholder, StatIcon, SocialIcon, icons…
-content/             data and bilingual content
-lib/i18n/            config, dictionaries (en, ar), server helper, plurals
-lib/                 motion constants, formatting, media-query + WebGL helpers
-public/images/       the society's photographs (resized, metadata stripped)
+  discovery/         search, filters, result bar, filter sheet, states, URL query state
+  platform/          platform primitives, Breadcrumbs, NotFoundView, DemoSession, registration
+                     status, check-in pass
+  three/             SceneMount, Studio, procedural models and their rig
+  pages/<route>/     each platform page's own components and styles
+content/             landing data and bilingual content; content/platform/ the sample records
+lib/data/            the platform's async data layer and its fixed clock
+lib/i18n/            config, dictionaries (en, ar, platform-*, pages/*), server helper, plurals
+lib/                 routes (every internal address), motion constants, formatting,
+                     media-query + WebGL helpers
+public/images/       the society's photographs: web copies of /photos (long edge ≤ 2400px,
+                     metadata stripped; portraits cut to head-and-shoulders squares).
+                     /photos itself holds the full-resolution sources and is not committed
 styles/              tokens.css, globals.css
 ```
 

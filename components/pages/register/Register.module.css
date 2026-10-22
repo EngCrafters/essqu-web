@@ -1,0 +1,667 @@
+/* /register — the application form and its live member card. */
+
+.section {
+  padding-block: var(--space-6) var(--section-space);
+}
+
+.layout,
+.success {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .layout,
+  .success {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: var(--space-10);
+  }
+
+  .cardCol {
+    position: sticky;
+    top: calc(var(--nav-offset) + var(--nav-height) + var(--space-6));
+  }
+}
+
+/* On phones the card leads, so the visitor sees it change as they type below it. */
+@media (max-width: 63.99rem) {
+  .layout .cardCol {
+    order: -1;
+  }
+}
+
+/* ---------------------------------------------------------------- form */
+
+.form {
+  display: grid;
+  gap: var(--space-6);
+  padding: clamp(var(--space-5), 3vw, var(--space-8));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-6);
+}
+
+@media (min-width: 40rem) {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+}
+
+.field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field > label,
+.field > legend {
+  padding: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.hint {
+  margin-top: -4px;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.field input:not([type='checkbox']),
+.field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-button);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  transition:
+    border-color var(--dur-hover) var(--ease-out),
+    box-shadow var(--dur-hover) var(--ease-out);
+}
+
+.field input[dir='ltr'] {
+  text-align: start;
+}
+
+:global(html[dir='rtl']) .field input[dir='ltr'] {
+  text-align: right;
+}
+
+.field input:focus-visible,
+.field select:focus-visible {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+
+.field[data-invalid] input:not([type='checkbox']),
+.field[data-invalid] select {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 3px rgb(179 38 30 / 0.08);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: #b3261e;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.error::before {
+  content: '!';
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #b3261e;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.interests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.interest {
+  position: relative;
+  display: inline-flex;
+}
+
+.interest input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.interest span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-chip);
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out),
+    border-color var(--dur-hover) var(--ease-out);
+}
+
+.interest input:checked + span {
+  border-color: var(--text-primary);
+  background: var(--text-primary);
+  color: var(--on-dark);
+}
+
+.interest input:focus-visible + span {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-weight: 500 !important;
+  cursor: pointer;
+}
+
+.consent input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--brand-primary);
+}
+
+.actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.tip {
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.tip a {
+  color: var(--brand-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .spinner {
+    animation: spin 700ms linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.summary {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid rgb(179 38 30 / 0.35);
+  border-inline-start: 4px solid #b3261e;
+  border-radius: 12px;
+  background: rgb(179 38 30 / 0.05);
+  color: var(--text-primary);
+}
+
+.summary:focus {
+  outline: 2px solid #b3261e;
+  outline-offset: 2px;
+}
+
+.summaryTitle {
+  font-weight: 700;
+}
+
+.summary ul {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-5);
+  list-style: disc;
+}
+
+.summary a {
+  color: #8c1d18;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- card blueprint */
+
+.card {
+  --key: var(--border-strong);
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  width: 100%;
+  aspect-ratio: 1.586;
+  min-height: 15rem;
+  padding: var(--space-5);
+  overflow: hidden;
+  border-radius: 18px;
+  background:
+    linear-gradient(var(--atmo-grid) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(90deg, var(--atmo-grid) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(150deg, #173a7a, var(--section-dark) 70%);
+  color: var(--on-dark);
+  box-shadow: 0 30px 60px -30px rgb(16 33 61 / 0.6);
+  align-content: space-between;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cardFlag {
+  padding: 2px var(--space-2);
+  border: 1px dashed var(--border-on-dark-strong);
+  border-radius: var(--radius-chip);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cardMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.cardSymbol {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+
+.cardSymbol svg {
+  width: 64px;
+  height: 64px;
+}
+
+.cardSymbol svg path:first-child {
+  stroke: var(--key);
+  stroke-width: 2;
+}
+
+.cardBlank {
+  width: 56px;
+  height: 56px;
+  border: 1.5px dashed var(--border-on-dark-strong);
+  border-radius: 50% 50% 50% 0;
+}
+
+.cardWho {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cardName {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.6rem);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardName[data-empty] {
+  color: var(--atmo-text-secondary);
+  font-weight: 500;
+}
+
+.cardDiscipline {
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-small);
+}
+
+.cardFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.cardFacts dt {
+  color: var(--atmo-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cardFacts dd {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.cardInterests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-height: 24px;
+}
+
+.cardInterests span {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-chip);
+  background: rgb(255 255 255 / 0.12);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cardStripe {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 6px;
+  background: var(--key);
+  transition: background-color 400ms var(--ease-out);
+}
+
+/* ---------------------------------------------------------------- success */
+
+.successCopy {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
+}
+
+.successMark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgb(46 125 50 / 0.12);
+  color: #2e7d32;
+}
+
+.successMark svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.successTitle {
+  font-size: var(--text-h2);
+}
+
+.successBody {
+  max-width: 52ch;
+  color: var(--text-secondary);
+  font-size: var(--text-lead);
+}
+
+.nextTitle {
+  margin-top: var(--space-4);
+  font-size: var(--text-h4);
+}
+
+.next {
+  display: grid;
+  gap: var(--space-3);
+  counter-reset: step;
+}
+
+.next li {
+  display: flex;
+  gap: var(--space-3);
+  counter-increment: step;
+}
+
+.next li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-hover);
+  font-size: var(--text-label);
+  font-weight: 700;
+}
+
+.successActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.successNote {
+  margin-top: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+/* ---------------------------------------------------------------- SQU ID card upload */
+
+/* The card's row: a small preview, the file's name and state, and the choose/replace action. The
+   native file input sits invisibly over the action, as the interest checkboxes sit under their
+   chips, so the label, keyboard focus and screen readers all reach a real control. */
+.upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  transition: border-color var(--dur-hover) var(--ease-out);
+}
+
+.upload[data-filled] {
+  border-style: solid;
+}
+
+.field[data-invalid] .upload {
+  border-color: #b3261e;
+  box-shadow: 0 0 0 3px rgb(179 38 30 / 0.08);
+}
+
+.uploadPreview {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 72px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--brand-soft);
+}
+
+.uploadPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploadPreview svg {
+  width: 40px;
+  height: 28px;
+  fill: none;
+  stroke: var(--brand-primary);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.uploadInfo {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: 2px;
+  min-width: 0;
+}
+
+.uploadName {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadMeta {
+  min-height: 1.2em;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}
+
+.uploadButtons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.uploadPick {
+  position: relative;
+  display: inline-flex;
+}
+
+.uploadInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.uploadInput:disabled {
+  cursor: not-allowed;
+}
+
+.uploadInput:focus-visible + span {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.uploadRemove {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.uploadRemove:hover {
+  color: var(--text-primary);
+}
+
+/* Upload progress under the submit button: the same thin bar as the events' seat bars. */
+.progress {
+  position: relative;
+  width: min(100%, 20rem);
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--brand-soft);
+}
+
+.progress span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: var(--fill, 0%);
+  border-radius: inherit;
+  background: var(--brand-primary);
+  transition: width 200ms linear;
+}
+
+/* ---------------------------------------------------------------- password */
+
+/* The field's own input with a Show/Hide button inside its inline end; used here and on the
+   sign-in and reset pages, so every password field looks the same. */
+.passwordBox {
+  position: relative;
+}
+
+.field .passwordBox input {
+  padding-inline-end: 5.5rem;
+}
+
+.reveal {
+  position: absolute;
+  inset-block: 6px;
+  inset-inline-end: 6px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-button) - 4px);
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reveal:hover {
+  background: var(--brand-soft);
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}

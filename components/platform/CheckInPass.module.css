@@ -1,0 +1,95 @@
+/* A ticket stub: a punched edge, a code square and three facts. Marked as a preview. */
+
+.pass {
+  position: relative;
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 0 58%, var(--background) 9px, transparent 10px),
+    radial-gradient(circle at 100% 58%, var(--background) 9px, transparent 10px),
+    var(--surface);
+  overflow: hidden;
+}
+
+.passHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--section-dark);
+  color: var(--on-dark);
+}
+
+.passTitle {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.passFlag {
+  padding: 2px var(--space-2);
+  border: 1px dashed var(--border-on-dark-strong);
+  border-radius: var(--radius-chip);
+  color: var(--on-dark-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.passBody {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  border-bottom: 1.5px dashed var(--border-strong);
+}
+
+.code {
+  width: 112px;
+  height: 112px;
+  shape-rendering: crispEdges;
+}
+
+.ink {
+  fill: var(--text-primary);
+}
+
+.paper {
+  fill: var(--surface);
+}
+
+.passFacts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.passFacts dt {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.passFacts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-small);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.passCode {
+  direction: ltr;
+  font-family: var(--font-display-latin);
+  letter-spacing: 0.06em;
+  unicode-bidi: isolate;
+}
+
+.passHint {
+  padding: var(--space-3) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+}

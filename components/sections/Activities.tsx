@@ -6,12 +6,11 @@ import { ActivityGalleries } from './ActivityGalleries'
 import styles from './Activities.module.css'
 
 /**
- * The society's six activities, each an automatic slideshow of its previous events. Dated,
+ * The society's six activities, each an automatic slideshow of its photographs. Dated,
  * upcoming events stay in the Events section.
  */
 export async function Activities() {
   const { t } = await getI18n()
-  const hasDemo = ACTIVITIES.some((a) => a.events.some((e) => e.demo))
 
   return (
     <section id="activities" className={`section ${styles.section}`} aria-labelledby="activities-title">
@@ -22,14 +21,6 @@ export async function Activities() {
           </h2>
           <div className={styles.headAside} data-reveal="rise">
             <p className="section-lead">{t.activities.lead}</p>
-            {hasDemo && (
-              <p className="preview-note">
-                <span className="status-dot" aria-hidden="true" />
-                <span>
-                  <strong>{t.activities.demoStrong}</strong> {t.activities.demoBody}
-                </span>
-              </p>
-            )}
           </div>
         </header>
 

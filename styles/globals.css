@@ -344,6 +344,37 @@ main:focus {
   background: transparent;
 }
 
+/* A discipline's name as a link to its section of /disciplines: the surrounding text's look,
+   with a fine dotted rule that firms up on hover. Chips keep their own frame instead. */
+.discipline-link {
+  text-decoration: underline dotted 1px;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 0.22em;
+  transition:
+    color var(--dur-hover) var(--ease-out),
+    text-decoration-color var(--dur-hover) var(--ease-out);
+}
+
+.discipline-link:hover {
+  color: var(--brand-primary);
+  text-decoration-color: currentColor;
+}
+
+a.chip {
+  transition:
+    border-color var(--dur-hover) var(--ease-out),
+    color var(--dur-hover) var(--ease-out);
+}
+
+.chip.discipline-link {
+  text-decoration: none;
+}
+
+a.chip:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
 .status-dot {
   width: 7px;
   height: 7px;
