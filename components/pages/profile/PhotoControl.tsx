@@ -16,12 +16,15 @@ export type PhotoOutcome = 'saved' | 'removed' | 'invalid' | 'failed'
 export function PhotoControl({
   name,
   email,
+  hasPhoto,
   photoUrl,
   canUpload,
   send,
 }: {
   name: string
   email: string
+  /** Core's answer; the image itself may still be downloading. */
+  hasPhoto: boolean
   photoUrl: string | null
   canUpload: boolean
   send: (file: File | null) => Promise<PhotoOutcome>
@@ -95,10 +98,10 @@ export function PhotoControl({
           <>
             {canUpload && (
               <button type="button" className="btn btn--secondary btn--compact" onClick={() => inputRef.current?.click()} disabled={busy}>
-                {photoUrl ? c.change : c.add}
+                {hasPhoto ? c.change : c.add}
               </button>
             )}
-            {photoUrl && (
+            {hasPhoto && (
               <button type="button" className="btn btn--quiet btn--compact" onClick={() => void run(null)} disabled={busy}>
                 {c.remove}
               </button>

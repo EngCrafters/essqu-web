@@ -261,7 +261,14 @@ function OwnProfileView({
         <div className="container">
           <p className={p.badge}>{c.you}</p>
           <div className={p.heroGrid}>
-            <PhotoControl name={profile.name} email={email} photoUrl={profile.hasPhoto ? photoUrl : null} canUpload={canUpload} send={sendPhotoFile} />
+            <PhotoControl
+              name={profile.name}
+              email={email}
+              hasPhoto={profile.hasPhoto}
+              photoUrl={profile.hasPhoto ? photoUrl : null}
+              canUpload={canUpload}
+              send={sendPhotoFile}
+            />
             <div className={p.who}>
               <h1 className={`${p.name} intro-item`} dir="auto">
                 {profile.name}
