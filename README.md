@@ -9,6 +9,9 @@ Earlier drafts are kept:
 - **Draft 2 / Draft 3** (Next.js): `drafts/draft-2-source.zip`, `drafts/draft-3-source.zip`.
 - **Draft 4 onward:** this repository's git history.
 
+**Developer documentation:** start at [`docs/README.md`](docs/README.md) for setup, architecture,
+routes, Core integration, configuration and known gaps.
+
 Product scope comes from `PRD.pdf` (Idea & Requirements Document v1.0). **Events and event
 registration come from the Core platform** (`engsoc-platform`, `api.essqu.com/v1`) when it is
 configured: see [`integration/`](integration/INTEGRATION_ARCHITECTURE.md) and `lib/core-api/`.
