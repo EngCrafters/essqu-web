@@ -365,7 +365,8 @@
   font-size: var(--text-label);
 }
 
-.field input:not([type='checkbox']),
+/* Not file inputs: they stay visually hidden (.fileInput) behind their own button. */
+.field input:not([type='checkbox']):not([type='file']),
 .field select {
   width: 100%;
   min-height: 48px;
@@ -391,7 +392,7 @@
   box-shadow: 0 0 0 3px var(--brand-soft);
 }
 
-.field[data-invalid] input:not([type='checkbox']),
+.field[data-invalid] input:not([type='checkbox']):not([type='file']),
 .field[data-invalid] select {
   border-color: #b3261e;
   box-shadow: 0 0 0 3px rgb(179 38 30 / 0.08);
@@ -657,9 +658,82 @@
   background: var(--background);
 }
 
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-block: var(--space-3) var(--space-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.checkRow input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.1rem;
+  flex: none;
+  accent-color: var(--primary, currentColor);
+}
+
 .emailValue {
   overflow-wrap: anywhere;
   font-weight: 700;
+}
+
+/* ------------------------------------- SQU verification and committee leadership cards */
+
+.path {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.roleRow {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.roleRow[data-ended] .path {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.roleHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fileName {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The badge beside the member's name. */
+.squBadge {
+  margin-inline-start: var(--space-2);
+  vertical-align: middle;
 }
 
 @media (prefers-reduced-motion: reduce) {

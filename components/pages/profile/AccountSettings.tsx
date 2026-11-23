@@ -1,8 +1,8 @@
 'use client'
 
-import { useId, useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useI18n } from '@/components/i18n/I18nProvider'
-import { isSquEmail } from '@/lib/core-api/member-profile'
+import { isEmail } from '@/lib/core-api/member-profile'
 import { memberProfileCopy } from '@/lib/i18n/dictionaries/pages/member-profile'
 import { memberAuthClient, type MemberAuthSettings } from '@/lib/member-auth/client'
 import { routes } from '@/lib/routes'
@@ -10,9 +10,19 @@ import m from './MemberProfile.module.css'
 
 /**
  * The sign-in email and password belong to Supabase Auth, and change only through its
- * confirmation emails. Core then follows a confirmed SQU address; it never takes one from here.
+ * confirmation emails. Core then follows the confirmed address, personal or institutional
+ * (ADR 0025); it never takes one from here.
  */
-export function AccountSettings({ authSettings, signInEmail }: { authSettings: MemberAuthSettings; signInEmail: string }) {
+export function AccountSettings({
+  authSettings,
+  signInEmail,
+  children,
+}: {
+  authSettings: MemberAuthSettings
+  signInEmail: string
+  /** More setting cards in the same grid (email announcements). */
+  children?: ReactNode
+}) {
   const { locale } = useI18n()
   const c = memberProfileCopy[locale].profile.settings
   const id = useId()
@@ -24,7 +34,7 @@ export function AccountSettings({ authSettings, signInEmail }: { authSettings: M
   const [reset, setReset] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
 
   const typed = email.trim().toLowerCase()
-  const invalid = !isSquEmail(typed) || typed === signInEmail.toLowerCase()
+  const invalid = !isEmail(typed) || typed === signInEmail.toLowerCase()
   const changeEmail = async (e: FormEvent) => {
     e.preventDefault()
     setTouched(true)
@@ -57,7 +67,6 @@ export function AccountSettings({ authSettings, signInEmail }: { authSettings: M
         <p className={m.emailValue} dir="ltr">
           {signInEmail}
         </p>
-        {!isSquEmail(signInEmail.toLowerCase()) && <p className={m.note}>{c.notSqu}</p>}
         {changing ? (
           <form className={m.form} onSubmit={changeEmail} noValidate aria-busy={emailState === 'sending'}>
             <div className={m.field} data-invalid={(touched && invalid) || undefined}>
@@ -139,6 +148,7 @@ export function AccountSettings({ authSettings, signInEmail }: { authSettings: M
           </p>
         )}
       </section>
+      {children}
     </div>
   )
 }

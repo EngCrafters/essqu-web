@@ -79,6 +79,33 @@ export function memberAuthClient(settings: MemberAuthSettings): SupabaseClient {
 
 export type SignUpOutcome = { ok: true } | { ok: false; problem: AuthProblem }
 
+export type AccountTokenOutcome = { ok: true } | { ok: false; stage: 'sign-in' | 'password'; problem: AuthProblem }
+
+/**
+ * Immediate account activation (Core ADR 0030): Core created the account and returned a one-time
+ * sign-in token. This browser signs in with it, then sets the chosen password with Supabase Auth
+ * itself, so the password still goes nowhere else.
+ */
+export async function signInWithAccountToken(client: Pick<SupabaseClient, 'auth'>, tokenHash: string, password: string): Promise<AccountTokenOutcome> {
+  try {
+    const { error } = await client.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
+    if (error) return { ok: false, stage: 'sign-in', problem: classifyAuthError(error) }
+  } catch (error) {
+    return { ok: false, stage: 'sign-in', problem: classifyAuthError(error as { code?: string; status?: number }) }
+  }
+  return setAccountPassword(client, password)
+}
+
+/** The signed-in account's password (after an immediate sign-in, or to retry it). */
+export async function setAccountPassword(client: Pick<SupabaseClient, 'auth'>, password: string): Promise<AccountTokenOutcome> {
+  try {
+    const { error } = await client.auth.updateUser({ password })
+    return error ? { ok: false, stage: 'password', problem: classifyAuthError(error) } : { ok: true }
+  } catch (error) {
+    return { ok: false, stage: 'password', problem: classifyAuthError(error as { code?: string; status?: number }) }
+  }
+}
+
 /**
  * The applicant's account, created by Supabase Auth's own sign-up after Core accepted the
  * application. Supabase sends the confirmation email; until it is confirmed the account cannot

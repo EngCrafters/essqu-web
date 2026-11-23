@@ -6,12 +6,14 @@ import {
   fetchApplicationStatus,
   forgetApplication,
   membershipFormData,
+  immediateAccountFor,
   membershipOutcomeFor,
   prepareDocument,
   recallApplication,
   rememberApplication,
   sniffDocument,
 } from '@/lib/core-api/membership'
+import { findCategory, toMembershipOptions } from '@/lib/core-api/membership-options'
 import { fakeFetch, json, problem } from '../support/core'
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
@@ -68,25 +70,145 @@ describe('prepareDocument', () => {
 })
 
 describe('membershipFormData', () => {
-  it('sends exactly the fields Core accepts, the consent wording version and the prepared card', () => {
-    const form = membershipFormData(
-      { fullName: ' Aisha Al-Hinai ', email: ' S123456@SQU.EDU.OM ', universityId: ' 123456 ', academicYear: '2', discipline: 'civil', interests: ['cad', 'data'] },
-      { blob: encoded, fileName: 'squ-id-card.jpg' },
-    )
-    assert.deepEqual([...new Set(form.keys())].sort(), ['academicYear', 'consent', 'consentVersion', 'discipline', 'email', 'fullName', 'idDocument', 'interests', 'universityId'])
+  const student = { id: 'university_student', label: { en: 'University Student', ar: 'طالب جامعي' }, institution: 'required' as const, academicYear: true }
+  const graduate = { id: 'graduate', label: { en: 'Graduate / Alumni', ar: 'خرّيج' }, institution: 'optional' as const, academicYear: false }
+  const professional = { id: 'industry_professional', label: { en: 'Industry Professional', ar: 'مهني' }, institution: 'none' as const, academicYear: false }
+  const values = {
+    fullName: ' Aisha Al-Hinai ', email: ' Aisha@Gmail.COM ',
+    category: 'university_student',
+    institution: 'utas',
+    institutionName: '',
+    academicYear: '2', discipline: 'civil', interests: ['cad', 'data'],
+  }
+
+  it('sends a student’s fields, the consent wording version, and no student ID or document', () => {
+    const form = membershipFormData(values, student)
+    assert.deepEqual([...new Set(form.keys())].sort(), ['academicYear', 'category',
+      'consent', 'consentVersion', 'discipline', 'email', 'fullName', 'institution', 'interests',
+    ])
     assert.equal(form.get('fullName'), 'Aisha Al-Hinai')
-    assert.equal(form.get('email'), 's123456@squ.edu.om')
-    assert.equal(form.get('universityId'), '123456')
+    assert.equal(form.get('email'), 'aisha@gmail.com')
+    assert.equal(form.get('category'), 'university_student')
+    assert.equal(form.get('institution'), 'utas')
+    assert.equal(form.get('academicYear'), '2')
     assert.deepEqual(form.getAll('interests'), ['cad', 'data'])
     assert.equal(form.get('consent'), 'true')
     assert.equal(form.get('consentVersion'), MEMBERSHIP_CONSENT_VERSION)
-    assert.equal((form.get('idDocument') as File).name, 'squ-id-card.jpg')
+    assert.equal(MEMBERSHIP_CONSENT_VERSION, '2026-11-v2')
+    assert.equal(form.has('idDocument'), false)
+    assert.equal(form.has('universityId'), false)
+  })
+
+  it('sends a typed university name only with “Other university”', () => {
+    const form = membershipFormData({ ...values, institution: 'other', institutionName: '  ETH Zürich ' }, student)
+    assert.equal(form.get('institution'), 'other')
+    assert.equal(form.get('institutionName'), 'ETH Zürich')
+    assert.equal(membershipFormData({ ...values, institutionName: 'Stale' }, student).has('institutionName'), false)
+  })
+
+  it('never sends a detail the category does not collect, even if it was typed before switching', () => {
+    const form = membershipFormData(
+      { ...values, category: 'industry_professional', institution: 'other', institutionName: 'Stale', academicYear: '4' },
+      professional,
+    )
+    assert.deepEqual([...new Set(form.keys())].sort(), ['category', 'consent', 'consentVersion', 'discipline', 'email', 'fullName', 'interests'])
+    const alumnus = membershipFormData({ ...values, category: 'graduate', institution: '', academicYear: '3' }, graduate)
+    assert.equal(alumnus.has('institution'), false)
+    assert.equal(alumnus.has('academicYear'), false)
+    assert.equal(membershipFormData({ ...values, category: 'graduate', institution: 'squ' }, graduate).get('institution'), 'squ')
+  })
+})
+
+describe('toMembershipOptions', () => {
+  const body = {
+    data: {
+      categories: [
+        { id: 'university_student', label: { en: 'University Student', ar: 'طالب جامعي' }, institution: 'required', academicYear: true },
+        { id: 'BAD ID', label: { en: 'x', ar: 'x' }, institution: 'none', academicYear: false },
+        { id: 'other', label: { en: 'Other', ar: 'أخرى' }, institution: 'sometimes', academicYear: false },
+      ],
+      institutions: [
+        { id: 'squ', name: { en: 'Sultan Qaboos University (SQU)', ar: 'جامعة السلطان قابوس' }, country: 'OM' },
+        { id: 'other', name: { en: 'Clash', ar: 'تعارض' }, country: 'OM' },
+        { id: 'no-arabic', name: { en: 'Only English' }, country: 'OM' },
+      ],
+      consentVersion: '2026-11-v2',
+    },
+  }
+
+  it('keeps only categories and institutions it can render, and never an institution called "other"', () => {
+    const options = toMembershipOptions(body)!
+    assert.deepEqual(
+      options.categories.map((c) => c.id),
+      ['university_student'],
+    )
+    assert.deepEqual(
+      options.institutions.map((i) => i.id),
+      ['squ'],
+    )
+    assert.equal(options.consentVersion, '2026-11-v2')
+    // A Core before automatic approval (Core ADR 0029) doesn't say: the page keeps the review wording.
+    assert.equal(options.approval, 'review')
+    assert.equal(findCategory(options, 'university_student')?.academicYear, true)
+    assert.equal(findCategory(options, 'astronaut'), null)
+  })
+
+  it('reads immediate account activation only from the exact value (Core ADR 0030)', () => {
+    assert.equal(toMembershipOptions(body)!.accountActivation, 'email_confirmation')
+    assert.equal(toMembershipOptions({ data: { ...body.data, accountActivation: 'immediate' } })!.accountActivation, 'immediate')
+    assert.equal(toMembershipOptions({ data: { ...body.data, accountActivation: 'yes' } })!.accountActivation, 'email_confirmation')
+  })
+
+  it('reads automatic approval only from the exact value', () => {
+    assert.equal(toMembershipOptions({ data: { ...body.data, approval: 'automatic' } })!.approval, 'automatic')
+    assert.equal(toMembershipOptions({ data: { ...body.data, approval: 'AUTOMATIC' } })!.approval, 'review')
+    assert.equal(toMembershipOptions({ data: { ...body.data, approval: true } })!.approval, 'review')
+  })
+
+  it('reads anything unexpected as unavailable', () => {
+    assert.equal(toMembershipOptions(null), null)
+    assert.equal(toMembershipOptions({ data: { ...body.data, categories: [] } }), null)
+    assert.equal(toMembershipOptions({ data: { ...body.data, consentVersion: '<script>' } }), null)
+  })
+})
+
+describe('immediateAccountFor (Core ADR 0030)', () => {
+  const TOKEN_HASH = 'f'.repeat(56)
+  it('accepts only a well-formed one-time sign-in token', () => {
+    assert.deepEqual(immediateAccountFor(201, { data: { tokenHash: TOKEN_HASH, member: true } }), { kind: 'ready', tokenHash: TOKEN_HASH, member: true })
+    assert.deepEqual(immediateAccountFor(201, { data: { tokenHash: TOKEN_HASH } }), { kind: 'ready', tokenHash: TOKEN_HASH, member: false })
+    assert.deepEqual(immediateAccountFor(201, { data: { tokenHash: 'short' } }), { kind: 'unavailable' })
+    assert.deepEqual(immediateAccountFor(201, { data: { tokenHash: 'has spaces and <tags> '.repeat(3) } }), { kind: 'unavailable' })
+  })
+
+  it('maps every refusal, and falls back to email confirmation when Core cannot create accounts', () => {
+    assert.deepEqual(immediateAccountFor(409, { reason: 'confirmation-required' }), { kind: 'confirmation-required' })
+    assert.deepEqual(immediateAccountFor(409, { reason: 'account-exists' }), { kind: 'account-exists' })
+    assert.deepEqual(immediateAccountFor(409, { reason: 'already-set-up' }), { kind: 'already-set-up' })
+    assert.deepEqual(immediateAccountFor(409, { reason: 'expired' }), { kind: 'expired' })
+    assert.deepEqual(immediateAccountFor(503, { reason: 'not-configured' }), { kind: 'confirmation-required' })
+    for (const [status, body] of [[503, null], [404, {}], [409, { reason: 'other' }], [500, 'x']] as const) {
+      assert.deepEqual(immediateAccountFor(status, body), { kind: 'unavailable' })
+    }
   })
 })
 
 describe('membershipOutcomeFor', () => {
   it('reports success only with a well-formed status token', () => {
-    assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'pending_review', statusToken: TOKEN } }, null), { kind: 'submitted', statusToken: TOKEN })
+    const confirm = { accountActivation: 'email_confirmation' }
+    assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'pending_review', statusToken: TOKEN } }, null), { kind: 'submitted', statusToken: TOKEN, status: 'pending_review', ...confirm })
+    // Core ADR 0029: approved at submission. Only the exact 'approved' counts.
+    assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'approved', statusToken: TOKEN } }, null), { kind: 'submitted', statusToken: TOKEN, status: 'approved', ...confirm })
+    assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'member', statusToken: TOKEN } }, null), { kind: 'submitted', statusToken: TOKEN, status: 'pending_review', ...confirm })
+    assert.deepEqual(membershipOutcomeFor(201, { data: { statusToken: TOKEN } }, null), { kind: 'submitted', statusToken: TOKEN, status: 'pending_review', ...confirm })
+    // Core ADR 0030: only the exact 'immediate' skips the confirmation email.
+    assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'approved', statusToken: TOKEN, accountActivation: 'immediate' } }, null), {
+      kind: 'submitted',
+      statusToken: TOKEN,
+      status: 'approved',
+      accountActivation: 'immediate',
+    })
+    assert.equal((membershipOutcomeFor(201, { data: { statusToken: TOKEN, accountActivation: 'IMMEDIATE' } }, null) as { accountActivation: string }).accountActivation, 'email_confirmation')
     assert.deepEqual(membershipOutcomeFor(201, { data: { status: 'pending_review' } }, null), { kind: 'unavailable' })
     assert.deepEqual(membershipOutcomeFor(200, { data: { statusToken: TOKEN } }, null), { kind: 'unavailable' })
   })
@@ -97,11 +219,11 @@ describe('membershipOutcomeFor', () => {
     assert.deepEqual(membershipOutcomeFor(409, problem(409, 'conflict'), null), { kind: 'conflict', reason: null })
     assert.deepEqual(membershipOutcomeFor(429, problem(429, 'rate-limited'), '3600'), { kind: 'rate-limited', retryAfterSeconds: 3600 })
     assert.deepEqual(
-      membershipOutcomeFor(422, problem(422, 'invalid-fields', { errors: [{ field: 'email', code: 'invalid' }, { field: 'idDocument', code: 'unsupported-type' }, { field: 'status', code: 'unexpected-field' }] }), null),
-      { kind: 'invalid', fields: [{ field: 'email', code: 'invalid' }, { field: 'idDocument', code: 'unsupported-type' }] },
+      membershipOutcomeFor(422, problem(422, 'invalid-fields', { errors: [{ field: 'email', code: 'invalid' }, { field: 'institutionName', code: 'required' }, { field: 'status', code: 'unexpected-field' }] }), null),
+      { kind: 'invalid', fields: [{ field: 'email', code: 'invalid' }, { field: 'institutionName', code: 'required' }] },
     )
-    assert.deepEqual(membershipOutcomeFor(413, problem(413, 'payload-too-large'), null), { kind: 'invalid', fields: [{ field: 'idDocument', code: 'too-large' }] })
-    for (const status of [400, 403, 415, 500, 503]) assert.deepEqual(membershipOutcomeFor(status, null, null), { kind: 'unavailable' }, String(status))
+    // No document is sent any more, so an oversized body is simply a failure.
+    for (const status of [400, 403, 413, 415, 500, 503]) assert.deepEqual(membershipOutcomeFor(status, null, null), { kind: 'unavailable' }, String(status))
   })
 })
 

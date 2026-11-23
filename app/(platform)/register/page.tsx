@@ -6,6 +6,7 @@ import { PlatformHero } from '@/components/platform/Platform'
 import { ComingSoon } from '@/components/platform/ComingSoon'
 import { isComingSoon } from '@/content/site'
 import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
+import { getMembershipOptions } from '@/lib/core-api/membership-options.server'
 import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { getI18n } from '@/lib/i18n/server'
 
@@ -26,19 +27,30 @@ export default async function RegisterPage() {
   // Core's public address (not a secret): the applicant's browser sends the application there.
   // Null when Core isn't configured; the form then says applications can't be sent right now.
   const applyBaseUrl = getRegistrationBaseUrl()
+  // The categories and institutions live in Core's database (Core ADR 0025). Without them the
+  // form cannot know which details to ask for, so it says applications can't be sent right now.
+  const options = await getMembershipOptions()
   return (
     <>
       <PlatformHero eyebrow={c.eyebrow} title={c.title} lead={<p>{c.lead}</p>} layout="stack" tone="paper">
         <p className="preview-note">
           <span className="status-dot" aria-hidden="true" />
           <span>
-            <strong>{c.noteStrong}</strong> {c.noteBody}
+            {options?.approval === 'automatic' ? (
+              <>
+                <strong>{c.noteStrongAutomatic}</strong> {options.accountActivation === 'immediate' ? c.noteBodyImmediate : c.noteBodyAutomatic}
+              </>
+            ) : (
+              <>
+                <strong>{c.noteStrong}</strong> {c.noteBody}
+              </>
+            )}
           </span>
         </p>
       </PlatformHero>
       <section className={styles.section} aria-label={c.formLabel}>
         <div className="container">
-          <RegisterForm applyBaseUrl={applyBaseUrl} authSettings={getMemberAuthConfig()} />
+          <RegisterForm applyBaseUrl={applyBaseUrl} authSettings={getMemberAuthConfig()} options={options} />
         </div>
       </section>
     </>

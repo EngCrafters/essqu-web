@@ -1,18 +1,25 @@
+import { OTHER_INSTITUTION, type AccountActivation, type CategoryOption } from './membership-options'
 import { parseProblem } from './schemas'
 
 /*
- * Membership applications, browser side (Core ADR 0017). The applicant's browser posts the
- * form and the SQU ID card straight to Core:
+ * Membership applications, browser side (Core ADRs 0017 and 0025). The applicant's browser
+ * posts the form straight to Core:
  *
  *   POST {CORE_API_BASE_URL}/membership-applications   (multipart/form-data, no key, no cookie)
  *
- * Core validates everything again, identifies the card by its file signature, rate-limits per
- * address, and stores the application as pending review. Nothing here can choose a status, role
- * or reviewer. The 256-bit status token Core returns is kept in this browser only, so the
- * applicant can see their status when they come back.
+ * Anyone may apply: students, graduates, academics, professionals and others. The category
+ * decides which details are sent; no student ID and no ID card are collected here (SQU student
+ * verification is a separate, signed-in step on the profile). Core validates everything again,
+ * rate-limits per address, and stores the application: approved at once under Core's automatic
+ * policy (Core ADR 0029), otherwise pending review. Core reports which; nothing here can choose a
+ * status, role or reviewer. The 256-bit status token Core returns is kept in this browser only,
+ * so the applicant can see their status when they come back.
+ *
+ * The document helpers below prepare the SQU ID card for that profile step.
  */
 
-export const MEMBERSHIP_CONSENT_VERSION = '2026-10-v1'
+/** The consent wording of the form (Core ADR 0025): no ID card is mentioned or collected. */
+export const MEMBERSHIP_CONSENT_VERSION = '2026-11-v2'
 /** Core's limit: 4 MiB, inside Vercel's 4.5 MB request ceiling. */
 export const MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 export const DOCUMENT_ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf'
@@ -20,7 +27,7 @@ export const DOCUMENT_ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf'
 export const MAX_IMAGE_SIDE = 2000
 export const SUBMIT_TIMEOUT_MS = 90_000
 
-export type ApplicationField = 'fullName' | 'email' | 'universityId' | 'academicYear' | 'discipline' | 'interests' | 'consent' | 'idDocument'
+export type ApplicationField = 'fullName' | 'email' | 'category' | 'institution' | 'institutionName' | 'academicYear' | 'discipline' | 'interests' | 'consent'
 export type DocumentProblem = 'required' | 'unsupported-type' | 'too-large' | 'unreadable'
 export type DocumentKind = 'image/jpeg' | 'image/png' | 'image/webp' | 'application/pdf'
 
@@ -86,35 +93,44 @@ export async function prepareDocument(file: File | null, encode: ImageEncoder = 
 export interface MembershipValues {
   fullName: string
   email: string
-  universityId: string
+  category: string
+  /** A listed institution's id, `other` (then `institutionName` is typed), or empty. */
+  institution: string
+  institutionName: string
   academicYear: string
   discipline: string
   interests: string[]
 }
 
-/** Exactly the fields Core accepts, and nothing else (Core refuses any other field). */
-export function membershipFormData(values: MembershipValues, document: { blob: Blob; fileName: string }): FormData {
+/**
+ * Exactly the fields Core accepts, and only those the category collects: a value typed before
+ * the applicant switched category is never sent (Core would drop it anyway).
+ */
+export function membershipFormData(values: MembershipValues, category: CategoryOption): FormData {
   const form = new FormData()
   form.set('fullName', values.fullName.trim())
   form.set('email', values.email.trim().toLowerCase())
-  form.set('universityId', values.universityId.trim())
-  form.set('academicYear', values.academicYear)
+  form.set('category', category.id)
+  if (category.institution !== 'none' && values.institution) {
+    form.set('institution', values.institution)
+    if (values.institution === OTHER_INSTITUTION) form.set('institutionName', values.institutionName.trim())
+  }
+  if (category.academicYear) form.set('academicYear', values.academicYear)
   form.set('discipline', values.discipline)
   for (const interest of values.interests) form.append('interests', interest)
   form.set('consent', 'true')
   form.set('consentVersion', MEMBERSHIP_CONSENT_VERSION)
-  form.set('idDocument', document.blob, document.fileName)
   return form
 }
 
 export type MembershipOutcome =
-  | { kind: 'submitted'; statusToken: string }
+  | { kind: 'submitted'; statusToken: string; status: 'pending_review' | 'approved'; accountActivation: AccountActivation }
   | { kind: 'invalid'; fields: { field: ApplicationField; code: string }[] }
   | { kind: 'conflict'; reason: 'already-applied' | 'already-member' | null }
   | { kind: 'rate-limited'; retryAfterSeconds: number | null }
   | { kind: 'unavailable' }
 
-const FIELDS: readonly ApplicationField[] = ['fullName', 'email', 'universityId', 'academicYear', 'discipline', 'interests', 'consent', 'idDocument']
+const FIELDS: readonly ApplicationField[] = ['fullName', 'email', 'category', 'institution', 'institutionName', 'academicYear', 'discipline', 'interests', 'consent']
 const TOKEN = /^[A-Za-z0-9_-]{43}$/
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -122,8 +138,13 @@ const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'obj
 /** Core's answer → an outcome. Pure, so every branch is tested without a network. */
 export function membershipOutcomeFor(status: number, body: unknown, retryAfter: string | null): MembershipOutcome {
   if (status === 201) {
-    const token = isRecord(body) && isRecord(body.data) ? body.data.statusToken : null
-    return typeof token === 'string' && TOKEN.test(token) ? { kind: 'submitted', statusToken: token } : { kind: 'unavailable' }
+    const data = isRecord(body) && isRecord(body.data) ? body.data : null
+    const token = data ? data.statusToken : null
+    // Only Core's explicit 'approved' counts; anything else is the cautious 'pending_review'.
+    const status = data?.status === 'approved' ? 'approved' : 'pending_review'
+    // Core ADR 0030: only an explicit 'immediate' skips the confirmation email.
+    const accountActivation: AccountActivation = data?.accountActivation === 'immediate' ? 'immediate' : 'email_confirmation'
+    return typeof token === 'string' && TOKEN.test(token) ? { kind: 'submitted', statusToken: token, status, accountActivation } : { kind: 'unavailable' }
   }
   const raw = isRecord(body) ? body : {}
   if (status === 409) {
@@ -139,8 +160,6 @@ export function membershipOutcomeFor(status: number, body: unknown, retryAfter: 
     const fields = errors.filter((e) => (FIELDS as readonly string[]).includes(e.field)) as { field: ApplicationField; code: string }[]
     return { kind: 'invalid', fields }
   }
-  // 413 means the card is too large even after preparation.
-  if (status === 413) return { kind: 'invalid', fields: [{ field: 'idDocument', code: 'too-large' }] }
   return { kind: 'unavailable' }
 }
 
@@ -171,6 +190,60 @@ export function submitMembershipApplication(baseUrl: string, form: FormData, onP
     xhr.onerror = xhr.ontimeout = xhr.onabort = () => resolve({ kind: 'unavailable' })
     xhr.send(form)
   })
+}
+
+/**
+ * Immediate account activation (Core ADR 0030): after a submission recorded as 'immediate', this
+ * browser asks Core for its account, proving only that it holds the status token. Core creates
+ * the account server-side (no confirmation email) and answers with a one-time sign-in token; the
+ * password is then set with Supabase Auth directly and never reaches Core.
+ */
+export type ImmediateAccount =
+  | { kind: 'ready'; tokenHash: string; member: boolean }
+  | { kind: 'confirmation-required' }
+  | { kind: 'account-exists' }
+  | { kind: 'already-set-up' }
+  | { kind: 'expired' }
+  | { kind: 'unavailable' }
+
+const SIGN_IN_TOKEN = /^[A-Za-z0-9_-]{16,256}$/
+
+/** Core's answer → what to do next. Pure, so every branch is tested without a network. */
+export function immediateAccountFor(status: number, body: unknown): ImmediateAccount {
+  const data = isRecord(body) && isRecord(body.data) ? body.data : null
+  if (status === 201) {
+    return data && typeof data.tokenHash === 'string' && SIGN_IN_TOKEN.test(data.tokenHash)
+      ? { kind: 'ready', tokenHash: data.tokenHash, member: data.member === true }
+      : { kind: 'unavailable' }
+  }
+  const reason = isRecord(body) ? body.reason : null
+  if (status === 409) {
+    if (reason === 'confirmation-required') return { kind: 'confirmation-required' }
+    if (reason === 'account-exists') return { kind: 'account-exists' }
+    if (reason === 'already-set-up') return { kind: 'already-set-up' }
+    if (reason === 'expired') return { kind: 'expired' }
+  }
+  // Core cannot create accounts right now: the usual email confirmation still works.
+  if (status === 503 && reason === 'not-configured') return { kind: 'confirmation-required' }
+  return { kind: 'unavailable' }
+}
+
+export async function setUpImmediateAccount(baseUrl: string, statusToken: string, fetchImpl: typeof fetch = fetch): Promise<ImmediateAccount> {
+  try {
+    const response = await fetchImpl(`${baseUrl}/membership-applications/account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ statusToken }),
+      credentials: 'omit',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30_000),
+    })
+    const body: unknown = await response.json().catch(() => null)
+    return immediateAccountFor(response.status, body)
+  } catch {
+    return { kind: 'unavailable' }
+  }
 }
 
 export type ApplicationStatus =
