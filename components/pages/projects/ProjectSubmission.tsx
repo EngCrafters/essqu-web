@@ -353,7 +353,9 @@ export function ProjectSubmission({ authSettings, baseUrl }: { authSettings: Mem
         try {
           const result = await fetchMemberProjects(authSettings, baseUrl, next.id)
           if (epoch === authEpoch.current && live.current.id === next.id) {
-            if (result.ok && result.data.projects[0]) open(result.data.projects[0])
+            // The list copy above already opened Overview; the full copy must not move a member
+            // back from a step they chose while it loaded.
+            if (result.ok && result.data.projects[0]) open(result.data.projects[0], false)
             else setProblem(result.ok ? 'UNAVAILABLE' : result.code)
           }
         } finally {

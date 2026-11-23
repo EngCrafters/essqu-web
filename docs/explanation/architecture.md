@@ -7,7 +7,8 @@ door. Its responsibilities:
 
 - the landing page, archive, disciplines, leadership and about pages, from content files;
 - published events and event registration, from Core;
-- the membership application, with the SQU ID card upload, sent to Core;
+- the membership application (five categories, any valid email, no ID card since Core ADR 0025),
+  sent to Core, and SQU student verification from the profile;
 - member sign-in, email confirmation and password reset, through Supabase Auth in the browser;
 - the signed-in member's profile, own registrations, attendance check-in and project
   submissions, through Core;
@@ -211,7 +212,7 @@ a redeploy. There is no dashboard or database setting.
 | Events (homepage section, `/events`, `/events/[slug]`)         | Real, from Core. Without Core they show an "unavailable" state, never samples.   |
 | Event registration (guest and member)                          | Real, sent to Core                                                               |
 | Attendance check-in (`/events/[slug]/attendance`)              | Real, sent to Core                                                               |
-| Membership application (`/register`)                           | Real, sent to Core with the ID card                                              |
+| Membership application (`/register`)                           | Real, sent to Core (no ID card since Core ADR 0025)                              |
 | Sign-in, confirmation, password reset                          | Real, Supabase Auth                                                              |
 | Member profile (`/profile`)                                    | Real, from Core                                                                  |
 | Projects catalogue and detail                                  | Real, from Core's published snapshots                                            |

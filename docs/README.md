@@ -47,6 +47,8 @@ Versions are the resolved versions in `package-lock.json`.
    translations, change a feature.
 8. [Deployment and troubleshooting](how-to/deployment-and-troubleshooting.md).
 9. [Known gaps](known-gaps.md) and [documentation maintenance](maintenance.md).
+10. [Development Cycle 2](development-cycle-2.md): expanded membership, SQU student verification
+    and committee leadership on the website (Core ADR 0025; implemented locally, not deployed).
 
 The shared [system integration guide](https://github.com/EngCrafters/engsoc-platform/blob/main/docs/integration/system-integration.md)
 explains how this site and Core work together. It is kept in the Core repository, together with

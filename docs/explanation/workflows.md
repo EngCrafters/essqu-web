@@ -93,9 +93,9 @@ sequenceDiagram
   participant B as Browser (/register)
   participant C as Core API
   participant A as Supabase Auth
-  B->>B: check the ID card signature and size, re-encode photos to JPEG (≤ 2000 px, metadata dropped)
-  B->>C: POST /membership-applications (multipart, no credential)
-  C-->>B: 201 status pending_review with statusToken
+  Note over B: the page was rendered with GET /membership-options (server, cached 5 min)
+  B->>C: POST /membership-applications (multipart text fields, no file, no credential)
+  C-->>B: 201 status (approved under Core's automatic policy, else pending_review) with statusToken
   B->>B: store statusToken in localStorage
   opt Supabase configured and a password was chosen
     B->>A: signUp(email, password, emailRedirectTo = site /login)
@@ -108,17 +108,26 @@ sequenceDiagram
 
 - **Form** ([`components/pages/register/RegisterForm.tsx`](../../components/pages/register/RegisterForm.tsx),
   [`lib/core-api/membership.ts`](../../lib/core-api/membership.ts)):
-  - full name, SQU email, student ID, academic year, discipline, up to four interests and
-    consent (version `2026-10-v1`);
-  - the ID card as JPEG, PNG, WebP or PDF, at most 4 MiB after preparation;
-  - one upload through `XMLHttpRequest` with a progress bar and a 90-second timeout, never
-    retried.
+  - full name, any valid email address, a category, a discipline, up to four interests and
+    consent (version `2026-11-v2`);
+  - by category (Core's `GET /membership-options` decides):
+    - a University Student gives a university (listed, or "Other" with its name) and an
+      academic year;
+    - a Graduate may give an alma mater;
+    - other categories give neither;
+    - fields of a previous category are cleared when the category changes and never sent
+      (`membershipFormData`);
+  - no student ID and no ID card (Core ADR 0025). SQU students verify later, from `/profile`;
+  - one request through `XMLHttpRequest` with a 90-second timeout, never retried. Without Core's
+    options no form is shown: the page says it couldn’t be loaded and offers Try again, which
+    reads `GET /membership-options` again from the browser.
 - **Outcomes:**
-  - 201 shows "Application received" with next steps;
+  - 201 with `status: approved` (Core's `automatic` policy, Core ADR 0029) shows "Welcome to the
+    society": the membership is approved and becomes active when the email is confirmed;
+  - 201 with `status: pending_review` shows "Application received" with next steps;
   - 409 `already-applied` or `already-member` shows a notice;
   - 422 maps field errors onto the form;
-  - 413 means the card is too large;
-  - 429 shows the rate limit (Core allows 20 per address per hour);
+  - 429 shows the rate limit (Core allows five per client address per hour);
   - anything else shows "couldn't be sent just now, nothing was saved".
 - **Password.** When `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set, the form asks for a password
   (8 characters to 72 bytes; [`lib/member-auth/password.ts`](../../lib/member-auth/password.ts)).
@@ -129,7 +138,23 @@ sequenceDiagram
 - **Status.** The 256-bit status token is the applicant's only handle. It is sent in a request
   body, never a URL. Returning visitors see "under review" or "approved", or a short note above a
   fresh form after a rejection.
-- **Membership starts in Core**, after review and activation. Being signed in grants nothing.
+- **Wording follows Core's policy.** `GET /membership-options` says `approval: automatic` or
+  `review`; the note above the form ("Membership starts when you register." or "Every application
+  is reviewed.") and the duplicate notice follow it. Only wording: Core decides at submission.
+- **Membership starts in Core.** Under the automatic policy Core approves a valid application at
+  submission, and the member record is created at the first confirmed sign-in (the confirmation
+  link lands on `/login`, which calls `GET /v1/me/membership`). Otherwise it follows review and
+  activation. Being signed in grants nothing by itself.
+- **Account activation** (Core ADR 0030), a separate Core setting the 201 reports as
+  `accountActivation`. `email_confirmation` (the default): Supabase sign-up and its confirmation
+  email, as above. `immediate`: no email; the browser sends its status token to
+  `POST /membership-applications/account`, Core creates the account and returns a one-time sign-in
+  token, and the browser signs in with it (`verifyOtp`) and sets the chosen password with Supabase
+  Auth (`updateUser`) ([`lib/member-auth/client.ts`](../../lib/member-auth/client.ts)
+  `signInWithAccountToken`). The page then shows "You're signed in" and Open your profile. An
+  address that already has an account gets "sign in with its password"; if Core cannot create
+  accounts (`409 confirmation-required` or `503 not-configured`), the page falls back to email
+  confirmation.
 
 ## Sign-in, confirmation and sign-out
 
@@ -176,8 +201,8 @@ token refresh, sign-out and other tabs.
 `/profile` settings also offer "send reset email" and an email change
 (`updateUser({ email }, { emailRedirectTo: <site>/login })`)
 ([`components/pages/profile/AccountSettings.tsx`](../../components/pages/profile/AccountSettings.tsx)).
-Core adopts a confirmed new sign-in email as the member's email only if it is an SQU address that
-no other member uses.
+Core adopts a confirmed new sign-in email as the member's email if no other member uses it (any
+valid address since Core ADR 0025; previously only SQU addresses).
 
 ## Member profile
 
@@ -189,15 +214,41 @@ loads, in parallel:
 - when projects are active, `GET /me/projects`.
 
 | Action                                  | Request                                                          | Rules (website check; Core checks again)                                                                                                                                          |
-| --------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Edit phone, year, discipline, interests | `PATCH /me/profile {phone, academicYear, discipline, interests}` | Year 1–5; a known discipline; at most 4 distinct known interests; phone empty or international. Hidden unless both the site switch and Core's `features.profileEditing` allow it. |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Edit phone, category, university, year, discipline, interests | `PATCH /me/profile {phone, category, institution, institutionName, academicYear, discipline, interests}` | The registration rules for the category (`draftProblems`, `editOf`); year 1–5 for students only; a known discipline; at most 4 distinct known interests; phone empty or international. Hidden unless both the site switch and Core's `features.profileEditing` allow it. |
 | Upload or replace photo                 | `PUT /me/profile/photo` with the raw JPEG or PNG body            | At most 3 MiB; Core re-encodes. Hidden unless both switches allow it.                                                                                                             |
 | Remove photo                            | `DELETE /me/profile/photo`                                       | Always allowed                                                                                                                                                                    |
-| Correct name or student ID              | `POST /me/profile/changes {field, value}`                        | `full_name` 2–200 characters; `university_id` 6–10 digits. A membership reviewer decides it in Core's dashboard.                                                                  |
+| Correct name (or a legacy student ID)                         | `POST /me/profile/changes {field, value}`                        | `full_name` 2–200 characters; `university_id` 6–10 digits, offered only to members whose record has one (the earlier SQU-only form). A membership reviewer decides it in Core's dashboard.                                                                  |
 
 Results are validated before rendering: `toOwnProfile` drops unknown disciplines and interests.
 `401` sends the visitor to sign in, `403 MEMBER_REQUIRED` shows the non-member state, and `503`
 shows a retry.
+
+### SQU verification and committee leadership (Core ADR 0025)
+
+Two independent cards on `/profile`, each with its own loading, error (Core's request reference
+and Try again) and empty state:
+
+- [`SquVerificationCard.tsx`](../../components/pages/profile/SquVerificationCard.tsx)
+  (`#squ-verification`) loads `GET /me/verification`;
+- [`LeadershipCard.tsx`](../../components/pages/profile/LeadershipCard.tsx) (`#leadership`) loads
+  `GET /me/leadership` and shows dashboard access as a separate, read-only fact.
+
+| Action                        | Request                                                                                                                           | Rules (website check; Core checks again)                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Submit SQU verification       | `POST /me/verification/squ` (multipart `studentNumber`, `document`)                                                               | Number of 6–10 digits; a JPEG, PNG, WebP or PDF prepared by `prepareDocument` (photos re-encoded without metadata). Offered while Core's `canSubmit` is true; otherwise the next date is shown.                                                                                                                                                                                                                                                               |
+| Request a leadership position | `GET /me/leadership/options`, then `POST /me/leadership/requests {committeeId, teamId (null for committee leadership), position}` | A committee; the assignment level (Committee leadership, or Team leadership when the committee has active teams); a team for team leadership only; then Chief or Assistant Chief. Changing the committee clears the level and team; changing the level clears the team. Hidden, with a "requests are closed" note, while Core reports `requestsOpen: false`. Core re-checks the switch, the path, duplicates and limits (`REQUESTS_CLOSED` 409 and the rest). |
+
+`toSquState`, `toOwnLeadership` and `toLeadershipOptions` drop anything malformed. The cards never receive a
+reviewer note, a reviewer's identity, a document key or the full student number. Decisions
+appear on the next visit; no email is sent. A Chief or Assistant Chief appointment gives
+dashboard access only through the permissions assigned to its committee or team (Core ADR 0027);
+the leadership card shows which positions do.
+
+**Email announcements** (Core ADR 0028). The profile's Account settings include an "Email
+announcements" switch (`EmailPreferences.tsx`): `GET /me/email-preferences` loads the choice and
+`PATCH /me/email-preferences {announcements}` saves it. Unsubscribe links in the society's emails
+change the same setting in Core. Membership is unaffected either way.
 
 ## Project submission
 

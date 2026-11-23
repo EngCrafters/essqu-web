@@ -5,7 +5,8 @@ import { COMING_SOON, isComingSoon } from '@/content/site'
 import {
   correctionProblem,
   draftProblems,
-  isSquEmail,
+  editOf,
+  isEmail,
   photoProblem,
   profileControls,
   toOwnProfile,
@@ -68,19 +69,57 @@ describe('sign-in return to the profile', () => {
 })
 
 describe('profile edits', () => {
-  const draft = { phone: '+968 9123 4567', academicYear: '3', discipline: 'electrical', interests: ['cad' as const, 'embedded' as const] }
+  // The categories and institutions Core publishes (migration 0033), as the page receives them.
+  const options = {
+    categories: [
+      { id: 'university_student', label: { en: 'University Student', ar: 'طالب جامعي' }, institution: 'required' as const, academicYear: true },
+      { id: 'graduate', label: { en: 'Graduate / Alumni', ar: 'خرّيج' }, institution: 'optional' as const, academicYear: false },
+      { id: 'academic', label: { en: 'Academic / Researcher', ar: 'أكاديمي' }, institution: 'none' as const, academicYear: false },
+    ],
+    institutions: [{ id: 'squ', name: { en: 'SQU', ar: 'جامعة السلطان قابوس' }, country: 'OM' }],
+    consentVersion: '2026-11-v2',
+    approval: 'review' as const,
+    accountActivation: 'email_confirmation' as const,
+  }
+  const draft = { phone: '+968 9123 4567',
+    category: 'university_student',
+    institution: 'squ',
+    institutionName: '',
+    academicYear: '3', discipline: 'electrical', interests: ['cad' as const, 'embedded' as const],
+  }
 
   it('accepts a complete draft, and an empty phone', () => {
-    assert.deepEqual(draftProblems(draft), {})
-    assert.deepEqual(draftProblems({ ...draft, phone: '' }), {})
+    assert.deepEqual(draftProblems(draft, options), {})
+    assert.deepEqual(draftProblems({ ...draft, phone: '' }, options), {})
   })
 
-  it('applies the rules Core applies', () => {
-    assert.deepEqual(Object.keys(draftProblems({ ...draft, phone: '91234567' })), ['phone'])
-    assert.deepEqual(Object.keys(draftProblems({ ...draft, academicYear: '6' })), ['academicYear'])
-    assert.deepEqual(Object.keys(draftProblems({ ...draft, discipline: 'aerospace' })), ['discipline'])
-    assert.deepEqual(Object.keys(draftProblems({ ...draft, interests: ['cad', 'data', 'power', 'hse', 'quality'] })), ['interests'])
-    assert.deepEqual(Object.keys(draftProblems({ ...draft, interests: ['cad', 'cad'] })), ['interests'])
+  it('applies the rules Core applies, by category', () => {
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, phone: '91234567' }, options)), ['phone'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, academicYear: '6' }, options)), ['academicYear'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, discipline: 'aerospace' }, options)), ['discipline'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, interests: ['cad', 'data', 'power', 'hse', 'quality'] }, options)), ['interests'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, interests: ['cad', 'cad'] }, options)), ['interests'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, category: 'astronaut' }, options)), ['category'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, institution: '' }, options)), ['institution'])
+    assert.deepEqual(Object.keys(draftProblems({ ...draft, institution: 'other', institutionName: 'X' }, options)), ['institutionName'])
+    assert.deepEqual(draftProblems({ ...draft, institution: 'other', institutionName: 'Imperial College London' }, options), {})
+    // A graduate's alma mater is optional and no year is asked for.
+    assert.deepEqual(draftProblems({ ...draft, category: 'graduate', institution: '', academicYear: '' }, options), {})
+    assert.deepEqual(draftProblems({ ...draft, category: 'academic', institution: '', academicYear: '' }, options), {})
+  })
+
+  it('sends only the details the category collects', () => {
+    assert.deepEqual(editOf({ ...draft, category: 'academic', institution: 'other', institutionName: 'Stale' }, options), {
+      phone: '+96891234567',
+      category: 'academic',
+      institution: '',
+      institutionName: '',
+      academicYear: null,
+      discipline: 'electrical',
+      interests: ['cad', 'embedded'],
+    })
+    assert.equal(editOf({ ...draft, institutionName: 'Stale' }, options)!.institutionName, '')
+    assert.equal(editOf({ ...draft, category: 'astronaut' }, options), null)
   })
 
   it('checks a correction before a reviewer sees it', () => {
@@ -92,11 +131,12 @@ describe('profile edits', () => {
     assert.equal(correctionProblem('full_name', 'Name\u0007'), 'full_name')
   })
 
-  it('changes the sign-in email only to a university address', () => {
-    assert.ok(isSquEmail('s123@squ.edu.om'))
-    assert.ok(isSquEmail('s123@student.squ.edu.om'))
-    assert.ok(!isSquEmail('s123@squ.edu.om.evil.example'))
-    assert.ok(!isSquEmail('s123@gmail.com'))
+  it('changes the sign-in email to any valid address, personal or institutional (Core ADR 0025)', () => {
+    assert.ok(isEmail('s123@squ.edu.om'))
+    assert.ok(isEmail('aisha.alhinai@gmail.com'))
+    assert.ok(!isEmail('not-an-email'))
+    assert.ok(!isEmail('a@localhost'))
+    assert.ok(!isEmail(`${'a'.repeat(250)}@x.om`))
   })
 
   it('previews only a JPEG or PNG within the size limit', () => {
@@ -152,6 +192,29 @@ describe("Core's profile answer", () => {
     assert.deepEqual(profileControls(on, { ...coreOn, photoUploads: false }), { canEdit: true, canUpload: false })
     assert.deepEqual(profileControls({ ...on, allowProfileEditing: false }, coreOn), { canEdit: false, canUpload: true })
     assert.deepEqual(profileControls(on, { ...coreOn, profileEditing: false }), { canEdit: false, canUpload: true })
+  })
+
+  it('reads the category, institution and SQU badge, and accepts a member with no student ID', () => {
+    const profile = toOwnProfile({
+      ...answer,
+      universityId: null,
+      category: 'graduate',
+      categoryLabel: { en: 'Graduate / Alumni', ar: 'خرّيج' },
+      institution: null,
+      institutionName: 'University of Leeds',
+      squVerified: true,
+    })!
+    assert.equal(profile.universityId, null)
+    assert.equal(profile.category, 'graduate')
+    assert.deepEqual(profile.categoryLabel, { en: 'Graduate / Alumni', ar: 'خرّيج' })
+    assert.equal(profile.institutionName, 'University of Leeds')
+    assert.equal(profile.squVerified, true)
+    // An answer from before migration 0033 still renders: no category, not verified.
+    const legacy = toOwnProfile(answer)!
+    assert.equal(legacy.universityId, '12345678')
+    assert.equal(legacy.category, null)
+    assert.equal(legacy.squVerified, false)
+    assert.equal(toOwnProfile({ ...answer, squVerified: 'yes' })!.squVerified, false)
   })
 
   it('treats a missing switch as off, and a malformed answer as unavailable', () => {

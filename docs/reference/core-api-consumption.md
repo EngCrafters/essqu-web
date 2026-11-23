@@ -18,7 +18,10 @@ lib/core-api/
   errors.ts            CoreErrorKind and retry rules
   types.ts             wire types for events, problems and registration
   registration.ts      browser: guest registration
-  membership.ts        browser: membership application and status token
+  membership.ts        browser: membership application (category fields) and status token
+  membership-options.ts          categories and institutions: types and validation (Core ADR 0025)
+  membership-options.server.ts   getMembershipOptions(): GET /membership-options, no key, cached 5 min
+  member-roles.ts      browser: SQU verification and leadership (two independent profile cards)
   member-events.ts     browser: memberCall() helper, member attendance and registration
   member-profile.ts    browser: own profile, photo, corrections, own registrations
   member-projects.ts   browser: own projects and project images
@@ -59,7 +62,9 @@ allows no credentials.
 | `events.server.ts` `getCoreEvent`                                   | `GET /events/{eventId}`                        | One published event                                                   |
 | `app/media/events/[eventId]/route.ts`                               | `GET /events/{eventId}/image?v=…`              | Event cover bytes                                                     |
 | `registration.ts` `submitRegistration`                              | `POST /events/{eventId}/registrations`         | Guest registration                                                    |
-| `membership.ts` `submitMembershipApplication`                       | `POST /membership-applications`                | Membership application with the ID card                               |
+| `membership-options.server.ts` `getMembershipOptions`               | `GET /membership-options`                      | Categories, institutions, consent version, `approval` (`automatic` or `review`, wording only) (server; `/register`, `/profile`) |
+| `membership.ts` `submitMembershipApplication`                       | `POST /membership-applications`                | Membership application (text fields only; no ID, no card); 201 `status` is `approved` under Core's automatic policy |
+| `membership.ts` `setUpImmediateAccount`                             | `POST /membership-applications/account`        | Immediate account activation (Core ADR 0030): one-time sign-in token  |
 | `membership.ts` `fetchApplicationStatus`                            | `POST /membership-applications/status`         | Applicant's status by token                                           |
 | `member-auth/membership.ts` `fetchOwnMembership`                    | `GET /me/membership`                           | Is this account a member or an applicant?                             |
 | `member-events.ts` `fetchMemberEvent`; `AttendanceConfirmation.tsx` | `GET /me/events/{eventId}/attendance`          | Verified profile, own registration, check-in state                    |
@@ -67,7 +72,15 @@ allows no credentials.
 | `RegistrationPanel.tsx`                                             | `POST /me/events/{eventId}/registrations`      | Member registration                                                   |
 | `RegistrationPanel.tsx`; `member-profile.ts` `saveOwnProfile`       | `PATCH /me/profile`                            | Save the phone, or the editable profile fields                        |
 | `member-profile.ts` `fetchOwnProfile`; `account.tsx`                | `GET /me/profile`                              | Own profile and Core's feature switches                               |
-| `member-profile.ts` `requestCorrection`                             | `POST /me/profile/changes`                     | Request a name or student ID correction                               |
+| `member-profile.ts` `requestCorrection`                             | `POST /me/profile/changes`                     | Request a name (or legacy student ID) correction                               |
+| `member-roles.ts` `fetchOwnSqu`                                     | `GET /me/verification`                         | Own SQU verification (the SQU card)                                                                                             |
+| `member-roles.ts` `fetchOwnLeadership`                              | `GET /me/leadership`                           | Own appointments (each with `grantsAccess`, Core ADR 0027), requests, limits and dashboard access (leadership card)             |
+| `membership-options.ts` `fetchMembershipOptions`                    | `GET /membership-options`                      | "Try again" on `/register` after the server could not load the options                                                          |
+| `member-roles.ts` `submitSquEvidence`                               | `POST /me/verification/squ`                    | SQU student number and ID card evidence (multipart)                                                                             |
+| `member-roles.ts` `fetchLeadershipOptions`                          | `GET /me/leadership/options`                   | Committees with active teams; requestable positions                                                                             |
+| `member-roles.ts` `requestLeadership`                               | `POST /me/leadership/requests`                 | Request Chief or Assistant Chief of a committee (`teamId: null`) or of one of its teams                                         |
+| `member-email.ts` `fetchEmailPreferences`                           | `GET /me/email-preferences`                    | Whether the member receives the society's optional announcements (Core ADR 0028)                                                |
+| `member-email.ts` `saveEmailPreferences`                            | `PATCH /me/email-preferences`                  | `{announcements: boolean}`; optimistic switch, put back if Core refuses                                                         |
 | `member-profile.ts` `fetchOwnRegistrations`                         | `GET /me/events`                               | Own registrations                                                     |
 | `member-profile.ts` `sendPhoto`; `account.tsx`                      | `GET`, `PUT`, `DELETE /me/profile/photo`       | Own photo                                                             |
 | `projects.server.ts` `getPublishedProjects`                         | `GET /projects?offset=…`                       | Published catalogue, 30 per page                                      |
@@ -104,7 +117,9 @@ The website does **not** call `GET /health`.
 | Project reads              | `CORE_API_TIMEOUT_MS`                           | none                                                                        | `no-store`                                                                                   |
 | Event cover proxy          | 15 s                                            | none                                                                        | CDN: 300 s with a version, 60 s without                                                      |
 | Guest registration         | 15 s                                            | never                                                                       | `no-store`                                                                                   |
+| Membership options         | `CORE_API_TIMEOUT_MS`                           | none                                                                        | Next.js data cache, 300 s; `null` (form unavailable) on any failure                          |
 | Membership application     | 90 s                                            | never                                                                       | not applicable                                                                               |
+| SQU verification evidence  | 60 s                                            | never                                                                       | `no-store`                                                                                   |
 | Membership status, `/me/*` | 10–15 s (photos and project images 30 s)        | never                                                                       | `no-store`                                                                                   |
 
 `errors.ts` maps statuses to `not-found`, `unauthorized`, `forbidden`, `rate-limited`,

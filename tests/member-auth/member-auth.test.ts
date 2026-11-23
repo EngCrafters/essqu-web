@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { signUpApplicant } from '@/lib/member-auth/client'
+import { setAccountPassword, signInWithAccountToken, signUpApplicant } from '@/lib/member-auth/client'
 import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
 import { classifyAuthError } from '@/lib/member-auth/errors'
 import { readAuthLink, withoutAuthLink } from '@/lib/member-auth/links'
@@ -139,5 +139,46 @@ describe('sign-in configuration', () => {
     assert.equal(getMemberAuthConfig({ SUPABASE_URL: 'http://127.0.0.1:54321', SUPABASE_ANON_KEY: key, VERCEL_ENV: 'production' }), null)
     assert.equal(getMemberAuthConfig({ SUPABASE_URL: 'http://project.example:54321', SUPABASE_ANON_KEY: key }), null)
     assert.deepEqual(getMemberAuthConfig({ SUPABASE_URL: 'http://127.0.0.1:54321', SUPABASE_ANON_KEY: key })?.url, 'http://127.0.0.1:54321')
+  })
+})
+
+describe('signInWithAccountToken (Core ADR 0030)', () => {
+  const fake = (verify: { error: unknown } | Error, update: { error: unknown } | Error) => {
+    const calls: unknown[] = []
+    return {
+      calls,
+      auth: {
+        verifyOtp: async (input: unknown) => {
+          calls.push(['verifyOtp', input])
+          if (verify instanceof Error) throw verify
+          return { data: {}, ...verify }
+        },
+        updateUser: async (input: unknown) => {
+          calls.push(['updateUser', input])
+          if (update instanceof Error) throw update
+          return { data: {}, ...update }
+        },
+      },
+    }
+  }
+
+  it('signs in with the one-time token, then sets the password with Supabase Auth only', async () => {
+    const client = fake({ error: null }, { error: null })
+    assert.deepEqual(await signInWithAccountToken(client as never, 'f'.repeat(56), 'chosen-password'), { ok: true })
+    assert.deepEqual(client.calls, [
+      ['verifyOtp', { token_hash: 'f'.repeat(56), type: 'magiclink' }],
+      ['updateUser', { password: 'chosen-password' }],
+    ])
+  })
+
+  it('tells a failed sign-in from a refused password, and never throws', async () => {
+    const expired = fake({ error: { code: 'otp_expired', status: 403 } }, { error: null })
+    assert.deepEqual(await signInWithAccountToken(expired as never, 'f'.repeat(56), 'x'), { ok: false, stage: 'sign-in', problem: 'link-expired' })
+    assert.deepEqual(expired.calls.length, 1)
+    const weak = fake({ error: null }, { error: { code: 'weak_password', status: 422 } })
+    assert.deepEqual(await signInWithAccountToken(weak as never, 'f'.repeat(56), 'x'), { ok: false, stage: 'password', problem: 'weak-password' })
+    const offline = fake(new TypeError('Failed to fetch'), { error: null })
+    assert.deepEqual(await signInWithAccountToken(offline as never, 'f'.repeat(56), 'x'), { ok: false, stage: 'sign-in', problem: 'unavailable' })
+    assert.deepEqual(await setAccountPassword(fake({ error: null }, new TypeError('x')) as never, 'x'), { ok: false, stage: 'password', problem: 'unavailable' })
   })
 })

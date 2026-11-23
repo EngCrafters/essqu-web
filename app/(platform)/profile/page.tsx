@@ -3,6 +3,7 @@ import { MemberProfile } from '@/components/pages/profile/MemberProfile'
 import { ComingSoon } from '@/components/platform/ComingSoon'
 import { isComingSoon } from '@/content/site'
 import { getRegistrationBaseUrl } from '@/lib/core-api/events.server'
+import { getMembershipOptions } from '@/lib/core-api/membership-options.server'
 import { memberProfileCopy } from '@/lib/i18n/dictionaries/pages/member-profile'
 import { getI18n } from '@/lib/i18n/server'
 import { getMemberAuthConfig } from '@/lib/member-auth/config.server'
@@ -15,7 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** The signed-in member's own profile. Its content is private, so it is read in the browser with the member's session. */
-export default function ProfilePage() {
+export default async function ProfilePage() {
   if (isComingSoon('profile')) return <ComingSoon module="profile" />
-  return <MemberProfile authSettings={getMemberAuthConfig()} coreBase={getRegistrationBaseUrl()} />
+  // Public reference data (categories, institutions) for editing the category details.
+  const options = await getMembershipOptions()
+  return <MemberProfile authSettings={getMemberAuthConfig()} coreBase={getRegistrationBaseUrl()} options={options} />
 }

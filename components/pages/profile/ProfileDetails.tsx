@@ -2,14 +2,14 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useI18n } from '@/components/i18n/I18nProvider'
-import { DISCIPLINE_BY_ID, DISCIPLINES, type DisciplineId } from '@/content/disciplines'
+import { DISCIPLINE_BY_ID, DISCIPLINES } from '@/content/disciplines'
 import { SKILLS, type SkillId } from '@/content/platform/taxonomy'
-import { normalizePhone } from '@/lib/core-api/member-events'
 import {
   MAX_INTERESTS,
   correctionProblem,
   draftOf,
   draftProblems,
+  editOf,
   type CorrectionField,
   type EditField,
   type OwnProfile,
@@ -17,6 +17,7 @@ import {
   type ProfileEdit,
 } from '@/lib/core-api/member-profile'
 import type { MemberResult } from '@/lib/core-api/member-events'
+import { OTHER_INSTITUTION, findCategory, type MembershipOptions } from '@/lib/core-api/membership-options'
 import { memberProfileCopy } from '@/lib/i18n/dictionaries/pages/member-profile'
 import m from './MemberProfile.module.css'
 
@@ -27,11 +28,14 @@ const VerifiedMark = () => (
 )
 
 /**
- * The member's details in two cards. Verified identity (name, SQU email, student ID) changes
- * only through a correction a reviewer approves; the rest the member edits here when allowed.
+ * The member's details in two cards. Verified identity (name, membership email, and a student ID
+ * kept from the earlier SQU-only form) changes only through a correction a reviewer approves; the
+ * rest the member edits here when allowed. The category decides which of the university, alma
+ * mater and academic year apply (Core ADR 0025); changing it clears the ones whose meaning changed.
  */
 export function ProfileDetails({
   profile,
+  options,
   canEdit,
   editing,
   setEditing,
@@ -39,6 +43,7 @@ export function ProfileDetails({
   requestChange,
 }: {
   profile: OwnProfile
+  options: MembershipOptions | null
   canEdit: boolean
   editing: boolean
   setEditing: (editing: boolean) => void
@@ -69,20 +74,19 @@ export function ProfileDetails({
     if (editing) firstRef.current?.focus()
   }, [editing])
 
-  const problems = draftProblems(draft)
+  const problems = draftProblems(draft, options)
   const shown = (f: EditField) => touched && problems[f]
+  const category = findCategory(options, draft.category)
+  const asksInstitution = Boolean(category && category.institution !== 'none')
+  const student = category?.institution === 'required'
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setTouched(true)
-    if (Object.keys(problems).length) return
+    const edit = editOf(draft, options)
+    if (Object.keys(problems).length || !edit) return
     setBusy(true)
     setResult(null)
-    const outcome = await save({
-      phone: draft.phone.trim() ? normalizePhone(draft.phone) : null,
-      academicYear: Number(draft.academicYear),
-      discipline: draft.discipline as DisciplineId,
-      interests: draft.interests,
-    })
+    const outcome = await save(edit)
     setBusy(false)
     setResult(outcome.ok ? 'saved' : 'failed')
     if (outcome.ok) setEditing(false)
@@ -91,6 +95,14 @@ export function ProfileDetails({
   const pendingFor = (field: CorrectionField) => profile.changeRequests.find((r) => r.field === field && r.status === 'pending')
   const decided = profile.changeRequests.find((r) => r.status !== 'pending')
   const empty = <dd data-empty="">{d.notAdded}</dd>
+  const institutionLabel = profile.institution ? l(profile.institution) : profile.institutionName
+  const error = (f: EditField, message: string) =>
+    shown(f) ? (
+      <p id={`${id}-${f}-error`} className={m.problem}>
+        {message}
+      </p>
+    ) : null
+  const describedBy = (f: EditField, hint = false) => [hint ? `${id}-${f}-hint` : '', shown(f) ? `${id}-${f}-error` : ''].filter(Boolean).join(' ') || undefined
 
   return (
     <div className={m.cards}>
@@ -116,13 +128,15 @@ export function ProfileDetails({
             <dt>{d.email}</dt>
             <dd dir="ltr">{profile.email}</dd>
           </div>
-          <div>
-            <dt>{d.studentId}</dt>
-            <dd dir="ltr">
-              {profile.universityId}
-              {pendingFor('university_id') && <span className={m.pending}>{c.correction.pending(pendingFor('university_id')!.requestedValue)}</span>}
-            </dd>
-          </div>
+          {profile.universityId ? (
+            <div>
+              <dt>{d.studentId}</dt>
+              <dd dir="ltr">
+                {profile.universityId}
+                {pendingFor('university_id') && <span className={m.pending}>{c.correction.pending(pendingFor('university_id')!.requestedValue)}</span>}
+              </dd>
+            </div>
+          ) : null}
         </dl>
         {decided && !pendingFor(decided.field) && (
           <p className={decided.status === 'approved' ? m.note : m.problem} role="status">
@@ -147,15 +161,37 @@ export function ProfileDetails({
         {editing ? (
           <form className={m.form} onSubmit={onSubmit} noValidate aria-busy={busy}>
             <div className={m.row}>
+              <div className={m.field} data-invalid={shown('category') || undefined}>
+                <label htmlFor={`${id}-category`}>{d.category}</label>
+                <select
+                  ref={firstRef}
+                  id={`${id}-category`}
+                  value={draft.category}
+                  onChange={(e) => {
+                    const next = e.target.value
+                    // Another category: the details whose meaning changed are cleared, never kept hidden.
+                    setDraft((x) => (x.category === next ? x : { ...x, category: next, institution: '', institutionName: '', academicYear: '' }))
+                  }}
+                  aria-invalid={Boolean(shown('category'))}
+                  aria-describedby={describedBy('category')}
+                >
+                  <option value="">—</option>
+                  {options?.categories.map((x) => (
+                    <option key={x.id} value={x.id}>
+                      {l(x.label)}
+                    </option>
+                  ))}
+                </select>
+                {error('category', d.errors.category)}
+              </div>
               <div className={m.field} data-invalid={shown('discipline') || undefined}>
                 <label htmlFor={`${id}-discipline`}>{d.discipline}</label>
                 <select
-                  ref={firstRef}
                   id={`${id}-discipline`}
                   value={draft.discipline}
                   onChange={(e) => setDraft((x) => ({ ...x, discipline: e.target.value }))}
                   aria-invalid={Boolean(shown('discipline'))}
-                  aria-describedby={shown('discipline') ? `${id}-discipline-error` : undefined}
+                  aria-describedby={describedBy('discipline')}
                 >
                   <option value="">—</option>
                   {DISCIPLINES.map((x) => (
@@ -164,35 +200,70 @@ export function ProfileDetails({
                     </option>
                   ))}
                 </select>
-                {shown('discipline') && (
-                  <p id={`${id}-discipline-error`} className={m.problem}>
-                    {d.errors.discipline}
-                  </p>
-                )}
-              </div>
-              <div className={m.field} data-invalid={shown('academicYear') || undefined}>
-                <label htmlFor={`${id}-year`}>{d.year}</label>
-                <select
-                  id={`${id}-year`}
-                  value={draft.academicYear}
-                  onChange={(e) => setDraft((x) => ({ ...x, academicYear: e.target.value }))}
-                  aria-invalid={Boolean(shown('academicYear'))}
-                  aria-describedby={shown('academicYear') ? `${id}-year-error` : undefined}
-                >
-                  <option value="">—</option>
-                  {[1, 2, 3, 4, 5].map((y) => (
-                    <option key={y} value={y}>
-                      {t.platform.common.yearN(y)}
-                    </option>
-                  ))}
-                </select>
-                {shown('academicYear') && (
-                  <p id={`${id}-year-error`} className={m.problem}>
-                    {d.errors.academicYear}
-                  </p>
-                )}
+                {error('discipline', d.errors.discipline)}
               </div>
             </div>
+            {asksInstitution || category?.academicYear ? (
+              <div className={m.row}>
+                {asksInstitution ? (
+                  <div className={m.field} data-invalid={shown('institution') || undefined}>
+                    <label htmlFor={`${id}-institution`}>{student ? d.institution : d.almaMater}</label>
+                    <select
+                      id={`${id}-institution`}
+                      value={draft.institution}
+                      onChange={(e) => setDraft((x) => ({ ...x, institution: e.target.value, institutionName: e.target.value === OTHER_INSTITUTION ? x.institutionName : '' }))}
+                      aria-invalid={Boolean(shown('institution'))}
+                      aria-describedby={describedBy('institution')}
+                    >
+                      <option value="">{student ? d.institutionPlaceholder : d.almaMaterPlaceholder}</option>
+                      {options?.institutions.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {l(x.name)}
+                        </option>
+                      ))}
+                      <option value={OTHER_INSTITUTION}>{d.otherInstitution}</option>
+                    </select>
+                    {error('institution', d.errors.institution)}
+                  </div>
+                ) : null}
+                {category?.academicYear ? (
+                  <div className={m.field} data-invalid={shown('academicYear') || undefined}>
+                    <label htmlFor={`${id}-year`}>{d.year}</label>
+                    <select
+                      id={`${id}-year`}
+                      value={draft.academicYear}
+                      onChange={(e) => setDraft((x) => ({ ...x, academicYear: e.target.value }))}
+                      aria-invalid={Boolean(shown('academicYear'))}
+                      aria-describedby={describedBy('academicYear')}
+                    >
+                      <option value="">—</option>
+                      {[1, 2, 3, 4, 5].map((y) => (
+                        <option key={y} value={y}>
+                          {t.platform.common.yearN(y)}
+                        </option>
+                      ))}
+                    </select>
+                    {error('academicYear', d.errors.academicYear)}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {asksInstitution && draft.institution === OTHER_INSTITUTION ? (
+              <div className={m.field} data-invalid={shown('institutionName') || undefined}>
+                <label htmlFor={`${id}-institutionName`}>{d.institutionName}</label>
+                <input
+                  id={`${id}-institutionName`}
+                  dir="auto"
+                  maxLength={120}
+                  autoComplete="organization"
+                  value={draft.institutionName}
+                  onChange={(e) => setDraft((x) => ({ ...x, institutionName: e.target.value }))}
+                  aria-invalid={Boolean(shown('institutionName'))}
+                  aria-describedby={describedBy('institutionName')}
+                />
+                {error('institutionName', d.errors.institutionName)}
+              </div>
+            ) : null}
             <div className={m.field} data-invalid={shown('phone') || undefined}>
               <label htmlFor={`${id}-phone`}>{d.phone}</label>
               <p id={`${id}-phone-hint`} className={m.hint}>
@@ -207,13 +278,9 @@ export function ProfileDetails({
                 value={draft.phone}
                 onChange={(e) => setDraft((x) => ({ ...x, phone: e.target.value }))}
                 aria-invalid={Boolean(shown('phone'))}
-                aria-describedby={`${id}-phone-hint${shown('phone') ? ` ${id}-phone-error` : ''}`}
+                aria-describedby={describedBy('phone', true)}
               />
-              {shown('phone') && (
-                <p id={`${id}-phone-error`} className={m.problem}>
-                  {d.errors.phone}
-                </p>
-              )}
+              {error('phone', d.errors.phone)}
             </div>
             <fieldset className={m.field} data-invalid={shown('interests') || undefined} aria-describedby={`${id}-interests-hint`}>
               <legend>{d.interests}</legend>
@@ -256,13 +323,25 @@ export function ProfileDetails({
           <>
             <dl className={m.list}>
               <div>
+                <dt>{d.category}</dt>
+                {profile.categoryLabel ? <dd>{l(profile.categoryLabel)}</dd> : empty}
+              </div>
+              {institutionLabel ? (
+                <div>
+                  <dt>{profile.category === 'graduate' ? d.almaMater : d.institution}</dt>
+                  <dd dir="auto">{institutionLabel}</dd>
+                </div>
+              ) : null}
+              <div>
                 <dt>{d.discipline}</dt>
                 {profile.discipline ? <dd>{l(DISCIPLINE_BY_ID[profile.discipline].name)}</dd> : empty}
               </div>
-              <div>
-                <dt>{d.year}</dt>
-                {profile.academicYear ? <dd>{t.platform.common.yearN(profile.academicYear)}</dd> : empty}
-              </div>
+              {profile.academicYear ? (
+                <div>
+                  <dt>{d.year}</dt>
+                  <dd>{t.platform.common.yearN(profile.academicYear)}</dd>
+                </div>
+              ) : null}
               <div>
                 <dt>{d.phone}</dt>
                 {profile.phone ? <dd dir="ltr">{profile.phone}</dd> : empty}
@@ -348,7 +427,8 @@ function CorrectionDialog({ profile, requestChange }: { profile: OwnProfile; req
             <label htmlFor={`${id}-field`}>{c.field}</label>
             <select id={`${id}-field`} value={field} onChange={(e) => setField(e.target.value as CorrectionField)}>
               <option value="full_name">{c.fields.full_name}</option>
-              <option value="university_id">{c.fields.university_id}</option>
+              {/* A student ID exists only on records from the earlier SQU-only form. */}
+              {profile.universityId ? <option value="university_id">{c.fields.university_id}</option> : null}
             </select>
           </div>
           <div className={m.field} data-invalid={shownProblem || undefined}>
@@ -359,7 +439,7 @@ function CorrectionDialog({ profile, requestChange }: { profile: OwnProfile; req
               dir={field === 'university_id' ? 'ltr' : 'auto'}
               inputMode={field === 'university_id' ? 'numeric' : 'text'}
               autoComplete="off"
-              placeholder={field === 'full_name' ? profile.name : profile.universityId}
+              placeholder={field === 'full_name' ? profile.name : (profile.universityId ?? '')}
               onChange={(e) => {
                 setValue(e.target.value)
                 setProblem(null)

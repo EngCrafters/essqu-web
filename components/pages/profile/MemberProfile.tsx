@@ -20,6 +20,7 @@ import {
   type OwnProfile,
   type OwnRegistration,
 } from '@/lib/core-api/member-profile'
+import type { MembershipOptions } from '@/lib/core-api/membership-options'
 import { formatMonthYear } from '@/lib/format'
 import { memberProfileCopy } from '@/lib/i18n/dictionaries/pages/member-profile'
 import type { MemberAuthSettings } from '@/lib/member-auth/client'
@@ -27,8 +28,11 @@ import { useMemberAccount } from '@/lib/member-auth/account'
 import { routes } from '@/lib/routes'
 import { SITE_FEATURES } from '@/lib/site-features'
 import { AccountSettings } from './AccountSettings'
+import { EmailPreferences } from './EmailPreferences'
 import { PhotoControl, type PhotoOutcome } from './PhotoControl'
 import { ProfileDetails } from './ProfileDetails'
+import { LeadershipCard } from './LeadershipCard'
+import { SquVerificationCard } from './SquVerificationCard'
 import p from './Profile.module.css'
 import m from './MemberProfile.module.css'
 
@@ -56,7 +60,7 @@ const earliest = (dates: (string | null | undefined)[]) => dates.filter((d): d i
  * Everything comes from Core with the member's own session (ADR 0023); signing in alone shows
  * nothing, and an applicant sees only where their application stands.
  */
-export function MemberProfile({ authSettings, coreBase }: { authSettings: MemberAuthSettings | null; coreBase: string | null }) {
+export function MemberProfile({ authSettings, coreBase, options }: { authSettings: MemberAuthSettings | null; coreBase: string | null; options: MembershipOptions | null }) {
   const { locale } = useI18n()
   const c = memberProfileCopy[locale].profile
   const { account, refresh } = useMemberAccount()
@@ -148,6 +152,7 @@ export function MemberProfile({ authSettings, coreBase }: { authSettings: Member
       setProfile={(profile) => setLoaded((x) => x && { ...x, profile })}
       authSettings={authSettings}
       coreBase={coreBase}
+      options={options}
       email={account.email}
       photoUrl={account.photoUrl}
       refresh={refresh}
@@ -194,6 +199,7 @@ function OwnProfileView({
   setProfile,
   authSettings,
   coreBase,
+  options,
   email,
   photoUrl,
   refresh,
@@ -202,6 +208,7 @@ function OwnProfileView({
   setProfile: (profile: OwnProfile) => void
   authSettings: MemberAuthSettings
   coreBase: string
+  options: MembershipOptions | null
   email: string
   photoUrl: string | null
   refresh: () => Promise<void>
@@ -273,6 +280,16 @@ function OwnProfileView({
               <h1 className={`${p.name} intro-item`} dir="auto">
                 {profile.name}
               </h1>
+              {profile.squVerified ? (
+                <p className="intro-item">
+                  <a href="#squ-verification" className={m.stamp}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                      <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    </svg>
+                    {c.squVerified}
+                  </a>
+                </p>
+              ) : null}
               <p className={`${p.headline} intro-item`} style={{ '--i': 1 } as CSSProperties}>
                 {memberSince ? c.memberSince(formatMonthYear(memberSince.slice(0, 10), intl)) : null}
                 {profile.status === 'graduate' ? ` · ${c.graduate}` : null}
@@ -283,6 +300,12 @@ function OwnProfileView({
                   {profile.discipline && <DisciplineLink id={profile.discipline}>{l(DISCIPLINE_BY_ID[profile.discipline].name)}</DisciplineLink>}
                   {profile.discipline && profile.academicYear ? ' · ' : null}
                   {profile.academicYear ? t.platform.common.yearN(profile.academicYear) : null}
+                  {profile.institution || profile.institutionName ? (
+                    <>
+                      {' · '}
+                      <bdi>{profile.institution ? l(profile.institution) : profile.institutionName}</bdi>
+                    </>
+                  ) : null}
                 </p>
               )}
               {profile.interests.length ? (
@@ -307,6 +330,12 @@ function OwnProfileView({
                   {c.actions.edit}
                 </a>
               )}
+              <a href="#squ-verification" className="btn btn--secondary btn--compact">
+                {c.roles.squ.nav}
+              </a>
+              <a href="#leadership" className="btn btn--secondary btn--compact">
+                {c.roles.leadership.title}
+              </a>
               <a href="#events" className="btn btn--secondary btn--compact">
                 {c.actions.events}
               </a>
@@ -391,6 +420,7 @@ function OwnProfileView({
           </div>
           <ProfileDetails
             profile={profile}
+            options={options}
             canEdit={canEdit}
             editing={editing}
             setEditing={setEditing}
@@ -407,6 +437,14 @@ function OwnProfileView({
           />
         </div>
       </section>
+
+      {/* Two independent cards: each loads its own Core endpoint and fails on its own. */}
+      <div className={m.section}>
+        <div className={`container ${m.cards}`}>
+          <SquVerificationCard authSettings={authSettings} coreBase={coreBase} />
+          <LeadershipCard authSettings={authSettings} coreBase={coreBase} />
+        </div>
+      </div>
 
       <section className={m.section} aria-label={`${c.events.title} · ${c.projects.title}`} style={{ '--key': keyColor } as CSSProperties}>
         <div className={`container ${m.blocks}`}>
@@ -481,7 +519,9 @@ function OwnProfileView({
           <div className={m.sectionHead}>
             <h2 id="settings-title">{c.settings.title}</h2>
           </div>
-          <AccountSettings authSettings={authSettings} signInEmail={profile.signInEmail ?? email} />
+          <AccountSettings authSettings={authSettings} signInEmail={profile.signInEmail ?? email}>
+            <EmailPreferences authSettings={authSettings} coreBase={coreBase} />
+          </AccountSettings>
         </div>
       </section>
     </>

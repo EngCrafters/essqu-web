@@ -114,6 +114,11 @@ values are passed to the browser as props on purpose, because they are public by
 - `ESSQU_EVENT_FLOW=true` makes the build write to `.next-event-flow`. Core's two-app browser test
   harness uses it so it does not disturb a running dev server.
 
+Development Cycle 2 (Core ADR 0025) adds **no environment variable**. `/register` and `/profile`
+read Core's `GET /membership-options` with the existing `CORE_API_BASE_URL` and
+`CORE_API_TIMEOUT_MS`, without a key, and cache it for 300 seconds
+(`MEMBERSHIP_OPTIONS_REVALIDATE_SECONDS` in `lib/core-api/membership-options.server.ts`).
+
 ## Build time versus runtime
 
 - **Runtime.** Core and Supabase settings are read on the server for each process

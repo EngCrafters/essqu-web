@@ -365,6 +365,15 @@
   font-size: var(--text-small);
 }
 
+/* The university or alma mater: one line, however long its name. */
+.cardInstitution {
+  overflow: hidden;
+  color: var(--atmo-text-secondary);
+  font-size: var(--text-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .cardFacts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

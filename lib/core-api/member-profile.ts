@@ -4,17 +4,27 @@ import type { DisciplineId } from '@/content/disciplines'
 import { memberAuthClient, type MemberAuthSettings } from '@/lib/member-auth/client'
 import type { SiteFeatures } from '@/lib/site-features'
 import { memberCall, normalizePhone, type MemberResult } from './member-events'
+import { OTHER_INSTITUTION, findCategory, type MembershipOptions } from './membership-options'
 
 /**
- * The signed-in member's own profile in Core (ADR 0023). Every call carries the Supabase session;
- * Core decides whose profile it is from that token alone, never from anything the page sends.
+ * The signed-in member's own profile in Core (ADRs 0023 and 0025). Every call carries the
+ * Supabase session; Core decides whose profile it is from that token alone, never from anything
+ * the page sends.
  */
 export type CorrectionField = 'full_name' | 'university_id'
 export type OwnProfile = {
   name: string
   email: string
   signInEmail: string | null
-  universityId: string
+  /** Kept from the earlier SQU-only form; members who joined later have none (Core ADR 0025). */
+  universityId: string | null
+  /** The membership category and its institution or alma mater, as Core describes them. */
+  category: string | null
+  categoryLabel: { en: string; ar: string } | null
+  institution: { id: string; en: string; ar: string } | null
+  institutionName: string | null
+  /** An active SQU student verification. Separate from membership: one never implies the other. */
+  squVerified: boolean
   academicYear: number | null
   discipline: DisciplineId | null
   interests: SkillId[]
@@ -38,38 +48,86 @@ export type OwnRegistration = {
   checkedInAt: string | null
   registeredAt: string | null
 }
-export type ProfileEdit = { phone: string | null; academicYear: number; discipline: DisciplineId; interests: SkillId[] }
+/** What is sent: only the details the category collects (Core drops any other, too). */
+export type ProfileEdit = {
+  phone: string | null
+  category: string
+  /** A listed institution's id, `other` (then `institutionName` is typed), or empty. */
+  institution: string
+  institutionName: string
+  academicYear: number | null
+  discipline: DisciplineId
+  interests: SkillId[]
+}
 
 export const MAX_INTERESTS = 4
 export const MAX_PHOTO_BYTES = 3 * 1024 * 1024
 export const PHOTO_TYPES = ['image/jpeg', 'image/png'] as const
 
 const DISCIPLINE_IDS: string[] = DISCIPLINES.map((d) => d.id)
+const CONTROL = /[\u0000-\u001f\u007f]/
 
-export type EditField = 'phone' | 'academicYear' | 'discipline' | 'interests'
-export type ProfileDraft = { phone: string; academicYear: string; discipline: string; interests: SkillId[] }
+export type EditField = 'phone' | 'category' | 'institution' | 'institutionName' | 'academicYear' | 'discipline' | 'interests'
+export type ProfileDraft = {
+  phone: string
+  category: string
+  /** A listed institution's id, `other` (then `institutionName` is typed), or empty. */
+  institution: string
+  institutionName: string
+  academicYear: string
+  discipline: string
+  interests: SkillId[]
+}
 
 export const draftOf = (p: OwnProfile): ProfileDraft => ({
   phone: p.phone ?? '',
+  category: p.category ?? '',
+  institution: p.institution?.id ?? (p.institutionName ? OTHER_INSTITUTION : ''),
+  institutionName: p.institutionName ?? '',
   academicYear: p.academicYear ? String(p.academicYear) : '',
   discipline: p.discipline ?? '',
   interests: p.interests,
 })
 
-/** The same rules Core applies; Core checks again and has the last word. */
-export function draftProblems(d: ProfileDraft): Partial<Record<EditField, true>> {
+/** The same rules Core applies, by category; Core checks again and has the last word. */
+export function draftProblems(d: ProfileDraft, options: MembershipOptions | null): Partial<Record<EditField, true>> {
   const e: Partial<Record<EditField, true>> = {}
+  const category = findCategory(options, d.category)
   if (d.phone.trim() && !normalizePhone(d.phone)) e.phone = true
-  if (!/^[1-5]$/.test(d.academicYear)) e.academicYear = true
+  if (!category) e.category = true
+  if (category && category.institution !== 'none') {
+    if (d.institution === OTHER_INSTITUTION) {
+      const name = d.institutionName.trim()
+      if (name.length < 2 || name.length > 120 || CONTROL.test(name)) e.institutionName = true
+    } else if (d.institution && !options?.institutions.some((i) => i.id === d.institution)) e.institution = true
+    else if (!d.institution && category.institution === 'required') e.institution = true
+  }
+  if (category?.academicYear && !/^[1-5]$/.test(d.academicYear)) e.academicYear = true
   if (!DISCIPLINE_IDS.includes(d.discipline)) e.discipline = true
   if (d.interests.length > MAX_INTERESTS || new Set(d.interests).size !== d.interests.length) e.interests = true
   return e
 }
 
+/** The edit to send: details the category does not collect are cleared, never sent stale. */
+export function editOf(d: ProfileDraft, options: MembershipOptions | null): ProfileEdit | null {
+  const category = findCategory(options, d.category)
+  if (!category) return null
+  const institution = category.institution === 'none' ? '' : d.institution
+  return {
+    phone: d.phone.trim() ? normalizePhone(d.phone) : null,
+    category: category.id,
+    institution,
+    institutionName: institution === OTHER_INSTITUTION ? d.institutionName.trim() : '',
+    academicYear: category.academicYear ? Number(d.academicYear) : null,
+    discipline: d.discipline as DisciplineId,
+    interests: d.interests,
+  }
+}
+
 export function correctionProblem(field: CorrectionField, value: string): CorrectionField | null {
   const v = value.trim()
   if (field === 'university_id') return /^[0-9]{6,10}$/.test(v) ? null : field
-  return v.length >= 2 && v.length <= 200 && !/[\u0000-\u001f\u007f]/.test(v) ? null : field
+  return v.length >= 2 && v.length <= 200 && !CONTROL.test(v) ? null : field
 }
 
 /** A control shows only when the website's switch (site-features.json) and Core's both allow it. */
@@ -78,22 +136,29 @@ export const profileControls = (site: SiteFeatures['profile'], core: OwnProfile[
   canUpload: site.allowPhotoUpload && core.photoUploads,
 })
 
-/** The university address a membership keeps; Core follows only a confirmed SQU email. */
-export const isSquEmail = (value: string) => value.length <= 254 && /^[^\s@]+@([a-z0-9-]+\.)*squ\.edu\.om$/.test(value)
+/** Any address, personal or institutional: Core follows a confirmed sign-in email (ADR 0025). */
+export const isEmail = (value: string) => value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 const str = (v: unknown): v is string => typeof v === 'string'
 const strOrNull = (v: unknown): v is string | null => v === null || typeof v === 'string'
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 
 /** Validate Core's answer before rendering it; an unknown discipline or interest is dropped, not shown. */
 export function toOwnProfile(v: unknown): OwnProfile | null {
-  if (!object(v) || !str(v.name) || !str(v.email) || !str(v.universityId) || !strOrNull(v.phone) || !str(v.status)) return null
+  if (!object(v) || !str(v.name) || !str(v.email) || !strOrNull(v.universityId ?? null) || !strOrNull(v.phone) || !str(v.status)) return null
   const app = object(v.application) ? v.application : null
   const features = object(v.features) ? v.features : {}
+  const label = object(v.categoryLabel) ? v.categoryLabel : null
+  const institution = object(v.institution) ? v.institution : null
   return {
     name: v.name,
     email: v.email,
     signInEmail: str(v.signInEmail) ? v.signInEmail : null,
-    universityId: v.universityId,
+    universityId: str(v.universityId) ? v.universityId : null,
+    category: str(v.category) ? v.category : null,
+    categoryLabel: label && str(label.en) && str(label.ar) ? { en: label.en, ar: label.ar } : null,
+    institution: institution && str(institution.id) && str(institution.en) && str(institution.ar) ? { id: institution.id, en: institution.en, ar: institution.ar } : null,
+    institutionName: str(v.institutionName) ? v.institutionName : null,
+    squVerified: v.squVerified === true,
     academicYear: Number.isInteger(v.academicYear) ? (v.academicYear as number) : null,
     discipline: str(v.discipline) && DISCIPLINE_IDS.includes(v.discipline) ? (v.discipline as DisciplineId) : null,
     interests: Array.isArray(v.interests) ? (v.interests.filter((s) => str(s) && s in SKILLS) as SkillId[]) : [],
@@ -130,7 +195,8 @@ function toRegistrations(v: unknown): OwnRegistration[] | null {
   )
 }
 
-const mapped = <T>(result: MemberResult<unknown>, to: (v: unknown) => T | null): MemberResult<T> => {
+/** Core's answer checked and shaped; anything unexpected reads as unavailable, never half-shown. */
+export const mapped = <T>(result: MemberResult<unknown>, to: (v: unknown) => T | null): MemberResult<T> => {
   if (!result.ok) return result
   const value = to(result.data)
   return value ? { ok: true, data: value } : { ok: false, code: 'UNAVAILABLE', status: 503 }
